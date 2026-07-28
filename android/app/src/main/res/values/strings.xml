@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">海大 TAT</string>
+    <string name="title_activity_main">海大 TAT</string>
+    <string name="package_name">com.lxuan.ntou_tat</string>
+    <string name="custom_url_scheme">com.lxuan.ntou_tat</string>
+</resources>
