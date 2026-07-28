@@ -174,6 +174,7 @@ const periodsForSlot = (slot: TimetableSlot) => {
 }
 
 const coursePalette = ['#acd6f4', '#eef0b3', '#b9dfc4', '#f1bcc8', '#cdbfee', '#b9dedc']
+const TIMETABLE_VIEW_STORAGE_KEY = 'ntou-timetable-view-v2'
 
 const courseColor = (slot: TimetableSlot) => {
   const key = slot.courseId || slot.courseTitle
@@ -268,7 +269,7 @@ function App() {
   const [selectedTab, setSelectedTab] = useState<TabKey>('timetable')
   const [timetableViewMode, setTimetableViewMode] = useState<'grid' | 'list'>(() => {
     try {
-      return localStorage.getItem('ntou-timetable-view') === 'list' ? 'list' : 'grid'
+      return localStorage.getItem(TIMETABLE_VIEW_STORAGE_KEY) === 'list' ? 'list' : 'grid'
     } catch {
       return 'grid'
     }
@@ -878,7 +879,7 @@ function App() {
                 ? (mode) => {
                     setTimetableViewMode(mode)
                     try {
-                      localStorage.setItem('ntou-timetable-view', mode)
+                      localStorage.setItem(TIMETABLE_VIEW_STORAGE_KEY, mode)
                     } catch {
                       // The timetable still works when storage is unavailable.
                     }
