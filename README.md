@@ -8,7 +8,7 @@
 
 ## 下載 APK
 
-[直接下載最新版海大 TAT APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/ntou-tat-v1.10.4-debug.apk)
+[直接下載最新版海大 TAT APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/app-release.apk)
 
 目前提供 Android Debug APK。首次安裝時，Android 可能會要求允許瀏覽器或檔案管理器
 安裝未知來源 App。
