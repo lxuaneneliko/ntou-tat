@@ -6,6 +6,13 @@
 > 本專案不是海大官方 App，也未受海大委託或背書。AIS 網頁結構或登入流程變更時，
 > 部分功能可能暫時失效。
 
+## 下載 APK
+
+[直接下載最新版海大 TAT APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/ntou-tat-v1.10.4-debug.apk)
+
+目前提供 Android Debug APK。首次安裝時，Android 可能會要求允許瀏覽器或檔案管理器
+安裝未知來源 App。
+
 ## 功能
 
 - 海大 AIS 驗證碼登入與本機 Session 保存
@@ -22,7 +29,8 @@
 - App 不保存密碼，也沒有自建資料後端、分析 SDK 或廣告追蹤。
 - AIS Cookie 與課表／成績快取使用 Android App 私有儲存空間。
 - 頭像和自訂資料只保存在使用者裝置。
-- Repository 不包含真實帳號、Cookie、Token、手機截圖、APK 或簽章金鑰。
+- Git 歷史不包含真實帳號、Cookie、Token、手機截圖、APK 或簽章金鑰。
+- GitHub Release 只提供經過隱私掃描的 APK 安裝檔。
 
 完整說明請見 [PRIVACY.md](PRIVACY.md)。
 
