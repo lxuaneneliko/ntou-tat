@@ -42,6 +42,7 @@ const eventsFromDocument = (document: Document): CalendarEvent[] => {
           startsOn,
           endsOn,
           category: '海大行事曆',
+          source: 'official',
         })
       })
     })
@@ -95,6 +96,7 @@ const eventsFromHtml = (html: string): CalendarEvent[] => {
           startsOn,
           endsOn: normalizeDate(endDate) || startsOn,
           category: '海大行事曆',
+          source: 'official',
         })
         buttonIndex += 1
       }

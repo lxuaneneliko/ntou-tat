@@ -37,6 +37,12 @@ import { clearPortalSession } from './api/portal'
 import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
 import { authStore } from './storage/authStorage'
+import {
+  personalEventsForStudent,
+  readPersonalCalendarStore,
+  writePersonalCalendarStore,
+  type PersonalCalendarStore,
+} from './storage/calendarStorage'
 import { semestersForStudent } from './semester'
 import {
   clearSemesterCache,
@@ -77,6 +83,11 @@ type AppData = {
 }
 
 type SemesterData = Pick<AppData, 'timetable' | 'grades' | 'credits'>
+
+type CalendarEventDraft = Pick<
+  CalendarEvent,
+  'title' | 'startsOn' | 'endsOn' | 'category' | 'time' | 'notes'
+>
 
 const weekdays = [
   { value: 1, short: '一' },
@@ -294,6 +305,11 @@ function App() {
   })
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false)
   const [isAddGradeOpen, setIsAddGradeOpen] = useState(false)
+  const [isAddCalendarEventOpen, setIsAddCalendarEventOpen] = useState(false)
+  const [calendarEventDate, setCalendarEventDate] = useState(() => isoDate(new Date()))
+  const [personalCalendarStore, setPersonalCalendarStore] = useState<PersonalCalendarStore>(
+    readPersonalCalendarStore,
+  )
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
 
   const saveCustomCourses = (newCourses: Record<string, TimetableSlot[]>) => {
@@ -315,6 +331,10 @@ function App() {
   const saveAlarms = (newAlarms: Array<{ id: string; time: string; label: string; active: boolean }>) => {
     setAlarms(newAlarms)
     localStorage.setItem('ntou_alarms_v9', JSON.stringify(newAlarms))
+  }
+  const savePersonalCalendarStore = (nextStore: PersonalCalendarStore) => {
+    setPersonalCalendarStore(nextStore)
+    writePersonalCalendarStore(nextStore)
   }
   const saveCustomAvatar = (dataUrl: string) => {
     storeAvatar(dataUrl)
@@ -572,7 +592,9 @@ function App() {
 
   useEffect(() => {
     const handleBackButton = CapApp.addListener('backButton', () => {
-      if (isAddCourseOpen) {
+      if (isAddCalendarEventOpen) {
+        setIsAddCalendarEventOpen(false)
+      } else if (isAddCourseOpen) {
         setIsAddCourseOpen(false)
       } else if (isAddGradeOpen) {
         setIsAddGradeOpen(false)
@@ -587,7 +609,7 @@ function App() {
     return () => {
       void handleBackButton.then((h: { remove: () => void }) => h.remove())
     }
-  }, [activeCourse, moreView, isAddCourseOpen, isAddGradeOpen])
+  }, [activeCourse, moreView, isAddCalendarEventOpen, isAddCourseOpen, isAddGradeOpen])
 
   const handleLogin = async (studentId: string, password: string, captchaCode?: string) => {
     setLoginBusy(true)
@@ -704,6 +726,20 @@ function App() {
       return !deletedForSem.includes(g.id)
     })
   }, [data?.grades, customGrades, deletedGrades, selectedSemester])
+
+  const personalCalendarEvents = useMemo(
+    () => data ? personalEventsForStudent(personalCalendarStore, data.profile.id) : [],
+    [data, personalCalendarStore],
+  )
+
+  const mergedCalendarEvents = useMemo(
+    () => [...(data?.calendar ?? []), ...personalCalendarEvents].sort((a, b) =>
+      `${a.startsOn}-${a.time ?? ''}-${a.title}`.localeCompare(
+        `${b.startsOn}-${b.time ?? ''}-${b.title}`,
+      ),
+    ),
+    [data?.calendar, personalCalendarEvents],
+  )
 
   const calculatedCreditsAndGpa = useMemo(() => {
     const passed = mergedGrades.filter((grade) =>
@@ -877,7 +913,25 @@ function App() {
                 onOpenCourse={(slot) => void openCourse(coursesFromTimetable([slot])[0])}
               />
             ) : selectedTab === 'calendar' ? (
-              <CalendarScreen events={data.calendar} />
+              <CalendarScreen
+                events={mergedCalendarEvents}
+                onDeleteEvent={(id) => {
+                  const event = personalCalendarEvents.find((candidate) => candidate.id === id)
+                  if (!event || !confirm(`確定要刪除「${event.title}」嗎？`)) return
+                  const nextEvents = personalCalendarEvents.filter((candidate) => candidate.id !== id)
+                  const nextStore = { ...personalCalendarStore }
+                  if (nextEvents.length) {
+                    nextStore[data.profile.id] = nextEvents
+                  } else {
+                    delete nextStore[data.profile.id]
+                  }
+                  savePersonalCalendarStore(nextStore)
+                }}
+                onRequestAdd={(date) => {
+                  setCalendarEventDate(date)
+                  setIsAddCalendarEventOpen(true)
+                }}
+              />
             ) : selectedTab === 'grades' ? (
               <GradesScreen
                 credits={calculatedCreditsAndGpa}
@@ -995,6 +1049,26 @@ function App() {
               const currentCustom = customGrades[selectedSemester] || []
               saveCustomGrades({ ...customGrades, [selectedSemester]: [...currentCustom, newGrade] })
               setIsAddGradeOpen(false)
+            }}
+          />
+        ) : null}
+
+        {isAddCalendarEventOpen ? (
+          <AddCalendarEventModal
+            initialDate={calendarEventDate}
+            onClose={() => setIsAddCalendarEventOpen(false)}
+            onSave={(draft) => {
+              const event: CalendarEvent = {
+                id: `personal-calendar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                ...draft,
+                source: 'personal',
+              }
+              const currentEvents = personalEventsForStudent(personalCalendarStore, data.profile.id)
+              savePersonalCalendarStore({
+                ...personalCalendarStore,
+                [data.profile.id]: [...currentEvents, event],
+              })
+              setIsAddCalendarEventOpen(false)
             }}
           />
         ) : null}
@@ -1248,7 +1322,15 @@ function TimetableScreen({
   )
 }
 
-function CalendarScreen({ events }: { events: CalendarEvent[] }) {
+function CalendarScreen({
+  events,
+  onDeleteEvent,
+  onRequestAdd,
+}: {
+  events: CalendarEvent[]
+  onDeleteEvent: (id: string) => void
+  onRequestAdd: (date: string) => void
+}) {
   const [cursor, setCursor] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
@@ -1262,10 +1344,14 @@ function CalendarScreen({ events }: { events: CalendarEvent[] }) {
     const day = index - firstDayOffset + 1
     return day >= 1 && day <= totalDays ? day : null
   })
-  const selectedEvents = events.filter((event) => {
-    const end = event.endsOn || event.startsOn
-    return selectedDate >= event.startsOn && selectedDate <= end
-  })
+  const selectedEvents = events
+    .filter((event) => {
+      const end = event.endsOn || event.startsOn
+      return selectedDate >= event.startsOn && selectedDate <= end
+    })
+    .sort((a, b) =>
+      `${a.time ?? '99:99'}-${a.title}`.localeCompare(`${b.time ?? '99:99'}-${b.title}`),
+    )
   const shiftMonth = (offset: number) => {
     setCursor((current) => {
       const next = new Date(current.getFullYear(), current.getMonth() + offset, 1)
@@ -1326,14 +1412,25 @@ function CalendarScreen({ events }: { events: CalendarEvent[] }) {
             <ChevronLeft size={22} />
           </button>
           <strong>{monthLabel(cursor)}</strong>
-          <button
-            className="plain-icon"
-            type="button"
-            aria-label="下個月"
-            onClick={() => shiftMonth(1)}
-          >
-            <ChevronRight size={22} />
-          </button>
+          <div className="calendar-toolbar-actions">
+            <button
+              className="plain-icon"
+              type="button"
+              aria-label="下個月"
+              onClick={() => shiftMonth(1)}
+            >
+              <ChevronRight size={22} />
+            </button>
+            <button
+              className="plain-icon calendar-add"
+              type="button"
+              aria-label="新增個人事件"
+              title="新增個人事件"
+              onClick={() => onRequestAdd(selectedDate)}
+            >
+              <Plus size={21} />
+            </button>
+          </div>
         </div>
         <div className="calendar-weekdays">
           {['一', '二', '三', '四', '五', '六', '日'].map((day) => <span key={day}>{day}</span>)}
@@ -1342,10 +1439,12 @@ function CalendarScreen({ events }: { events: CalendarEvent[] }) {
           {cells.map((day, index) => {
             if (!day) return <span className="calendar-blank" key={`blank-${index}`} />
             const date = isoDate(new Date(cursor.getFullYear(), cursor.getMonth(), day))
-            const hasEvent = events.some((event) => {
+            const dateEvents = events.filter((event) => {
               const end = event.endsOn || event.startsOn
               return date >= event.startsOn && date <= end
             })
+            const hasOfficialEvent = dateEvents.some((event) => event.source !== 'personal')
+            const hasPersonalEvent = dateEvents.some((event) => event.source === 'personal')
             return (
               <button
                 className={`calendar-day ${selectedDate === date ? 'selected' : ''}`}
@@ -1354,7 +1453,12 @@ function CalendarScreen({ events }: { events: CalendarEvent[] }) {
                 onClick={() => setSelectedDate(date)}
               >
                 <span>{day}</span>
-                {hasEvent ? <i /> : null}
+                {hasOfficialEvent || hasPersonalEvent ? (
+                  <span className="calendar-markers" aria-hidden="true">
+                    {hasOfficialEvent ? <i className="official" /> : null}
+                    {hasPersonalEvent ? <i className="personal" /> : null}
+                  </span>
+                ) : null}
               </button>
             )
           })}
@@ -1364,18 +1468,34 @@ function CalendarScreen({ events }: { events: CalendarEvent[] }) {
         <div className="section-label">{selectedDate}</div>
         {selectedEvents.length ? (
           selectedEvents.map((event) => (
-            <div className="agenda-row" key={event.id}>
+            <div className={`agenda-row ${event.source === 'personal' ? 'personal' : 'official'}`} key={event.id}>
               <span className="agenda-dot" />
-              <div>
+              <div className="agenda-copy">
                 <strong>{event.title}</strong>
-                <span>{event.category}</span>
+                <span>
+                  {event.category}
+                  {event.time ? ` · ${event.time}` : ''}
+                  {event.endsOn && event.endsOn !== event.startsOn ? ` · 至 ${event.endsOn}` : ''}
+                </span>
+                {event.notes ? <p>{event.notes}</p> : null}
               </div>
+              {event.source === 'personal' ? (
+                <button
+                  className="agenda-delete"
+                  type="button"
+                  aria-label={`刪除${event.title}`}
+                  title="刪除個人事件"
+                  onClick={() => onDeleteEvent(event.id)}
+                >
+                  <Trash2 size={17} />
+                </button>
+              ) : null}
             </div>
           ))
         ) : (
           <div className="inline-empty compact">
             <CalendarDays size={22} />
-            <span>此日期沒有海大官方行事</span>
+            <span>此日期沒有行事</span>
           </div>
         )}
       </div>
@@ -2383,6 +2503,135 @@ function ClockScreen({
         </div>
       </div>
     </section>
+  )
+}
+
+function AddCalendarEventModal({
+  initialDate,
+  onClose,
+  onSave,
+}: {
+  initialDate: string
+  onClose: () => void
+  onSave: (event: CalendarEventDraft) => void
+}) {
+  const [title, setTitle] = useState('')
+  const [startsOn, setStartsOn] = useState(initialDate)
+  const [endsOn, setEndsOn] = useState(initialDate)
+  const [time, setTime] = useState('')
+  const [category, setCategory] = useState('個人')
+  const [notes, setNotes] = useState('')
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!title.trim()) {
+      alert('請輸入事件名稱！')
+      return
+    }
+    if (!startsOn || !endsOn) {
+      alert('請選擇事件日期！')
+      return
+    }
+    if (endsOn < startsOn) {
+      alert('結束日期不能早於開始日期！')
+      return
+    }
+
+    onSave({
+      title: title.trim(),
+      startsOn,
+      endsOn,
+      category,
+      time: time || undefined,
+      notes: notes.trim() || undefined,
+    })
+  }
+
+  return (
+    <div className="sheet-backdrop" role="presentation" onClick={onClose}>
+      <section
+        className="course-sheet calendar-event-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="calendar-event-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="sheet-handle" />
+        <button className="sheet-close" type="button" aria-label="關閉" onClick={onClose}>
+          <X size={21} />
+        </button>
+        <h2 id="calendar-event-title">新增個人事件</h2>
+        <form className="calendar-event-form" onSubmit={handleSubmit}>
+          <label>
+            <span>事件名稱</span>
+            <input
+              autoFocus
+              maxLength={80}
+              placeholder="例如：繳交期末報告"
+              type="text"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+            />
+          </label>
+
+          <div className="calendar-form-pair">
+            <label>
+              <span>開始日期</span>
+              <input
+                type="date"
+                value={startsOn}
+                onChange={(event) => {
+                  const nextStart = event.target.value
+                  setStartsOn(nextStart)
+                  if (endsOn < nextStart) setEndsOn(nextStart)
+                }}
+              />
+            </label>
+            <label>
+              <span>結束日期</span>
+              <input
+                min={startsOn}
+                type="date"
+                value={endsOn}
+                onChange={(event) => setEndsOn(event.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="calendar-form-pair">
+            <label>
+              <span>時間（選填）</span>
+              <input type="time" value={time} onChange={(event) => setTime(event.target.value)} />
+            </label>
+            <label>
+              <span>分類</span>
+              <select value={category} onChange={(event) => setCategory(event.target.value)}>
+                <option value="個人">個人</option>
+                <option value="課業">課業</option>
+                <option value="社團">社團</option>
+                <option value="生活">生活</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            <span>備註（選填）</span>
+            <textarea
+              maxLength={300}
+              placeholder="地點、攜帶物品或其他提醒"
+              rows={3}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+            />
+          </label>
+
+          <button className="calendar-event-save" type="submit">
+            <Plus size={18} />
+            <span>儲存事件</span>
+          </button>
+        </form>
+      </section>
+    </div>
   )
 }
 

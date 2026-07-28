@@ -116,6 +116,9 @@ export type CalendarEvent = {
   startsOn: string
   endsOn?: string
   category: string
+  time?: string
+  notes?: string
+  source?: 'official' | 'personal'
 }
 
 export type CampusLink = {
