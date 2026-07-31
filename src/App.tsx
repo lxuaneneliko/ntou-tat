@@ -25,6 +25,7 @@ import {
   Phone,
   Plus,
   RefreshCw,
+  Loader2,
   ShieldCheck,
   Trash2,
   X,
@@ -287,6 +288,7 @@ function App() {
   const [loginBusy, setLoginBusy] = useState(false)
   const [loginChallenge, setLoginChallenge] = useState<LoginChallenge | null>(null)
   const [challengeBusy, setChallengeBusy] = useState(false)
+  const [autoCaptchaFailed, setAutoCaptchaFailed] = useState(false)
 
   // --- NTOU TAT Heavy 重構合併新增之狀態 ---
   const [customCourses, setCustomCourses] = useState<Record<string, TimetableSlot[]>>(() => {
@@ -577,7 +579,12 @@ function App() {
       } catch (error) {
         if (!mounted) return
         if (error instanceof UnauthorizedError) {
-          await loadLoginChallenge(error.message)
+          if (error.message === 'CAPTCHA_FAILED') {
+            setAutoCaptchaFailed(true)
+            await loadLoginChallenge('驗證碼自動辨識連續失敗，請手動登入')
+          } else {
+            await loadLoginChallenge(error.message)
+          }
         } else {
           setAppError(messageFromError(error))
         }
@@ -612,18 +619,63 @@ function App() {
     }
   }, [activeCourse, moreView, isAddCalendarEventOpen, isAddCourseOpen, isAddGradeOpen])
 
-  const handleLogin = async (studentId: string, password: string, captchaCode?: string) => {
+  const handleLogin = async (studentId: string, password: string, providedCaptchaCode?: string, rememberMe?: boolean) => {
     setLoginBusy(true)
     setLoginError(null)
     try {
-      const nextSession = await api.login({
-        studentId,
-        password,
-        captchaCode,
-        challenge: loginChallenge ?? undefined,
-      })
-      await authStore.saveSession(nextSession)
-      setSession(nextSession)
+      const { recognizeCaptcha } = await import('./utils/ocr')
+      let maxRetries = providedCaptchaCode ? 1 : 3
+      let nextSession = null
+      let currentChallenge = loginChallenge
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          if (!currentChallenge && api.getLoginChallenge) {
+            currentChallenge = await api.getLoginChallenge()
+          }
+          
+          let solvedCaptchaCode = providedCaptchaCode
+          if (!solvedCaptchaCode && currentChallenge && (currentChallenge.captchaUrl || currentChallenge.captchaDataUrl)) {
+             solvedCaptchaCode = await recognizeCaptcha(currentChallenge.captchaDataUrl || currentChallenge.captchaUrl!)
+          }
+
+          nextSession = await api.login({
+            studentId,
+            password,
+            captchaCode: solvedCaptchaCode,
+            challenge: currentChallenge ?? undefined,
+          })
+          
+          setAutoCaptchaFailed(false)
+          break // Success
+        } catch (error: any) {
+          currentChallenge = null // Force new challenge on retry
+          const errorMessage = messageFromError(error)
+          
+          // Only retry if it's a captcha error, otherwise throw immediately
+          if (!errorMessage.includes('驗證碼') && !errorMessage.includes('captcha') && !errorMessage.includes('重複登入')) {
+            throw error
+          }
+          if (attempt === maxRetries - 1) {
+            if (!providedCaptchaCode) {
+              setAutoCaptchaFailed(true)
+            }
+            throw error
+          }
+        }
+      }
+
+      await authStore.saveSession(nextSession!)
+      
+      if (rememberMe) {
+        const { credentialsStore } = await import('./storage/credentialsStorage')
+        await credentialsStore.saveCredentials({ studentId, password })
+      } else {
+        const { credentialsStore } = await import('./storage/credentialsStorage')
+        await credentialsStore.clearCredentials()
+      }
+      
+      setSession(nextSession!)
       await loadAppData(undefined, true)
     } catch (error) {
       const message = messageFromError(error)
@@ -642,7 +694,12 @@ function App() {
       await loadAppData(selectedSemester, true)
     } catch (error) {
       if (error instanceof UnauthorizedError) {
-        await loadLoginChallenge(error.message)
+        if (error.message === 'CAPTCHA_FAILED') {
+          setAutoCaptchaFailed(true)
+          await loadLoginChallenge('驗證碼自動辨識連續失敗，請手動登入')
+        } else {
+          await loadLoginChallenge(error.message)
+        }
       } else {
         setAppError(messageFromError(error))
       }
@@ -658,7 +715,12 @@ function App() {
       await loadAppData(semesterId, true)
     } catch (error) {
       if (error instanceof UnauthorizedError) {
-        await loadLoginChallenge(error.message)
+        if (error.message === 'CAPTCHA_FAILED') {
+          setAutoCaptchaFailed(true)
+          await loadLoginChallenge('驗證碼自動辨識連續失敗，請手動登入')
+        } else {
+          await loadLoginChallenge(error.message)
+        }
       } else {
         setAppError(messageFromError(error))
       }
@@ -684,6 +746,8 @@ function App() {
   const logout = async () => {
     dataRequestRef.current += 1
     await authStore.clearSession()
+    const { credentialsStore } = await import('./storage/credentialsStorage')
+    await credentialsStore.clearCredentials()
     await clearPortalSession()
     await clearSemesterCache()
     semesterCacheRef.current.clear()
@@ -776,12 +840,12 @@ function App() {
     return (
       <LoginScreen
         busy={loginBusy}
-        challenge={loginChallenge}
         challengeBusy={challengeBusy}
         error={loginError || appError}
-        mode={apiMode}
+        challenge={loginChallenge}
+        autoCaptchaFailed={autoCaptchaFailed}
+        onRefreshChallenge={() => void loadLoginChallenge()}
         onLogin={handleLogin}
-        onReloadChallenge={loadLoginChallenge}
       />
     )
   }
@@ -2063,29 +2127,27 @@ function CourseSheet({
 
 type LoginScreenProps = {
   busy: boolean
-  challenge: LoginChallenge | null
   challengeBusy: boolean
   error: string | null
-  mode: string
-  onLogin: (studentId: string, password: string, captchaCode?: string) => Promise<void>
-  onReloadChallenge: () => Promise<void>
+  challenge: LoginChallenge | null
+  autoCaptchaFailed: boolean
+  onRefreshChallenge: () => void
+  onLogin: (studentId: string, password: string, providedCaptchaCode?: string, rememberMe?: boolean) => Promise<void>
 }
 
 function LoginScreen({
   busy,
-  challenge,
   challengeBusy,
   error,
-  mode,
+  challenge,
+  autoCaptchaFailed,
+  onRefreshChallenge,
   onLogin,
-  onReloadChallenge,
 }: LoginScreenProps) {
   const [studentId, setStudentId] = useState('')
   const [password, setPassword] = useState('')
   const [captchaCode, setCaptchaCode] = useState('')
-  const captchaRequired = mode === 'portal'
-
-  useEffect(() => setCaptchaCode(''), [challenge?.id])
+  const [rememberMe, setRememberMe] = useState(true)
 
   return (
     <div className="login-page">
@@ -2099,7 +2161,7 @@ function LoginScreen({
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            void onLogin(studentId, password, captchaCode)
+            void onLogin(studentId, password, autoCaptchaFailed ? captchaCode : undefined, rememberMe)
           }}
         >
           <label>
@@ -2119,40 +2181,50 @@ function LoginScreen({
               onChange={(event) => setPassword(event.target.value)}
             />
           </label>
-          {captchaRequired ? (
-            <label>
-              <span>驗證碼，區分大小寫</span>
+
+          {autoCaptchaFailed && challenge && (
+            <label className="captcha-label">
+              <span>驗證碼</span>
               <div className="captcha-row">
-                <div className="captcha-image">
-                  {challenge?.captchaDataUrl || challenge?.captchaUrl ? (
-                    <img src={challenge.captchaDataUrl || challenge.captchaUrl} alt="海大 AIS 驗證碼" />
-                  ) : (
-                    <span>讀取中</span>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  maxLength={4}
+                  autoComplete="off"
+                  value={captchaCode}
+                  onChange={(event) => setCaptchaCode(event.target.value.toUpperCase())}
+                />
                 <button
-                  className="captcha-refresh"
                   type="button"
-                  aria-label="重新取得驗證碼"
-                  disabled={challengeBusy}
-                  onClick={() => void onReloadChallenge()}
+                  className="refresh-captcha"
+                  disabled={challengeBusy || busy}
+                  onClick={onRefreshChallenge}
+                  title="重新產生驗證碼"
                 >
-                  <RefreshCw size={20} />
+                  {challengeBusy ? <Loader2 size={18} className="spin" /> : <RefreshCw size={18} />}
                 </button>
+                {challenge.captchaUrl || challenge.captchaDataUrl ? (
+                  <img src={challenge.captchaDataUrl || challenge.captchaUrl!} alt="Captcha" />
+                ) : (
+                  <div className="captcha-placeholder">無法載入</div>
+                )}
               </div>
-              <input
-                autoComplete="off"
-                maxLength={4}
-                value={captchaCode}
-                onChange={(event) => setCaptchaCode(event.target.value)}
-              />
+              <div className="captcha-hint">自動辨識失敗，請手動輸入圖中文字</div>
             </label>
-          ) : null}
+          )}
+
+          <label className="remember-me">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            <span>記住帳號密碼並自動登入</span>
+          </label>
           {error ? <div className="login-error"><AlertCircle size={18} /><span>{error}</span></div> : null}
           <button
             className="login-button"
             type="submit"
-            disabled={busy || challengeBusy || (captchaRequired && !challenge)}
+            disabled={busy || challengeBusy}
           >
             <KeyRound size={19} />
             {busy ? '登入中' : '登入'}
@@ -2160,7 +2232,7 @@ function LoginScreen({
         </form>
         <div className="privacy-note">
           <ShieldCheck size={17} />
-          AIS 直連，帳密不儲存，Cookie 於本機加密保存
+          {rememberMe ? '帳密與 Cookie 將加密儲存於本機安全區' : '帳密不儲存，Cookie 於本機加密保存'}
         </div>
       </section>
     </div>
