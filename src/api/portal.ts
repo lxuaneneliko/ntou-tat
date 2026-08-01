@@ -293,6 +293,15 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
         data: buildLoginBody(payload, challenge),
       })
       assertOk(response, '海大 AIS 登入請求失敗')
+      
+      if (response.data.includes('ConfirmInOrOut.aspx') || response.url.includes('ConfirmInOrOut')) {
+        await portalRequest({
+          url: new URL('LogOut.aspx', AIS_BASE_URL).toString(),
+          method: 'GET',
+          headers: { Accept: 'text/html,application/xhtml+xml', Referer: response.url },
+        })
+        throw new ApiError('偵測到重複登入，已自動為您登出其他視窗，請再次嘗試登入', 401, 'AIS_SESSION_CONFLICT_RESOLVED')
+      }
 
       const result = parseAisLoginResult(response.data)
       const authenticatedByCookie = hasAisAuthCookie(response.cookieNames)

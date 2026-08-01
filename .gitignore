@@ -56,3 +56,18 @@ android/app/src/main/res/xml/config.xml
 *.njsproj
 *.sln
 *.sw?
+
+# OCR test artifacts
+captchas/
+venv/
+labels.json
+captcha_test.py
+test_captcha.py
+find_captcha.py
+find_captcha2.py
+clean.py
+
+ais_login.html
+pageinit.js
+validate_code.html
+ocr_clean.ts

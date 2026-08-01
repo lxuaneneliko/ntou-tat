@@ -18,7 +18,9 @@
     "@capacitor/core": "^8.4.2",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/status-bar": "^8.0.3",
+    "capacitor-secure-storage-plugin": "^0.13.0",
     "lucide-react": "^1.26.0",
+    "onnxruntime-web": "^1.27.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
@@ -31,6 +33,7 @@
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
+    "vite-plugin-static-copy": "^4.1.1",
     "vitest": "^4.1.10"
   }
 }
