@@ -30,20 +30,27 @@ async function loadCharset(): Promise<string | string[]> {
   }
   return CHARSET
 }
+let modelLoadPromise: Promise<void> | null = null
 
 export async function loadOcrModel() {
-  if (session || isLoadingModel) {
-    return
-  }
-  isLoadingModel = true
-  try {
-    ort.env.wasm.numThreads = 1
-    session = await ort.InferenceSession.create(MODEL_URL)
-  } catch (e) {
-    console.error('Failed to load OCR model:', e)
-  } finally {
-    isLoadingModel = false
-  }
+  if (session) return
+  if (modelLoadPromise) return await modelLoadPromise
+
+  modelLoadPromise = (async () => {
+    isLoadingModel = true
+    try {
+      ort.env.wasm.numThreads = 1
+      session = await ort.InferenceSession.create(MODEL_URL)
+    } catch (e) {
+      console.error('Failed to load OCR model:', e)
+      throw e
+    } finally {
+      isLoadingModel = false
+      modelLoadPromise = null
+    }
+  })()
+
+  return await modelLoadPromise
 }
 
 /**
