@@ -635,8 +635,13 @@ function App() {
           }
           
           let solvedCaptchaCode = providedCaptchaCode
-          if (!solvedCaptchaCode && currentChallenge && (currentChallenge.captchaUrl || currentChallenge.captchaDataUrl)) {
-             solvedCaptchaCode = await recognizeCaptcha(currentChallenge.captchaDataUrl || currentChallenge.captchaUrl!)
+          if (!solvedCaptchaCode && currentChallenge && currentChallenge.captchaDataUrl) {
+             try {
+               solvedCaptchaCode = await recognizeCaptcha(currentChallenge!.captchaDataUrl!)
+             } catch (ocrError) {
+               setAutoCaptchaFailed(true)
+               throw ocrError
+             }
           }
 
           nextSession = await api.login({

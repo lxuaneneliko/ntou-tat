@@ -5,12 +5,13 @@ import { createHttpApiClient } from './http'
 import { createMockApiClient } from './mock'
 import { createPortalApiClient } from './portal'
 import { UnauthorizedError } from './errors'
-import { recognizeCaptcha } from '../utils/ocr'
 
 const configuredBaseUrl = import.meta.env.VITE_NTOU_API_BASE_URL?.trim()
 const configuredMode = import.meta.env.VITE_NTOU_AUTH_MODE?.trim()
 
 export const apiMode = configuredBaseUrl ? 'live' : configuredMode === 'mock' ? 'mock' : 'portal'
+
+let autoLoginPromise: Promise<boolean> | null = null
 
 // Wrap an API object to automatically perform login retry using secure credentials
 function withAutoLogin(api: NtouApi, onUnauthorized: () => void): NtouApi {
@@ -34,31 +35,42 @@ function withAutoLogin(api: NtouApi, onUnauthorized: () => void): NtouApi {
             throw error
           }
 
-          console.log('[AutoLogin] Unauthorized error detected, attempting auto-login...')
-          let loginSuccess = false
-          
-          for (let attempt = 0; attempt < 3; attempt++) {
-            try {
-              const challenge = await api.getLoginChallenge()
-              if (!challenge.captchaDataUrl) {
-                throw new Error('No captcha data url')
+          if (!autoLoginPromise) {
+            console.log('[AutoLogin] Unauthorized error detected, starting shared auto-login process...')
+            autoLoginPromise = (async () => {
+              let success = false
+              for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                  const challenge = await api.getLoginChallenge!()
+                  if (!challenge.captchaDataUrl) {
+                    throw new Error('No captcha data url')
+                  }
+                  const { recognizeCaptcha } = await import('../utils/ocr')
+                  const captchaCode = await recognizeCaptcha(challenge.captchaDataUrl)
+                  console.log(`[AutoLogin] OCR Result: ${captchaCode}`)
+                  
+                  const session = await api.login({
+                    studentId: credentials.studentId,
+                    password: credentials.password,
+                    captchaCode,
+                    challenge
+                  })
+                  await authStore.saveSession(session)
+                  success = true
+                  break
+                } catch (loginErr) {
+                  console.warn(`[AutoLogin] Attempt ${attempt + 1} failed:`, loginErr)
+                }
               }
-              const captchaCode = await recognizeCaptcha(challenge.captchaDataUrl)
-              console.log(`[AutoLogin] OCR Result: ${captchaCode}`)
-              
-              const session = await api.login({
-                studentId: credentials.studentId,
-                password: credentials.password,
-                captchaCode,
-                challenge
-              })
-              await authStore.saveSession(session)
-              loginSuccess = true
-              break
-            } catch (loginErr) {
-              console.warn(`[AutoLogin] Attempt ${attempt + 1} failed:`, loginErr)
-            }
+              return success
+            })().finally(() => {
+              autoLoginPromise = null
+            })
+          } else {
+            console.log('[AutoLogin] Auto-login already in progress, waiting for result...')
           }
+
+          const loginSuccess = await autoLoginPromise
 
           if (loginSuccess) {
             console.log('[AutoLogin] Success! Retrying original request.')

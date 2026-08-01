@@ -1,7 +1,6 @@
 import * as ort from 'onnxruntime-web'
 
 let session: ort.InferenceSession | null = null
-let isLoadingModel = false
 
 // Use the downloaded model from public directory
 const MODEL_URL = '/common_old.onnx'
@@ -37,7 +36,6 @@ export async function loadOcrModel() {
   if (modelLoadPromise) return await modelLoadPromise
 
   modelLoadPromise = (async () => {
-    isLoadingModel = true
     try {
       ort.env.wasm.numThreads = 1
       session = await ort.InferenceSession.create(MODEL_URL)
@@ -45,7 +43,6 @@ export async function loadOcrModel() {
       console.error('Failed to load OCR model:', e)
       throw e
     } finally {
-      isLoadingModel = false
       modelLoadPromise = null
     }
   })()
