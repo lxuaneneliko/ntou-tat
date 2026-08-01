@@ -1,6 +1,6 @@
 # 海大 TAT
 
-海大 TAT 是以 React、TypeScript、Vite 與 Capacitor 製作的非官方 Android
+海大 TAT 是以 React、TypeScript、Vite 與 Capacitor 製作的非官方 Android／iOS
 學生工具，將國立臺灣海洋大學 AIS 的課表、成績與校務資訊整理成行動版介面。
 
 > 本專案不是海大官方 App，也未受海大委託或背書。AIS 網頁結構或登入流程變更時，
@@ -10,7 +10,7 @@
 
 [直接下載最新版海大 TAT APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/app-release.apk)
 
-目前提供 Android Debug APK。首次安裝時，Android 可能會要求允許瀏覽器或檔案管理器
+目前 Release 提供 Android Debug APK。首次安裝時，Android 可能會要求允許瀏覽器或檔案管理器
 安裝未知來源 App。
 
 ## 功能
@@ -26,8 +26,8 @@
 ## 隱私
 
 - 帳號、密碼與驗證碼只送往 `https://ais.ntou.edu.tw`。
-- App 不保存密碼，也沒有自建資料後端、分析 SDK 或廣告追蹤。
-- AIS Cookie 與課表／成績快取使用 Android App 私有儲存空間。
+- App 可在使用者選擇「記住我」時，將登入資料存放於 Android Keystore 或 iOS Keychain；沒有自建資料後端、分析 SDK 或廣告追蹤。
+- AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間或 iOS Keychain。
 - 頭像和自訂資料只保存在使用者裝置。
 - Git 歷史不包含真實帳號、Cookie、Token、手機截圖、APK 或簽章金鑰。
 - GitHub Release 只提供經過隱私掃描的 APK 安裝檔。
@@ -41,6 +41,7 @@
 - Node.js 20+
 - Java 21
 - Android SDK
+- macOS、Xcode 26+（只在建置或安裝 iOS App 時需要）
 
 ```powershell
 npm install
@@ -54,6 +55,15 @@ Debug APK 會輸出到：
 ```text
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
+
+產生及同步 iOS 專案：
+
+```powershell
+npm run ios:sync
+```
+
+接著在 macOS 使用 Xcode 開啟 `ios/App/App.xcodeproj`，設定 Apple Team 與簽章後，
+即可安裝至 iPhone 或封存送往 TestFlight。iOS 15 以上版本受支援。
 
 ## Mock 模式
 
