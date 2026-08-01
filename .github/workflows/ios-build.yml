@@ -38,10 +38,10 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -70,9 +70,35 @@ jobs:
       - name: Package simulator app
         run: ditto -c -k --sequesterRsrc --keepParent DerivedData/Build/Products/Debug-iphonesimulator/App.app ntou-tat-ios-simulator.zip
 
+      - name: Build unsigned iPhone app
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath DerivedDataDevice \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir Payload
+          cp -R DerivedDataDevice/Build/Products/Debug-iphoneos/App.app Payload/App.app
+          zip -qry ntou-tat-ios-unsigned.ipa Payload
+
       - name: Upload simulator app
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ntou-tat-ios-simulator
           path: ntou-tat-ios-simulator.zip
+          if-no-files-found: error
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v6
+        with:
+          name: ntou-tat-ios-unsigned
+          path: ntou-tat-ios-unsigned.ipa
           if-no-files-found: error

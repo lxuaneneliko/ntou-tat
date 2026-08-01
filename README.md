@@ -65,6 +65,9 @@ npm run ios:sync
 接著在 macOS 使用 Xcode 開啟 `ios/App/App.xcodeproj`，設定 Apple Team 與簽章後，
 即可安裝至 iPhone 或封存送往 TestFlight。iOS 15 以上版本受支援。
 
+GitHub Actions 的 `iOS Build` 會另外產生 Simulator App 與未簽章 IPA。未簽章 IPA
+必須先用自己的 Apple 帳號或開發者憑證重新簽章，不能直接安裝到一般 iPhone。
+
 ## Mock 模式
 
 瀏覽器開發時可用 mock 資料，不必登入 AIS：
