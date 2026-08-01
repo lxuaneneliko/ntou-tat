@@ -11,9 +11,9 @@ Cookie 讀取使用者要求的校務資料。
 
 ## 本機保存
 
-- 密碼與驗證碼不會保存。
-- AIS Session Cookie 使用 Android Keystore 保護後，保存於 App 私有空間。
-- 課表、成績與學分快取使用 App 私有的加密儲存。
+- 驗證碼不會保存；只有使用者選擇「記住我」時，登入資料才會存入 Android Keystore 或 iOS Keychain。
+- AIS Session Cookie 使用 Android Keystore 或 iOS Keychain 保護。
+- 課表、成績與學分快取使用 Android App 私有加密儲存空間或 iOS Keychain。
 - 自訂課程、模擬成績、鬧鐘與使用者選擇的頭像只保存在 App 本機儲存空間。
 - 登出會清除 AIS Session；清除 App 資料或解除安裝會移除所有本機資料。
 
