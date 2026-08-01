@@ -6,16 +6,19 @@
 > 本專案不是海大官方 App，也未受海大委託或背書。AIS 網頁結構或登入流程變更時，
 > 部分功能可能暫時失效。
 
-## 下載 APK
+## 下載 App
 
-[直接下載最新版海大 TAT APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/app-release.apk)
+| 平台 | 下載 | 安裝說明 |
+| --- | --- | --- |
+| Android | [下載最新版 APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/app-release.apk) | 允許瀏覽器或檔案管理器安裝未知來源 App |
+| iPhone／iPad | [下載最新版未簽章 IPA](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/ntou-tat-ios-unsigned.ipa) | 需先使用自己的 Apple 帳號或開發者憑證簽章 |
 
-目前 Release 提供 Android Debug APK。首次安裝時，Android 可能會要求允許瀏覽器或檔案管理器
-安裝未知來源 App。
+Android APK 可以直接安裝。基於 Apple 的安全限制，未簽章 IPA 不能直接安裝到一般
+iPhone；請在 macOS 使用 Xcode 設定 Apple Team 後安裝，或先用自己的憑證重新簽章。
 
 ## 功能
 
-- 海大 AIS 驗證碼登入與本機 Session 保存
+- 海大 AIS 自動辨識驗證碼登入與本機 Session 保存
 - 學期課表格狀／條列顯示
 - 分學期成績、4.0 GPA 與學分統計
 - 海大官方行事曆、月份滑動切換與本機個人事件
@@ -30,7 +33,7 @@
 - AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間或 iOS Keychain。
 - 頭像和自訂資料只保存在使用者裝置。
 - Git 歷史不包含真實帳號、Cookie、Token、手機截圖、APK 或簽章金鑰。
-- GitHub Release 只提供經過隱私掃描的 APK 安裝檔。
+- GitHub Release 只提供經過隱私掃描的 APK 與未簽章 IPA。
 
 完整說明請見 [PRIVACY.md](PRIVACY.md)。
 
