@@ -3,7 +3,7 @@ import * as ort from 'onnxruntime-web'
 let session: ort.InferenceSession | null = null
 
 // Use the downloaded model from public directory
-const MODEL_URL = '/common_old.onnx'
+const MODEL_URL = `${import.meta.env.BASE_URL}common_old.onnx`
 
 // Load charset
 let CHARSET: string | string[] | null = null
@@ -11,7 +11,7 @@ let CHARSET: string | string[] | null = null
 async function loadCharset(): Promise<string | string[]> {
   if (CHARSET) return CHARSET
   try {
-    const res = await fetch('/common_old_charset.json')
+    const res = await fetch(`${import.meta.env.BASE_URL}common_old_charset.json`)
     const json = await res.json()
     if (Array.isArray(json)) {
       CHARSET = json

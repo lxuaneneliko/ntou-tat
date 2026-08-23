@@ -9,9 +9,6 @@ const config: CapacitorConfig = {
   android: {
     backgroundColor: '#f7f9f8',
   },
-  ios: {
-    backgroundColor: '#f7f9f8',
-  },
   plugins: {
     CapacitorHttp: {
       enabled: true,

@@ -1,5 +1,31 @@
 import type { Semester } from './types'
 
+export const currentSemesters = (now = new Date()): Semester[] => {
+  const rocYear = now.getFullYear() - 1911
+  const month = now.getMonth()
+  const currentYear = month >= 5 ? rocYear : rocYear - 1
+  const currentSemester = month >= 5 || month === 0 ? 1 : 2
+  const semesters: Semester[] = []
+  let year = currentYear
+  let semester = currentSemester
+
+  for (let index = 0; index < 4; index += 1) {
+    semesters.push({
+      id: `${year}-${semester}`,
+      title: `${year}-${semester}`,
+      current: index === 0,
+    })
+    if (semester === 1) {
+      semester = 2
+      year -= 1
+    } else {
+      semester = 1
+    }
+  }
+
+  return semesters
+}
+
 export const admissionYearFromStudentId = (studentId: string) => {
   const normalized = studentId.trim()
   if (!/^\d{8}$/.test(normalized)) return null

@@ -6,15 +6,19 @@
 國立臺灣海洋大學 AIS 網站 `https://ais.ntou.edu.tw`，並使用 AIS 回傳的 Session
 Cookie 讀取使用者要求的校務資料。
 
+PWA 版本不提供 AIS 登入，不會要求、接收或保存 AIS 帳號與密碼。這是因為 AIS 未開放
+跨網域存取，瀏覽器無法安全重現 Android 原生 App 的 Cookie Session 流程。
+
 校園連結或交通功能可能開啟第三方網站；除非使用者主動操作該網站，App 不會把 AIS
 帳號、Cookie、課表或成績傳送給第三方。
 
 ## 本機保存
 
-- 驗證碼不會保存；只有使用者選擇「記住我」時，登入資料才會存入 Android Keystore 或 iOS Keychain。
-- AIS Session Cookie 使用 Android Keystore 或 iOS Keychain 保護。
-- 課表、成績與學分快取使用 Android App 私有加密儲存空間或 iOS Keychain。
+- 驗證碼不會保存；只有 Android 使用者選擇「記住我」時，登入資料才會存入 Android Keystore。
+- AIS Session Cookie 使用 Android Keystore 保護。
+- 課表、成績與學分快取使用 Android App 私有加密儲存空間。
 - 自訂課程、模擬成績、鬧鐘與使用者選擇的頭像只保存在 App 本機儲存空間。
+- PWA 自訂資料只保存在目前瀏覽器的本機儲存空間；清除網站資料會一併移除。
 - 登出會清除 AIS Session；清除 App 資料或解除安裝會移除所有本機資料。
 
 ## 不收集的資料
