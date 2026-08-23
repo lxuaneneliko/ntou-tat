@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { admissionYearFromStudentId, semestersForStudent } from './semester'
+import { admissionYearFromStudentId, currentSemesters, semestersForStudent } from './semester'
 
 const semesters = ['115-1', '114-2', '114-1', '113-2'].map((id, index) => ({
   id,
@@ -8,6 +8,15 @@ const semesters = ['115-1', '114-2', '114-1', '113-2'].map((id, index) => ({
 }))
 
 describe('student semester range', () => {
+  it('builds the current semester list for the PWA local mode', () => {
+    expect(currentSemesters(new Date(2026, 7, 23)).map(({ id }) => id)).toEqual([
+      '115-1',
+      '114-2',
+      '114-1',
+      '113-2',
+    ])
+  })
+
   it('reads a 114 admission year from an NTOU student id', () => {
     expect(admissionYearFromStudentId('01400000')).toBe(114)
   })

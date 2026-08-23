@@ -4,12 +4,19 @@ import type { NtouApi } from './contract'
 import { createHttpApiClient } from './http'
 import { createMockApiClient } from './mock'
 import { createPortalApiClient } from './portal'
+import { createPwaApiClient } from './pwa'
 import { UnauthorizedError } from './errors'
 
 const configuredBaseUrl = import.meta.env.VITE_NTOU_API_BASE_URL?.trim()
 const configuredMode = import.meta.env.VITE_NTOU_AUTH_MODE?.trim()
 
-export const apiMode = configuredBaseUrl ? 'live' : configuredMode === 'mock' ? 'mock' : 'portal'
+export const apiMode = configuredBaseUrl
+  ? 'live'
+  : configuredMode === 'mock'
+    ? 'mock'
+    : import.meta.env.MODE === 'pwa'
+      ? 'pwa'
+      : 'portal'
 
 let autoLoginPromise: Promise<boolean> | null = null
 
@@ -100,6 +107,8 @@ export const createNtouApi = (onUnauthorized: () => void): NtouApi => {
     baseApi = createHttpApiClient(configuredBaseUrl, authStore, onUnauthorized)
   } else if (apiMode === 'mock') {
     baseApi = createMockApiClient()
+  } else if (apiMode === 'pwa') {
+    baseApi = createPwaApiClient()
   } else {
     baseApi = createPortalApiClient(authStore)
   }

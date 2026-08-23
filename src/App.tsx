@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { App as CapApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import {
   AlertCircle,
   Bell,
@@ -568,6 +569,15 @@ function App() {
     let mounted = true
     const boot = async () => {
       try {
+        if (apiMode === 'pwa') {
+          const pwaSession = await api.login({ studentId: 'pwa-local', password: '' })
+          await authStore.saveSession(pwaSession)
+          if (!mounted) return
+          setSession(pwaSession)
+          await loadAppData()
+          return
+        }
+
         const savedSession = await authStore.getSession()
         if (!mounted) return
         setSession(savedSession)
@@ -596,9 +606,11 @@ function App() {
     return () => {
       mounted = false
     }
-  }, [loadAppData, loadLoginChallenge])
+  }, [api, loadAppData, loadLoginChallenge])
 
   useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+
     const handleBackButton = CapApp.addListener('backButton', () => {
       if (isAddCalendarEventOpen) {
         setIsAddCalendarEventOpen(false)
@@ -1384,8 +1396,12 @@ function TimetableScreen({
       {!slots.length ? (
         <div className="inline-empty timetable-empty">
           <Clock3 size={24} />
-          <strong>尚未取得 AIS 課表</strong>
-          <span>這個學期沒有課程，或 AIS 暫時沒有回傳選課課表</span>
+          <strong>{apiMode === 'pwa' ? '尚未新增課程' : '尚未取得 AIS 課表'}</strong>
+          <span>
+            {apiMode === 'pwa'
+              ? '可從右上方選單新增本機課程'
+              : '這個學期沒有課程，或 AIS 暫時沒有回傳選課課表'}
+          </span>
         </div>
       ) : null}
     </section>
@@ -1687,7 +1703,7 @@ function GradesScreen({
       ) : (
         <div className="inline-empty" style={{ background: '#111419', borderRadius: '8px' }}>
           <GraduationCap size={26} />
-          <strong>尚未取得 AIS 成績</strong>
+          <strong>{apiMode === 'pwa' ? '尚未新增成績' : '尚未取得 AIS 成績'}</strong>
           <span>請按右上角重新整理；模擬成績已移到三點選單</span>
         </div>
       )}
@@ -1776,11 +1792,13 @@ function MoreScreen({
           )
         })}
       </div>
-      <button className="direct-logout" type="button" onClick={() => void onLogout()}>
-        <LogOut size={22} />
-        <span>登出海大 AIS</span>
-        <ChevronRight size={19} />
-      </button>
+      {apiMode !== 'pwa' ? (
+        <button className="direct-logout" type="button" onClick={() => void onLogout()}>
+          <LogOut size={22} />
+          <span>登出海大 AIS</span>
+          <ChevronRight size={19} />
+        </button>
+      ) : null}
     </section>
   )
 }
@@ -1815,16 +1833,25 @@ function MoreSubview({
       <section className="subview">
         <div className="settings-row">
           <span>資料來源</span>
-          <strong>{apiMode === 'portal' ? '海大 AIS 直連' : apiMode}</strong>
+          <strong>{apiMode === 'portal' ? '海大 AIS 直連' : apiMode === 'pwa' ? 'PWA 本機模式' : apiMode}</strong>
         </div>
-        <div className="settings-row">
-          <span>Cookie</span>
-          <strong>僅存在本機</strong>
-        </div>
-        <button className="logout-button" type="button" onClick={() => void onLogout()}>
-          <LogOut size={19} />
-          登出
-        </button>
+        {apiMode === 'pwa' ? (
+          <div className="settings-row">
+            <span>AIS 個人資料</span>
+            <strong>需使用 Android App</strong>
+          </div>
+        ) : (
+          <>
+            <div className="settings-row">
+              <span>Cookie</span>
+              <strong>僅存在本機</strong>
+            </div>
+            <button className="logout-button" type="button" onClick={() => void onLogout()}>
+              <LogOut size={19} />
+              登出
+            </button>
+          </>
+        )}
       </section>
     )
   }
@@ -2159,7 +2186,7 @@ function LoginScreen({
       <section className="login-panel">
         <div className="login-brand">
           <div className="brand-icon">
-            <img src="/app-icon.jpg" alt="" />
+            <img src={`${import.meta.env.BASE_URL}ntou-emblem.png`} alt="海大校徽" />
           </div>
           <div><h1>海大 TAT</h1><p>National Taiwan Ocean University</p></div>
         </div>

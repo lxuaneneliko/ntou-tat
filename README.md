@@ -1,6 +1,6 @@
 # 海大 TAT
 
-海大 TAT 是以 React、TypeScript、Vite 與 Capacitor 製作的非官方 Android／iOS
+海大 TAT 是以 React、TypeScript、Vite 與 Capacitor 製作的非官方 Android／PWA
 學生工具，將國立臺灣海洋大學 AIS 的課表、成績與校務資訊整理成行動版介面。
 
 > 本專案不是海大官方 App，也未受海大委託或背書。AIS 網頁結構或登入流程變更時，
@@ -8,13 +8,17 @@
 
 ## 下載 App
 
-| 平台 | 下載 | 安裝說明 |
+| 平台 | 開啟或下載 | 說明 |
 | --- | --- | --- |
-| Android | [下載最新版 APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/app-release.apk) | 允許瀏覽器或檔案管理器安裝未知來源 App |
-| iPhone／iPad | [下載最新版未簽章 IPA](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/ntou-tat-ios-unsigned.ipa) | 需先使用自己的 Apple 帳號或開發者憑證簽章 |
+| Android | [下載最新版 APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/app-release.apk) | 具備 AIS 登入、課表與成績功能 |
+| iPhone／iPad／電腦 | [開啟海大 TAT PWA](https://lxuaneneliko.github.io/ntou-tat/) | 可加入主畫面，提供官方行事曆、本機工具與校園連結 |
 
-Android APK 可以直接安裝。基於 Apple 的安全限制，未簽章 IPA 不能直接安裝到一般
-iPhone；請在 macOS 使用 Xcode 設定 Apple Team 後安裝，或先用自己的憑證重新簽章。
+APK 使用 debug key 簽章，可直接安裝；Android 如顯示未知來源提示，請允許瀏覽器或
+檔案管理器安裝此 App。
+
+海大 AIS 未開放跨網域請求，瀏覽器也不能讀取其 `HttpOnly` Session Cookie，因此 PWA
+不會要求或儲存 AIS 帳密，也無法讀取個人課表與成績。需要 AIS 個人資料時請使用
+Android APK。PWA 的海大官方行事曆會由 GitHub Actions 每日重新取得並部署。
 
 ## 功能
 
@@ -25,15 +29,17 @@ iPhone；請在 macOS 使用 Xcode 設定 Apple Team 後安裝，或先用自己
 - 海大校務系統功能樹與 App 內頁面
 - 校務公告、校園連結、交通與緊急聯絡
 - 本機自訂課程、模擬成績、鬧鐘與個人頭像
+- 可安裝、可離線開啟的 PWA
 
 ## 隱私
 
 - 帳號、密碼與驗證碼只送往 `https://ais.ntou.edu.tw`。
-- App 可在使用者選擇「記住我」時，將登入資料存放於 Android Keystore 或 iOS Keychain；沒有自建資料後端、分析 SDK 或廣告追蹤。
-- AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間或 iOS Keychain。
+- App 可在使用者選擇「記住我」時，將登入資料存放於 Android Keystore；沒有自建資料後端、分析 SDK 或廣告追蹤。
+- AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間。
+- PWA 不接收 AIS 帳密；自訂內容只保存在該瀏覽器的本機儲存空間。
 - 頭像和自訂資料只保存在使用者裝置。
 - Git 歷史不包含真實帳號、Cookie、Token、手機截圖、APK 或簽章金鑰。
-- GitHub Release 只提供經過隱私掃描的 APK 與未簽章 IPA。
+- GitHub Release 只提供經過隱私掃描的 Android APK。
 
 完整說明請見 [PRIVACY.md](PRIVACY.md)。
 
@@ -44,13 +50,13 @@ iPhone；請在 macOS 使用 Xcode 設定 Apple Team 後安裝，或先用自己
 - Node.js 20+
 - Java 21
 - Android SDK
-- macOS、Xcode 26+（只在建置或安裝 iOS App 時需要）
 
 ```powershell
 npm install
 npm test
 npm run lint
 npm run android:debug
+npm run build:pwa
 ```
 
 Debug APK 會輸出到：
@@ -59,17 +65,10 @@ Debug APK 會輸出到：
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-產生及同步 iOS 專案：
+PWA 會輸出到 `dist/`，正式站由 `.github/workflows/pages.yml` 部署至 GitHub Pages。
 
-```powershell
-npm run ios:sync
-```
-
-接著在 macOS 使用 Xcode 開啟 `ios/App/App.xcodeproj`，設定 Apple Team 與簽章後，
-即可安裝至 iPhone 或封存送往 TestFlight。iOS 15 以上版本受支援。
-
-GitHub Actions 的 `iOS Build` 會另外產生 Simulator App 與未簽章 IPA。未簽章 IPA
-必須先用自己的 Apple 帳號或開發者憑證重新簽章，不能直接安裝到一般 iPhone。
+App 與 PWA 圖示使用[海大官方校徽](https://www.ntou.edu.tw/motto)，來源檔取自海大
+AIS 官方網站；本專案仍為非官方學生工具。
 
 ## Mock 模式
 

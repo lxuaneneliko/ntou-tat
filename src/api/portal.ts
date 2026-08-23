@@ -44,6 +44,7 @@ import {
   resolvePortalMenuUrl,
 } from './portalMenu'
 import { buildAisCourseQueryBody, parseAisPersonalTimetable } from './timetableParser'
+import { currentSemesters } from '../semester'
 
 const AIS_BASE_URL = 'https://ais.ntou.edu.tw/'
 const MAINFRAME_URL = new URL('mainframe.aspx', AIS_BASE_URL).toString()
@@ -66,45 +67,6 @@ const buildLoginBody = (payload: LoginPayload, challenge: LoginChallenge) => {
   return body.toString()
 }
 
-
-const portalSemesters = (now = new Date()): Semester[] => {
-  const rocYear = now.getFullYear() - 1911
-  const month = now.getMonth()
-  let currentYear: number
-  let currentSemesterNum: number
-
-  if (month >= 5) {
-    currentYear = rocYear
-    currentSemesterNum = 1
-  } else if (month === 0) {
-    currentYear = rocYear - 1
-    currentSemesterNum = 1
-  } else {
-    currentYear = rocYear - 1
-    currentSemesterNum = 2
-  }
-
-  const semesters: Semester[] = []
-  let y = currentYear
-  let s = currentSemesterNum
-
-  for (let i = 0; i < 4; i++) {
-    semesters.push({
-      id: `${y}-${s}`,
-      title: `${y}-${s}`,
-      current: i === 0,
-    })
-
-    if (s === 1) {
-      s = 2
-      y = y - 1
-    } else {
-      s = 1
-    }
-  }
-
-  return semesters
-}
 
 export const createPortalApiClient = (store: AuthStore): NtouApi => {
   let latestChallenge: LoginChallenge | null = null
@@ -369,7 +331,7 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
     },
 
     async getSemesters(): Promise<Semester[]> {
-      return portalSemesters()
+      return currentSemesters()
     },
 
     async getTimetable(semesterId): Promise<TimetableResponse> {
