@@ -45,11 +45,13 @@ import {
 } from './portalMenu'
 import { buildAisCourseQueryBody, parseAisPersonalTimetable } from './timetableParser'
 import { currentSemesters } from '../semester'
+import { parseNtouAnnouncements } from './announcementParser'
 
 const AIS_BASE_URL = 'https://ais.ntou.edu.tw/'
 const MAINFRAME_URL = new URL('mainframe.aspx', AIS_BASE_URL).toString()
 const MENU_URL = new URL('MenuTree.aspx', AIS_BASE_URL).toString()
 const PUBLIC_CALENDAR_URL = 'https://www.ntou.edu.tw/calendar'
+const PUBLIC_HOME_URL = 'https://www.ntou.edu.tw/'
 
 const formHeaders = {
   'Content-Type': 'application/x-www-form-urlencoded',
@@ -458,7 +460,17 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
     },
 
     async getAnnouncements(): Promise<Announcement[]> {
-      return []
+      const response = await portalRequest({
+        url: PUBLIC_HOME_URL,
+        method: 'GET',
+        headers: { Accept: 'text/html,application/xhtml+xml' },
+      })
+      assertOk(response, '無法取得海大校務公告')
+      const announcements = parseNtouAnnouncements(response.data)
+      if (!announcements.length) {
+        throw new ApiError('海大首頁目前沒有回傳校務公告', 502, 'NTOU_ANNOUNCEMENTS_EMPTY')
+      }
+      return announcements
     },
 
     async getCalendar(from, to): Promise<CalendarEvent[]> {

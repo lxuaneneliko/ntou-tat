@@ -155,7 +155,7 @@ export type EmergencyContact = {
   subtitle: string
 }
 
-export type TabKey = 'timetable' | 'calendar' | 'grades' | 'clock' | 'more'
+export type TabKey = 'timetable' | 'calendar' | 'grades' | 'mail' | 'more'
 
 export type MoreView =
   | 'portal'

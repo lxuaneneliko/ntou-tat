@@ -34,6 +34,7 @@ type NativePortalPlugin = {
   cacheSet(options: { key: string; value: string }): Promise<void>
   cacheClear(): Promise<void>
   openSystemPage(options: { url: string }): Promise<void>
+  openMailPage(): Promise<void>
 }
 
 const NativePortal = registerPlugin<NativePortalPlugin>('NtouPortal')
@@ -137,6 +138,13 @@ const cookieHeaderFromSetCookie = (headers: HttpHeaders) => {
 export const getPortalCookieHeader = async (responseHeaders?: HttpHeaders) => {
   const cookiesFromHeaders = responseHeaders ? cookieHeaderFromSetCookie(responseHeaders) : ''
   return isNative() ? '' : cookiesFromHeaders
+}
+
+export const launchNtouMail = async () => {
+  if (isNative()) {
+    return NativePortal.openMailPage()
+  }
+  window.open('https://mail.ntou.edu.tw/cgi-bin/login?index=1', '_blank', 'noopener,noreferrer')
 }
 
 export const portalImageDataUrl = async (url: string, referer: string, cookieHeader?: string) => {

@@ -40,7 +40,6 @@ function withAutoLogin(api: NtouApi, onUnauthorized: () => void): NtouApi {
           }
 
           if (!autoLoginPromise) {
-            console.log('[AutoLogin] Unauthorized error detected, starting shared auto-login process...')
             autoLoginPromise = (async () => {
               let success = false
               for (let attempt = 0; attempt < 3; attempt++) {
@@ -51,8 +50,6 @@ function withAutoLogin(api: NtouApi, onUnauthorized: () => void): NtouApi {
                   }
                   const { recognizeCaptcha } = await import('../utils/ocr')
                   const captchaCode = await recognizeCaptcha(challenge.captchaDataUrl)
-                  console.log(`[AutoLogin] OCR Result: ${captchaCode}`)
-                  
                   const session = await api.login({
                     studentId: credentials.studentId,
                     password: credentials.password,
@@ -62,25 +59,19 @@ function withAutoLogin(api: NtouApi, onUnauthorized: () => void): NtouApi {
                   await authStore.saveSession(session)
                   success = true
                   break
-                } catch (loginErr) {
-                  console.warn(`[AutoLogin] Attempt ${attempt + 1} failed:`, loginErr)
-                }
+                } catch {}
               }
               return success
             })().finally(() => {
               autoLoginPromise = null
             })
-          } else {
-            console.log('[AutoLogin] Auto-login already in progress, waiting for result...')
           }
 
           const loginSuccess = await autoLoginPromise
 
           if (loginSuccess) {
-            console.log('[AutoLogin] Success! Retrying original request.')
             return await originalMethod.apply(api, args)
           } else {
-            console.warn('[AutoLogin] Failed after max attempts.')
             onUnauthorized()
             throw new UnauthorizedError('CAPTCHA_FAILED')
           }
