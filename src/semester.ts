@@ -1,5 +1,8 @@
 import type { Semester } from './types'
 
+const SEMESTER_HISTORY_COUNT = 12
+const PRIOR_DEGREE_YEARS = 4
+
 export const currentSemesters = (now = new Date()): Semester[] => {
   const rocYear = now.getFullYear() - 1911
   const month = now.getMonth()
@@ -9,7 +12,7 @@ export const currentSemesters = (now = new Date()): Semester[] => {
   let year = currentYear
   let semester = currentSemester
 
-  for (let index = 0; index < 4; index += 1) {
+  for (let index = 0; index < SEMESTER_HISTORY_COUNT; index += 1) {
     semesters.push({
       id: `${year}-${semester}`,
       title: `${year}-${semester}`,
@@ -37,13 +40,24 @@ export const admissionYearFromStudentId = (studentId: string) => {
   return null
 }
 
+export const isGraduateStudentId = (studentId: string) => {
+  const normalized = studentId.trim()
+  if (!/^\d{8}$/.test(normalized)) return false
+  const prefix = Number(normalized.slice(0, 3))
+  return prefix >= 90 && prefix <= 199
+}
+
 export const semestersForStudent = (semesters: Semester[], studentId: string) => {
   const admissionYear = admissionYearFromStudentId(studentId)
   if (admissionYear === null) return semesters
 
+  const firstVisibleYear = isGraduateStudentId(studentId)
+    ? admissionYear - PRIOR_DEGREE_YEARS
+    : admissionYear
+
   const available = semesters.filter((semester) => {
     const academicYear = Number(semester.id.split('-')[0])
-    return Number.isFinite(academicYear) && academicYear >= admissionYear
+    return Number.isFinite(academicYear) && academicYear >= firstVisibleYear
   })
   return available.length ? available : semesters
 }
