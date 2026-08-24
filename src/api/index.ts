@@ -4,7 +4,6 @@ import type { NtouApi } from './contract'
 import { createHttpApiClient } from './http'
 import { createMockApiClient } from './mock'
 import { createPortalApiClient } from './portal'
-import { createPwaApiClient } from './pwa'
 import { UnauthorizedError } from './errors'
 
 const configuredBaseUrl = import.meta.env.VITE_NTOU_API_BASE_URL?.trim()
@@ -108,12 +107,13 @@ export const createNtouApi = (onUnauthorized: () => void): NtouApi => {
   } else if (apiMode === 'mock') {
     baseApi = createMockApiClient()
   } else if (apiMode === 'pwa') {
-    baseApi = createPwaApiClient()
+    baseApi = createPortalApiClient(authStore)
   } else {
     baseApi = createPortalApiClient(authStore)
   }
 
-  // Only apply auto-login wrapper if it's the portal mode, as mock doesn't need it
+  // Native builds can keep encrypted credentials for CAPTCHA reauthentication.
+  // The PWA deliberately keeps only the server-side AIS session cookie and never stores passwords.
   if (apiMode === 'portal') {
     return withAutoLogin(baseApi, onUnauthorized)
   }

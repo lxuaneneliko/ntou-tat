@@ -25,7 +25,8 @@
     "lucide-react": "^1.26.0",
     "onnxruntime-web": "^1.27.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "tough-cookie": "^6.0.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.2",

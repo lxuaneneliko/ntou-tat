@@ -11,18 +11,19 @@
 | 平台 | 開啟或下載 | 說明 |
 | --- | --- | --- |
 | Android | [下載最新版 APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/NTOUTAT.apk) | 具備 AIS 登入、課表與成績功能 |
-| iPhone／iPad／電腦 | [開啟海大 TAT PWA](https://lxuaneneliko.github.io/ntou-tat/) | 可加入主畫面，提供官方行事曆、本機工具與校園連結 |
+| iPhone／iPad／電腦 | [開啟海大 TAT PWA](https://ntou-tat-app.vercel.app/) | 可登入 AIS、讀取課表與成績，並可加入主畫面 |
 
 APK 使用 debug key 簽章，可直接安裝；Android 如顯示未知來源提示，請允許瀏覽器或
 檔案管理器安裝此 App。
 
-海大 AIS 未開放跨網域請求，瀏覽器也不能讀取其 `HttpOnly` Session Cookie，因此 PWA
-不會要求或儲存 AIS 帳密，也無法讀取個人課表與成績。需要 AIS 個人資料時請使用
-Android APK。PWA 的海大官方行事曆會由 GitHub Actions 每日重新取得並部署。
+海大 AIS 未開放跨網域請求，瀏覽器也不能直接讀取其 `HttpOnly` Session Cookie。完整
+PWA 因此部署在具備同網域 Serverless Function 的 Vercel：瀏覽器把登入請求送至
+`/api/portal`，函式只轉送至允許的海大網域，並將 AIS Cookie 加密後放進最長 8 小時的
+`HttpOnly` Cookie。PWA 不把密碼寫入本機儲存空間或資料庫。
 
 ## 功能
 
-- 海大 AIS 自動辨識驗證碼登入與本機 Session 保存
+- 海大 AIS 自動辨識驗證碼登入與 Session 保存
 - 學期課表格狀／條列顯示
 - 分學期成績、4.0 GPA 與學分統計
 - 海大官方行事曆、月份滑動切換與本機個人事件
@@ -33,10 +34,12 @@ Android APK。PWA 的海大官方行事曆會由 GitHub Actions 每日重新取�
 
 ## 隱私
 
-- 帳號、密碼與驗證碼只送往 `https://ais.ntou.edu.tw`。
-- App 可在使用者選擇「記住我」時，將登入資料存放於 Android Keystore；沒有自建資料後端、分析 SDK 或廣告追蹤。
+- Android App 將帳號、密碼與驗證碼直接送往 `https://ais.ntou.edu.tw`。
+- PWA 的登入請求會經過同網域 Vercel Function 轉送至 AIS；函式不記錄或保存帳密。
+- App 可在使用者選擇「記住我」時，將登入資料存放於 Android Keystore；沒有分析 SDK 或廣告追蹤。
 - AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間。
-- PWA 不接收 AIS 帳密；自訂內容只保存在該瀏覽器的本機儲存空間。
+- PWA 不保存 AIS 密碼；AIS Session 以加密、`HttpOnly`、`Secure` Cookie 保存最多 8 小時。
+- PWA 課表、成績與自訂內容只保存在該瀏覽器的本機儲存空間。
 - 頭像和自訂資料只保存在使用者裝置。
 - Git 歷史不包含真實帳號、Cookie、Token、手機截圖、APK 或簽章金鑰。
 - GitHub Release 只提供經過隱私掃描的 Android APK。
@@ -65,7 +68,8 @@ Debug APK 會輸出到：
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-PWA 會輸出到 `dist/`，正式站由 `.github/workflows/pages.yml` 部署至 GitHub Pages。
+PWA 會輸出到 `dist/`，正式站使用 `vercel.json` 部署至 Vercel。GitHub Pages 僅保留舊網址
+轉址，不承載 AIS 登入後端。正式環境必須設定至少 32 字元的 `PORTAL_SESSION_SECRET`。
 
 App 與 PWA 圖示使用[海大官方校徽](https://www.ntou.edu.tw/motto)，來源檔取自海大
 AIS 官方網站；本專案仍為非官方學生工具。

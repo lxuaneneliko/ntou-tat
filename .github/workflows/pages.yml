@@ -2,8 +2,6 @@ name: Deploy PWA
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 18 * * *'
   push:
     branches:
       - main
@@ -53,14 +51,10 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Fetch official NTOU calendar
-        run: >-
-          curl --fail --location --retry 3 --retry-delay 5
-          https://www.ntou.edu.tw/calendar
-          --output public/ntou-calendar.html
-
-      - name: Build PWA
-        run: npm run build:pwa
+      - name: Build compatibility redirect
+        run: |
+          mkdir -p dist
+          cp public/github-pages-redirect.html dist/index.html
 
       - name: Set up GitHub Pages
         if: github.event_name != 'pull_request'

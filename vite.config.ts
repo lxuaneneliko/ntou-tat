@@ -6,9 +6,10 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const isPwaBuild = mode === 'pwa'
+  const pwaBase = process.env.VITE_PWA_BASE_PATH || (process.env.VERCEL ? '/' : '/ntou-tat/')
 
   return {
-    base: isPwaBuild ? '/ntou-tat/' : '/',
+    base: isPwaBuild ? pwaBase : '/',
     plugins: [
       react(),
       viteStaticCopy({
@@ -27,7 +28,7 @@ export default defineConfig(({ mode }) => {
               manifest: {
                 name: '海大 TAT',
                 short_name: '海大 TAT',
-                description: '海大行事曆、課表工具與校園快速連結',
+                description: '登入海大 AIS 並整理課表、成績、行事曆與校園資訊',
                 lang: 'zh-Hant',
                 start_url: './',
                 scope: './',
