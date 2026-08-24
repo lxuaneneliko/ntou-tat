@@ -691,12 +691,13 @@ function App() {
 
       await authStore.saveSession(nextSession!)
       
-      if (rememberMe) {
+      if (apiMode !== 'pwa') {
         const { credentialsStore } = await import('./storage/credentialsStorage')
-        await credentialsStore.saveCredentials({ studentId, password })
-      } else {
-        const { credentialsStore } = await import('./storage/credentialsStorage')
-        await credentialsStore.clearCredentials()
+        if (rememberMe) {
+          await credentialsStore.saveCredentials({ studentId, password })
+        } else {
+          await credentialsStore.clearCredentials()
+        }
       }
       
       setSession(nextSession!)
@@ -770,9 +771,9 @@ function App() {
   const logout = async () => {
     dataRequestRef.current += 1
     await authStore.clearSession()
-    const { credentialsStore } = await import('./storage/credentialsStorage')
-    await credentialsStore.clearCredentials()
     if (apiMode !== 'pwa') {
+      const { credentialsStore } = await import('./storage/credentialsStorage')
+      await credentialsStore.clearCredentials()
       await clearPortalSession()
     }
     await clearSemesterCache()
