@@ -3,7 +3,7 @@ export type AuthSession = {
   refreshToken: string
   expiresAt: string
   profile: StudentProfile
-  source?: 'api' | 'mock' | 'portal' | 'pwa'
+  source?: 'api' | 'mock' | 'portal'
 }
 
 export type LoginChallenge = {

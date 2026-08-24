@@ -6,11 +6,6 @@ Android App 使用者主動登入時，App 會將學號、密碼與驗證碼直�
 大學 AIS 網站 `https://ais.ntou.edu.tw`，並使用 AIS 回傳的 Session Cookie 讀取使用者
 要求的校務資料。
 
-PWA 因瀏覽器跨網域與 `HttpOnly` Cookie 限制，會將 AIS 請求送到同網域的 Vercel
-Serverless Function，再由該函式轉送至 `ais.ntou.edu.tw`。學號、密碼與驗證碼會在登入
-當下經過此函式記憶體，但程式不會將其寫入資料庫、檔案、分析服務或應用程式紀錄。
-代理只允許預先列出的海大 HTTPS 網域與 HTTP 方法，不能作為任意網站代理。
-
 校園連結或交通功能可能開啟第三方網站；除非使用者主動操作該網站，App 不會把 AIS
 帳號、Cookie、課表或成績傳送給第三方。
 
@@ -20,16 +15,13 @@ Serverless Function，再由該函式轉送至 `ais.ntou.edu.tw`。學號、密�
 - AIS Session Cookie 使用 Android Keystore 保護。
 - 課表、成績與學分快取使用 Android App 私有加密儲存空間。
 - 自訂課程、模擬成績、鬧鐘與使用者選擇的頭像只保存在 App 本機儲存空間。
-- PWA 不會將密碼寫入瀏覽器儲存空間；AIS Cookie 由伺服器以 AES-256-GCM 加密後，放入
-  `HttpOnly`、`Secure`、`SameSite=Lax` Cookie，最長保存 8 小時。
-- PWA 課表、成績、自訂資料與基本登入畫面狀態只保存在目前瀏覽器；清除網站資料會一併移除。
 - 登出會清除 AIS Session；清除 App 資料或解除安裝會移除所有本機資料。
 
 ## 不收集的資料
 
 本專案沒有分析、廣告、遙測或錯誤回報 SDK，也沒有保存個人資料的應用程式資料庫。
-Vercel 與海大 AIS 作為網路服務提供者仍可能依各自政策處理必要的連線中繼資料，例如
-IP 位址、時間、HTTP 狀態與流量資訊。應用程式程式碼不會主動集中保存：
+海大 AIS 仍可能依其政策處理必要的連線中繼資料，例如 IP 位址、時間、HTTP 狀態與流量
+資訊。應用程式程式碼不會主動集中保存：
 
 - AIS 帳號或密碼
 - Session Cookie

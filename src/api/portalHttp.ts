@@ -11,9 +11,6 @@ export type PortalResponse = {
 }
 
 const isNative = () => Capacitor.isNativePlatform()
-const configuredProxyUrl = import.meta.env.VITE_NTOU_PORTAL_PROXY_URL?.trim()
-const shouldUsePortalProxy = () => !isNative() && (import.meta.env.MODE === 'pwa' || Boolean(configuredProxyUrl))
-const portalProxyUrl = () => configuredProxyUrl || new URL('/api/portal', window.location.origin).toString()
 
 type NativePortalPlugin = {
   request(options: {
@@ -98,37 +95,6 @@ export const portalRequest = async (options: PortalRequestOptions): Promise<Port
     )
   }
 
-  if (shouldUsePortalProxy()) {
-    const response = await fetch(portalProxyUrl(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        action: 'request',
-        url: options.url,
-        method: options.method ?? 'GET',
-        headers: normalizeHeaders(options.headers),
-        data: typeof options.data === 'string' ? options.data : undefined,
-        timeoutMs: options.timeoutMs,
-      }),
-    })
-    const payload = await response.json() as Partial<PortalResponse> & { error?: string; code?: string }
-    if (!response.ok) {
-      throw new ApiError(
-        payload.error || '海大 AIS PWA 連線失敗',
-        response.status,
-        payload.code || 'PORTAL_PROXY_ERROR',
-      )
-    }
-    return {
-      status: payload.status ?? 502,
-      data: payload.data ?? '',
-      headers: payload.headers ?? {},
-      url: payload.url ?? options.url,
-      cookieNames: payload.cookieNames,
-    }
-  }
-
   const response = await fetch(options.url, {
     method: options.method ?? 'GET',
     headers: normalizeHeaders(options.headers),
@@ -194,29 +160,6 @@ export const portalImageDataUrl = async (url: string, referer: string, cookieHea
     return response.dataUrl
   }
 
-  if (shouldUsePortalProxy()) {
-    try {
-      const response = await fetch(portalProxyUrl(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ action: 'image', url, method: 'GET', headers }),
-      })
-      const payload = await response.json() as { dataUrl?: string; error?: string; code?: string }
-      if (!response.ok) {
-        throw new ApiError(
-          payload.error || '海大 AIS 驗證碼讀取失敗',
-          response.status,
-          payload.code || 'PORTAL_PROXY_ERROR',
-        )
-      }
-      return payload.dataUrl
-    } catch (error) {
-      if (error instanceof ApiError) throw error
-      return undefined
-    }
-  }
-
   try {
     const response = await fetch(url, { headers, credentials: 'include' })
     if (!response.ok) {
@@ -231,16 +174,6 @@ export const portalImageDataUrl = async (url: string, referer: string, cookieHea
 }
 
 export const clearPortalCookies = async () => {
-  if (shouldUsePortalProxy()) {
-    await fetch(portalProxyUrl(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ action: 'clear' }),
-    })
-    return
-  }
-
   if (!isNative()) {
     return
   }

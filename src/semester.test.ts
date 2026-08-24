@@ -8,7 +8,7 @@ const semesters = ['115-1', '114-2', '114-1', '113-2'].map((id, index) => ({
 }))
 
 describe('student semester range', () => {
-  it('builds the current semester list for the PWA local mode', () => {
+  it('builds the current semester list for local data', () => {
     expect(currentSemesters(new Date(2026, 7, 23)).map(({ id }) => id)).toEqual([
       '115-1',
       '114-2',

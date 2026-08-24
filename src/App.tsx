@@ -1818,19 +1818,12 @@ function MoreSubview({
       <section className="subview">
         <div className="settings-row">
           <span>資料來源</span>
-          <strong>{apiMode === 'portal' ? '海大 AIS 直連' : apiMode === 'pwa' ? '海大 AIS PWA 安全連線' : apiMode}</strong>
+          <strong>{apiMode === 'portal' ? '海大 AIS 直連' : apiMode}</strong>
         </div>
-        {apiMode === 'pwa' ? (
-          <div className="settings-row">
-            <span>登入保存</span>
-            <strong>加密 Session，PWA 不儲存密碼</strong>
-          </div>
-        ) : (
-          <div className="settings-row">
-            <span>Cookie</span>
-            <strong>僅存在本機</strong>
-          </div>
-        )}
+        <div className="settings-row">
+          <span>Cookie</span>
+          <strong>僅存在本機</strong>
+        </div>
         <button className="logout-button" type="button" onClick={() => void onLogout()}>
           <LogOut size={19} />
           登出
@@ -2227,20 +2220,14 @@ function LoginScreen({
             </label>
           )}
 
-          {apiMode === 'pwa' ? (
-            <div className="remember-me">
-              <span>登入狀態最多保存 8 小時，PWA 不會儲存密碼</span>
-            </div>
-          ) : (
-            <label className="remember-me">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              <span>記住帳號密碼並自動登入</span>
-            </label>
-          )}
+          <label className="remember-me">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            <span>記住帳號密碼並自動登入</span>
+          </label>
           {error ? <div className="login-error"><AlertCircle size={18} /><span>{error}</span></div> : null}
           <button
             className="login-button"
@@ -2253,11 +2240,9 @@ function LoginScreen({
         </form>
         <div className="privacy-note">
           <ShieldCheck size={17} />
-          {apiMode === 'pwa'
-            ? '密碼僅用於本次 AIS 登入；加密 Session 由 HttpOnly Cookie 保存'
-            : rememberMe
-              ? '帳密與 Cookie 將加密儲存於本機安全區'
-              : '帳密不儲存，Cookie 於本機加密保存'}
+          {rememberMe
+            ? '帳密與 Cookie 將加密儲存於本機安全區'
+            : '帳密不儲存，Cookie 於本機加密保存'}
         </div>
       </section>
     </div>

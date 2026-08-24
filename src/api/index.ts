@@ -13,9 +13,7 @@ export const apiMode = configuredBaseUrl
   ? 'live'
   : configuredMode === 'mock'
     ? 'mock'
-    : import.meta.env.MODE === 'pwa'
-      ? 'pwa'
-      : 'portal'
+    : 'portal'
 
 let autoLoginPromise: Promise<boolean> | null = null
 
@@ -106,14 +104,11 @@ export const createNtouApi = (onUnauthorized: () => void): NtouApi => {
     baseApi = createHttpApiClient(configuredBaseUrl, authStore, onUnauthorized)
   } else if (apiMode === 'mock') {
     baseApi = createMockApiClient()
-  } else if (apiMode === 'pwa') {
-    baseApi = createPortalApiClient(authStore)
   } else {
     baseApi = createPortalApiClient(authStore)
   }
 
   // Native builds can keep encrypted credentials for CAPTCHA reauthentication.
-  // The PWA deliberately keeps only the server-side AIS session cookie and never stores passwords.
   if (apiMode === 'portal') {
     return withAutoLogin(baseApi, onUnauthorized)
   }

@@ -1,12 +1,11 @@
 {
   "name": "ntou-tat",
   "private": true,
-  "version": "1.12.1",
+  "version": "1.12.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:pwa": "tsc -b && vite build --mode pwa",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
@@ -25,8 +24,7 @@
     "lucide-react": "^1.26.0",
     "onnxruntime-web": "^1.27.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "tough-cookie": "^6.0.2"
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.2",
@@ -37,7 +35,6 @@
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
-    "vite-plugin-pwa": "^1.3.0",
     "vite-plugin-static-copy": "^4.1.1",
     "vitest": "^4.1.10"
   }
