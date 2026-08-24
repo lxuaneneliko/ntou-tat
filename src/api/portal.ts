@@ -462,17 +462,13 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
     },
 
     async getCalendar(from, to): Promise<CalendarEvent[]> {
-      try {
-        const response = await portalRequest({
-          url: PUBLIC_CALENDAR_URL,
-          method: 'GET',
-          headers: { Accept: 'text/html,application/xhtml+xml' },
-        })
-        assertOk(response, '無法取得海大官方行事曆')
-        return filterCalendarRange(parseNtouPublicCalendar(response.data), from, to)
-      } catch {
-        return []
-      }
+      const response = await portalRequest({
+        url: PUBLIC_CALENDAR_URL,
+        method: 'GET',
+        headers: { Accept: 'text/html,application/xhtml+xml' },
+      })
+      assertOk(response, '無法取得海大官方行事曆')
+      return filterCalendarRange(parseNtouPublicCalendar(response.data), from, to)
     },
 
     async getCampusLinks(): Promise<CampusLink[]> {

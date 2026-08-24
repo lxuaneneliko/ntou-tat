@@ -753,7 +753,7 @@ button:disabled {
   height: 58px;
   padding: 0 11px;
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) 84px;
+  grid-template-columns: 42px minmax(0, 1fr) 126px;
   align-items: center;
   border-bottom: 1px solid var(--line);
 }
@@ -773,7 +773,7 @@ button:disabled {
 
 .calendar-toolbar-actions {
   display: grid;
-  grid-template-columns: repeat(2, 42px);
+  grid-template-columns: repeat(3, 42px);
 }
 
 .calendar-add {
@@ -845,6 +845,11 @@ button:disabled {
 .calendar-markers .official,
 .agenda-row.official .agenda-dot {
   background: #ffcf63;
+}
+
+.calendar-markers .holiday,
+.agenda-row.holiday .agenda-dot {
+  background: #ff6b81;
 }
 
 .calendar-markers .personal,

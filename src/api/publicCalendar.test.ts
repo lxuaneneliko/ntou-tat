@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { filterCalendarRange, parseNtouPublicCalendar, shouldMarkCalendarDate } from './publicCalendar'
+import {
+  filterCalendarRange,
+  isHolidayCalendarEvent,
+  parseNtouPublicCalendar,
+  shouldMarkCalendarDate,
+} from './publicCalendar'
 
 const calendarHtml = `
 <div class="calendar">
@@ -73,5 +78,16 @@ describe('NTOU public calendar parser', () => {
     }
 
     expect(shouldMarkCalendarDate(holiday, '2026-02-18')).toBe(true)
+    expect(isHolidayCalendarEvent(holiday)).toBe(true)
+  })
+
+  it('does not classify a personal event containing the word holiday as official leave', () => {
+    expect(isHolidayCalendarEvent({
+      id: 'personal-holiday',
+      title: '安排放假旅行',
+      startsOn: '2026-02-18',
+      category: '個人',
+      source: 'personal',
+    })).toBe(false)
   })
 })

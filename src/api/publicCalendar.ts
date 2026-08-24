@@ -121,10 +121,13 @@ export const filterCalendarRange = (
 
 const holidayTitle = /放假|補假|國定假日|停課|校慶假/i
 
+export const isHolidayCalendarEvent = (event: CalendarEvent) =>
+  event.source !== 'personal' && holidayTitle.test(`${event.title} ${event.category}`)
+
 export const shouldMarkCalendarDate = (event: CalendarEvent, date: string) => {
   const endsOn = event.endsOn || event.startsOn
   if (date < event.startsOn || date > endsOn) return false
   if (event.startsOn === endsOn) return true
-  if (holidayTitle.test(`${event.title} ${event.category}`)) return true
+  if (isHolidayCalendarEvent(event)) return true
   return date === event.startsOn || date === endsOn
 }

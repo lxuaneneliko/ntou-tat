@@ -45,7 +45,7 @@ import {
   writePersonalCalendarStore,
   type PersonalCalendarStore,
 } from './storage/calendarStorage'
-import { shouldMarkCalendarDate } from './api/publicCalendar'
+import { isHolidayCalendarEvent, shouldMarkCalendarDate } from './api/publicCalendar'
 import { semestersForStudent } from './semester'
 import {
   clearSemesterCache,
@@ -266,6 +266,13 @@ const isoDate = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
+const CALENDAR_AUTO_REFRESH_MS = 6 * 60 * 60 * 1000
+
+const officialCalendarRange = (now = new Date()) => ({
+  from: isoDate(new Date(now.getFullYear(), 0, 1)),
+  to: isoDate(new Date(now.getFullYear() + 1, 11, 31)),
+})
+
 function App() {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [data, setData] = useState<AppData | null>(null)
@@ -285,6 +292,7 @@ function App() {
   const [fileLoadingId, setFileLoadingId] = useState<string | null>(null)
   const [isBooting, setIsBooting] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [calendarRefreshing, setCalendarRefreshing] = useState(false)
   const [appError, setAppError] = useState<string | null>(null)
   const [loginError, setLoginError] = useState<string | null>(null)
   const [loginBusy, setLoginBusy] = useState(false)
@@ -348,6 +356,8 @@ function App() {
   const dataRef = useRef<AppData | null>(null)
   const semesterCacheRef = useRef(new Map<string, SemesterData>())
   const dataRequestRef = useRef(0)
+  const calendarUpdatedAtRef = useRef(0)
+  const calendarRefreshPromiseRef = useRef<Promise<void> | null>(null)
 
   const applyData = useCallback((nextData: AppData | null) => {
     dataRef.current = nextData
@@ -365,6 +375,33 @@ function App() {
   }, [applyData])
 
   const api = useMemo(() => createNtouApi(handleUnauthorized), [handleUnauthorized])
+
+  const refreshOfficialCalendar = useCallback(async () => {
+    if (calendarRefreshPromiseRef.current) return calendarRefreshPromiseRef.current
+
+    const task = (async () => {
+      setCalendarRefreshing(true)
+      const { from, to } = officialCalendarRange()
+      try {
+        const calendar = await api.getCalendar(from, to)
+        if (!calendar.length) throw new Error('海大官方行事曆目前沒有回傳事件')
+        const current = dataRef.current
+        if (current) applyData({ ...current, calendar })
+        calendarUpdatedAtRef.current = Date.now()
+      } catch (error) {
+        setAppError(`行事曆更新失敗：${messageFromError(error)}`)
+      } finally {
+        setCalendarRefreshing(false)
+      }
+    })()
+
+    calendarRefreshPromiseRef.current = task
+    try {
+      await task
+    } finally {
+      calendarRefreshPromiseRef.current = null
+    }
+  }, [api, applyData])
 
   const loadLoginChallenge = useCallback(async (preserveError?: string) => {
     if (!api.getLoginChallenge) {
@@ -427,9 +464,7 @@ function App() {
     }
     setSelectedSemester(semesterId)
 
-    const today = new Date()
-    const from = isoDate(today)
-    const to = isoDate(new Date(today.getFullYear(), today.getMonth() + 5, today.getDate()))
+    const { from, to } = officialCalendarRange()
 
     const loadErrors: string[] = []
     const loadOptional = async <T,>(label: string, request: Promise<T>, fallback: T) => {
@@ -472,6 +507,7 @@ function App() {
         if (requestId !== dataRequestRef.current) return
         const current = dataRef.current
         if (current) {
+          if (cal.length) calendarUpdatedAtRef.current = Date.now()
           applyData({
             ...current,
             announcements: ann,
@@ -622,6 +658,23 @@ function App() {
       void handleBackButton.then((h: { remove: () => void }) => h.remove())
     }
   }, [activeCourse, moreView, isAddCalendarEventOpen, isAddCourseOpen, isAddGradeOpen])
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+
+    const appStateListener = CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (
+        isActive &&
+        dataRef.current &&
+        Date.now() - calendarUpdatedAtRef.current >= CALENDAR_AUTO_REFRESH_MS
+      ) {
+        void refreshOfficialCalendar()
+      }
+    })
+    return () => {
+      void appStateListener.then((handle) => handle.remove())
+    }
+  }, [refreshOfficialCalendar])
 
   const handleLogin = async (studentId: string, password: string, providedCaptchaCode?: string, rememberMe?: boolean) => {
     setLoginBusy(true)
@@ -989,6 +1042,8 @@ function App() {
             ) : selectedTab === 'calendar' ? (
               <CalendarScreen
                 events={mergedCalendarEvents}
+                refreshing={calendarRefreshing}
+                onRefresh={() => void refreshOfficialCalendar()}
                 onDeleteEvent={(id) => {
                   const event = personalCalendarEvents.find((candidate) => candidate.id === id)
                   if (!event || !confirm(`確定要刪除「${event.title}」嗎？`)) return
@@ -1398,10 +1453,14 @@ function TimetableScreen({
 
 function CalendarScreen({
   events,
+  refreshing,
+  onRefresh,
   onDeleteEvent,
   onRequestAdd,
 }: {
   events: CalendarEvent[]
+  refreshing: boolean
+  onRefresh: () => void
   onDeleteEvent: (id: string) => void
   onRequestAdd: (date: string) => void
 }) {
@@ -1496,6 +1555,16 @@ function CalendarScreen({
               <ChevronRight size={22} />
             </button>
             <button
+              className="plain-icon"
+              type="button"
+              aria-label="更新官方行事曆"
+              title="更新官方行事曆"
+              disabled={refreshing}
+              onClick={onRefresh}
+            >
+              <RefreshCw className={refreshing ? 'spin' : ''} size={20} />
+            </button>
+            <button
               className="plain-icon calendar-add"
               type="button"
               aria-label="新增個人事件"
@@ -1514,7 +1583,10 @@ function CalendarScreen({
             if (!day) return <span className="calendar-blank" key={`blank-${index}`} />
             const date = isoDate(new Date(cursor.getFullYear(), cursor.getMonth(), day))
             const dateEvents = events.filter((event) => shouldMarkCalendarDate(event, date))
-            const hasOfficialEvent = dateEvents.some((event) => event.source !== 'personal')
+            const hasHolidayEvent = dateEvents.some(isHolidayCalendarEvent)
+            const hasOfficialEvent = dateEvents.some(
+              (event) => event.source !== 'personal' && !isHolidayCalendarEvent(event),
+            )
             const hasPersonalEvent = dateEvents.some((event) => event.source === 'personal')
             return (
               <button
@@ -1524,9 +1596,10 @@ function CalendarScreen({
                 onClick={() => setSelectedDate(date)}
               >
                 <span>{day}</span>
-                {hasOfficialEvent || hasPersonalEvent ? (
+                {hasOfficialEvent || hasHolidayEvent || hasPersonalEvent ? (
                   <span className="calendar-markers" aria-hidden="true">
                     {hasOfficialEvent ? <i className="official" /> : null}
+                    {hasHolidayEvent ? <i className="holiday" /> : null}
                     {hasPersonalEvent ? <i className="personal" /> : null}
                   </span>
                 ) : null}
@@ -1539,7 +1612,16 @@ function CalendarScreen({
         <div className="section-label">{selectedDate}</div>
         {selectedEvents.length ? (
           selectedEvents.map((event) => (
-            <div className={`agenda-row ${event.source === 'personal' ? 'personal' : 'official'}`} key={event.id}>
+            <div
+              className={`agenda-row ${
+                event.source === 'personal'
+                  ? 'personal'
+                  : isHolidayCalendarEvent(event)
+                    ? 'holiday'
+                    : 'official'
+              }`}
+              key={event.id}
+            >
               <span className="agenda-dot" />
               <div className="agenda-copy">
                 <strong>{event.title}</strong>
