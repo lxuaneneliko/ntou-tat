@@ -4,95 +4,105 @@ import type { NtouApi } from './contract'
 import { filterCalendarRange, parseNtouPublicCalendar } from './publicCalendar'
 import { campusLinks, emptyCredits, trafficInfo } from './publicData'
 
-const pwaProfile: StudentProfile = {
-  id: 'PWA 本機模式',
-  name: '海大 TAT',
-  department: '',
-  grade: '',
-  avatarInitials: 'PWA',
+export const PWA_SESSION_TOKEN = 'pwa-local-session-v2'
+
+const profileForStudent = (studentId: string): StudentProfile => {
+  const normalizedId = studentId.trim()
+  return {
+    id: normalizedId || 'PWA 本機模式',
+    name: normalizedId ? '海大學生' : '海大 TAT',
+    department: '',
+    grade: '',
+    avatarInitials: normalizedId ? normalizedId.slice(-2).toUpperCase() : 'PWA',
+  }
 }
 
-const pwaSession = (): AuthSession => ({
-  accessToken: 'pwa-local-session',
-  refreshToken: 'pwa-local-session',
+const pwaSession = (profile: StudentProfile): AuthSession => ({
+  accessToken: PWA_SESSION_TOKEN,
+  refreshToken: PWA_SESSION_TOKEN,
   expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-  profile: pwaProfile,
+  profile,
   source: 'pwa',
 })
 
-export const createPwaApiClient = (): NtouApi => ({
-  async login() {
-    return pwaSession()
-  },
+export const createPwaApiClient = (): NtouApi => {
+  let activeProfile = profileForStudent('')
 
-  async refresh() {
-    return pwaSession()
-  },
+  return {
+    async login(payload) {
+      activeProfile = profileForStudent(payload.studentId)
+      return pwaSession(activeProfile)
+    },
 
-  async getMe() {
-    return pwaProfile
-  },
+    async refresh() {
+      return pwaSession(activeProfile)
+    },
 
-  async getSemesters() {
-    return currentSemesters()
-  },
+    async getMe() {
+      return activeProfile
+    },
 
-  async getTimetable(semesterId) {
-    return {
-      semesterId,
-      updatedAt: new Date().toISOString(),
-      slots: [],
-    }
-  },
+    async getSemesters() {
+      return currentSemesters()
+    },
 
-  async getGrades() {
-    return []
-  },
+    async getTimetable(semesterId) {
+      return {
+        semesterId,
+        updatedAt: new Date().toISOString(),
+        slots: [],
+      }
+    },
 
-  async getCredits() {
-    return emptyCredits
-  },
-
-  async getCourseFiles() {
-    return []
-  },
-
-  async getAnnouncements() {
-    return []
-  },
-
-  async getCalendar(from, to) {
-    try {
-      const response = await fetch(`${import.meta.env.BASE_URL}ntou-calendar.html`, {
-        cache: 'no-store',
-      })
-      if (!response.ok) return []
-      return filterCalendarRange(parseNtouPublicCalendar(await response.text()), from, to)
-    } catch {
+    async getGrades() {
       return []
-    }
-  },
+    },
 
-  async getCampusLinks() {
-    return campusLinks
-  },
+    async getCredits() {
+      return emptyCredits
+    },
 
-  async getTraffic() {
-    return trafficInfo
-  },
+    async getCourseFiles() {
+      return []
+    },
 
-  async getPortalSystemMenu() {
-    return [
-      {
-        id: 'pwa-open-ais',
-        title: '在瀏覽器開啟 AIS',
-        kind: 'page',
-        path: ['pwa-open-ais'],
-      },
-    ]
-  },
+    async getAnnouncements() {
+      return []
+    },
 
-  async openPortalSystemPage() {
-    window.open('https://ais.ntou.edu.tw/', '_blank', 'noopener,noreferrer')
-  },
-})
+    async getCalendar(from, to) {
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}ntou-calendar.html`, {
+          cache: 'no-store',
+        })
+        if (!response.ok) return []
+        return filterCalendarRange(parseNtouPublicCalendar(await response.text()), from, to)
+      } catch {
+        return []
+      }
+    },
+
+    async getCampusLinks() {
+      return campusLinks
+    },
+
+    async getTraffic() {
+      return trafficInfo
+    },
+
+    async getPortalSystemMenu() {
+      return [
+        {
+          id: 'pwa-open-ais',
+          title: '在瀏覽器開啟 AIS',
+          kind: 'page',
+          path: ['pwa-open-ais'],
+        },
+      ]
+    },
+
+    async openPortalSystemPage() {
+      window.open('https://ais.ntou.edu.tw/', '_blank', 'noopener,noreferrer')
+    },
+  }
+}

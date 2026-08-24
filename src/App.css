@@ -1683,6 +1683,49 @@ button:disabled {
   background: var(--brand-strong);
 }
 
+.pwa-login-copy {
+  margin: -7px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.pwa-login-divider {
+  margin: 18px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.pwa-login-divider::before,
+.pwa-login-divider::after {
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+  content: '';
+}
+
+.pwa-official-login {
+  min-height: 49px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #d8eaff;
+  background: #172337;
+  border: 1px solid #3c526f;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.pwa-official-login:active {
+  background: #1c2d46;
+}
+
 .privacy-note {
   margin-top: 19px;
   padding-top: 16px;

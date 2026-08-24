@@ -34,6 +34,7 @@ import {
 import './App.css'
 import { apiMode, createNtouApi } from './api'
 import { UnauthorizedError } from './api/errors'
+import { PWA_SESSION_TOKEN } from './api/pwa'
 import { emergencyContacts, emptyCredits } from './api/publicData'
 import { clearPortalSession } from './api/portal'
 import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
@@ -570,11 +571,17 @@ function App() {
     const boot = async () => {
       try {
         if (apiMode === 'pwa') {
-          const pwaSession = await api.login({ studentId: 'pwa-local', password: '' })
-          await authStore.saveSession(pwaSession)
-          if (!mounted) return
-          setSession(pwaSession)
-          await loadAppData()
+          const savedSession = await authStore.getSession()
+          if (
+            savedSession?.source === 'pwa' &&
+            savedSession.accessToken === PWA_SESSION_TOKEN
+          ) {
+            if (!mounted) return
+            setSession(savedSession)
+            await loadAppData()
+          } else if (savedSession) {
+            await authStore.clearSession()
+          }
           return
         }
 
@@ -765,7 +772,9 @@ function App() {
     await authStore.clearSession()
     const { credentialsStore } = await import('./storage/credentialsStorage')
     await credentialsStore.clearCredentials()
-    await clearPortalSession()
+    if (apiMode !== 'pwa') {
+      await clearPortalSession()
+    }
     await clearSemesterCache()
     semesterCacheRef.current.clear()
     setSession(null)
@@ -773,7 +782,9 @@ function App() {
     setSelectedTab('timetable')
     setMoreView(null)
     setActiveCourse(null)
-    await loadLoginChallenge()
+    if (apiMode !== 'pwa') {
+      await loadLoginChallenge()
+    }
   }
 
   const beginPortalReauthentication = async () => {
@@ -854,6 +865,16 @@ function App() {
   if (isBooting) return <LoadingScreen />
 
   if (!session || !data) {
+    if (apiMode === 'pwa') {
+      return (
+        <PwaLoginScreen
+          busy={loginBusy}
+          error={loginError || appError}
+          onLogin={(studentId) => handleLogin(studentId, '', undefined, false)}
+        />
+      )
+    }
+
     return (
       <LoginScreen
         busy={loginBusy}
@@ -1792,13 +1813,11 @@ function MoreScreen({
           )
         })}
       </div>
-      {apiMode !== 'pwa' ? (
-        <button className="direct-logout" type="button" onClick={() => void onLogout()}>
-          <LogOut size={22} />
-          <span>登出海大 AIS</span>
-          <ChevronRight size={19} />
-        </button>
-      ) : null}
+      <button className="direct-logout" type="button" onClick={() => void onLogout()}>
+        <LogOut size={22} />
+        <span>{apiMode === 'pwa' ? '登出本機帳號' : '登出海大 AIS'}</span>
+        <ChevronRight size={19} />
+      </button>
     </section>
   )
 }
@@ -1836,10 +1855,16 @@ function MoreSubview({
           <strong>{apiMode === 'portal' ? '海大 AIS 直連' : apiMode === 'pwa' ? 'PWA 本機模式' : apiMode}</strong>
         </div>
         {apiMode === 'pwa' ? (
-          <div className="settings-row">
-            <span>AIS 個人資料</span>
-            <strong>需使用 Android App</strong>
-          </div>
+          <>
+            <div className="settings-row">
+              <span>AIS 個人資料</span>
+              <strong>需使用 Android App</strong>
+            </div>
+            <button className="logout-button" type="button" onClick={() => void onLogout()}>
+              <LogOut size={19} />
+              登出本機帳號
+            </button>
+          </>
         ) : (
           <>
             <div className="settings-row">
@@ -2165,6 +2190,68 @@ type LoginScreenProps = {
   autoCaptchaFailed: boolean
   onRefreshChallenge: () => void
   onLogin: (studentId: string, password: string, providedCaptchaCode?: string, rememberMe?: boolean) => Promise<void>
+}
+
+function PwaLoginScreen({
+  busy,
+  error,
+  onLogin,
+}: {
+  busy: boolean
+  error: string | null
+  onLogin: (studentId: string) => Promise<void>
+}) {
+  const [studentId, setStudentId] = useState('')
+
+  return (
+    <div className="login-page">
+      <section className="login-panel">
+        <div className="login-brand">
+          <div className="brand-icon">
+            <img src={`${import.meta.env.BASE_URL}ntou-emblem.png`} alt="海大校徽" />
+          </div>
+          <div><h1>海大 TAT</h1><p>PWA 本機登入</p></div>
+        </div>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void onLogin(studentId)
+          }}
+        >
+          <label>
+            <span>學號</span>
+            <input
+              autoComplete="username"
+              maxLength={20}
+              required
+              value={studentId}
+              onChange={(event) => setStudentId(event.target.value)}
+            />
+          </label>
+          <p className="pwa-login-copy">學號只存在這個瀏覽器，用來區分你的本機資料。</p>
+          {error ? <div className="login-error"><AlertCircle size={18} /><span>{error}</span></div> : null}
+          <button className="login-button" type="submit" disabled={busy}>
+            <KeyRound size={19} />
+            {busy ? '進入中' : '進入 PWA'}
+          </button>
+        </form>
+        <div className="pwa-login-divider"><span>或</span></div>
+        <a
+          className="pwa-official-login"
+          href="https://ais.ntou.edu.tw/"
+          rel="noreferrer"
+          target="_blank"
+        >
+          <ExternalLink size={19} />
+          海大 AIS 官方登入
+        </a>
+        <div className="privacy-note">
+          <ShieldCheck size={17} />
+          PWA 不會要求或保存 AIS 密碼
+        </div>
+      </section>
+    </div>
+  )
 }
 
 function LoginScreen({
