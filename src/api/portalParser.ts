@@ -66,6 +66,30 @@ const readSubmitButton = (document: Document | null, html: string) => {
   return { name, value }
 }
 
+const readLoginFieldNames = (document: Document | null, html: string) => {
+  const account = document?.querySelector<HTMLInputElement>(
+    'input#M_PORTAL_LOGIN_ACNT, input[name="M_PORTAL_LOGIN_ACNT"], input[autocomplete="username"]',
+  )
+  const password = document?.querySelector<HTMLInputElement>('input[type="password"][name]')
+  const captcha = document?.querySelector<HTMLInputElement>(
+    'input#M_PW2, input[name="M_PW2"], input[maxlength="4"][name]',
+  )
+  const accountTag = account
+    ? undefined
+    : findTagByAttr(html, 'input', 'id', 'M_PORTAL_LOGIN_ACNT') ||
+      findTagByAttr(html, 'input', 'name', 'M_PORTAL_LOGIN_ACNT')
+  const passwordTag = password ? undefined : findTagByAttr(html, 'input', 'type', 'password')
+  const captchaTag = captcha
+    ? undefined
+    : findTagByAttr(html, 'input', 'id', 'M_PW2') || findTagByAttr(html, 'input', 'name', 'M_PW2')
+
+  return {
+    account: account?.name || readAttr(accountTag, 'name') || 'M_PORTAL_LOGIN_ACNT',
+    password: password?.name || readAttr(passwordTag, 'name') || 'M_PW',
+    captcha: captcha?.name || readAttr(captchaTag, 'name') || 'M_PW2',
+  }
+}
+
 const resolveUrl = (url: string, baseUrl = AIS_LOGIN_URL) => new URL(url, baseUrl).toString()
 
 export const parseAisClientRedirect = (html: string, baseUrl = AIS_LOGIN_URL) => {
@@ -106,6 +130,7 @@ export const parseAisLoginChallenge = (html: string): LoginChallenge => {
 
   const submit = readSubmitButton(document, html)
   const hiddenFields = readHiddenFields(document, html)
+  const fieldNames = readLoginFieldNames(document, html)
 
   for (const name of ['__VIEWSTATE', '__VIEWSTATEGENERATOR', '__VIEWSTATEENCRYPTED', '__EVENTVALIDATION']) {
     if (!(name in hiddenFields)) {
@@ -122,6 +147,7 @@ export const parseAisLoginChallenge = (html: string): LoginChallenge => {
         ? resolveUrl(captcha?.getAttribute('src') || readAttr(captchaTag, 'src'))
         : undefined,
     hiddenFields,
+    fieldNames,
     submitName: submit.name || 'LGOIN_BTN',
     submitValue: submit.value || '登入/Login',
     notice:

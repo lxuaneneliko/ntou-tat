@@ -14,6 +14,11 @@ export type LoginChallenge = {
   captchaDataUrl?: string
   cookieHeader?: string
   hiddenFields?: Record<string, string>
+  fieldNames?: {
+    account: string
+    password: string
+    captcha: string
+  }
   submitName?: string
   submitValue?: string
   notice?: string

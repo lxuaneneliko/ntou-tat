@@ -2169,12 +2169,25 @@ function LoginScreen({
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            void onLogin(studentId, password, autoCaptchaFailed ? captchaCode : undefined, rememberMe)
+            const form = new FormData(event.currentTarget)
+            const submittedStudentId = String(form.get('studentId') ?? studentId)
+            const submittedPassword = String(form.get('password') ?? password)
+            const submittedCaptcha = String(form.get('captchaCode') ?? captchaCode)
+            setStudentId(submittedStudentId)
+            setPassword(submittedPassword)
+            setCaptchaCode(submittedCaptcha.toUpperCase())
+            void onLogin(
+              submittedStudentId,
+              submittedPassword,
+              autoCaptchaFailed ? submittedCaptcha : undefined,
+              rememberMe,
+            )
           }}
         >
           <label>
             <span>學號</span>
             <input
+              name="studentId"
               autoComplete="username"
               value={studentId}
               onChange={(event) => setStudentId(event.target.value)}
@@ -2183,6 +2196,7 @@ function LoginScreen({
           <label>
             <span>密碼</span>
             <input
+              name="password"
               autoComplete="current-password"
               type="password"
               value={password}
@@ -2195,6 +2209,7 @@ function LoginScreen({
               <span>驗證碼</span>
               <div className="captcha-row">
                 <input
+                  name="captchaCode"
                   type="text"
                   maxLength={4}
                   autoComplete="off"

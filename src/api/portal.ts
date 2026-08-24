@@ -58,11 +58,11 @@ const formHeaders = {
   Referer: AIS_BASE_URL,
 }
 
-const buildLoginBody = (payload: LoginPayload, challenge: LoginChallenge) => {
+export const buildLoginBody = (payload: LoginPayload, challenge: LoginChallenge) => {
   const body = new URLSearchParams(challenge.hiddenFields ?? {})
-  body.set('M_PORTAL_LOGIN_ACNT', payload.studentId.trim().toUpperCase())
-  body.set('M_PW', payload.password)
-  body.set('M_PW2', payload.captchaCode?.trim() ?? '')
+  body.set(challenge.fieldNames?.account || 'M_PORTAL_LOGIN_ACNT', payload.studentId.trim().toUpperCase())
+  body.set(challenge.fieldNames?.password || 'M_PW', payload.password)
+  body.set(challenge.fieldNames?.captcha || 'M_PW2', payload.captchaCode?.trim() ?? '')
   body.set(challenge.submitName || 'LGOIN_BTN', challenge.submitValue || '登入/Login')
   return body.toString()
 }

@@ -14,7 +14,7 @@ const loginHtml = `
   <input type="hidden" name="__VIEWSTATEENCRYPTED" value="" />
   <input type="hidden" name="__EVENTVALIDATION" value="event" />
   <input name="M_PORTAL_LOGIN_ACNT" id="M_PORTAL_LOGIN_ACNT" />
-  <input name="M_PW" id="M_PW" />
+  <input name="LoginPWD" type="password" id="LoginPWD" name="Password Text" />
   <input name="M_PW2" id="M_PW2" />
   <img src="/Temp/Captcha/session.png?t=1" id="importantImg" />
   <div id="server-mark">Server:107</div>
@@ -29,6 +29,11 @@ describe('portal parser', () => {
     expect(challenge.captchaUrl).toBe('https://ais.ntou.edu.tw/Temp/Captcha/session.png?t=1')
     expect(challenge.hiddenFields?.__VIEWSTATE).toBe('view')
     expect(challenge.hiddenFields?.__EVENTVALIDATION).toBe('event')
+    expect(challenge.fieldNames).toEqual({
+      account: 'M_PORTAL_LOGIN_ACNT',
+      password: 'LoginPWD',
+      captcha: 'M_PW2',
+    })
   })
 
   it('follows only secure AIS client-side queue redirects', () => {
