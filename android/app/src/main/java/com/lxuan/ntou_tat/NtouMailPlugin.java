@@ -2,6 +2,9 @@ package com.lxuan.ntou_tat;
 
 import android.os.Build;
 import android.text.Html;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.URLSpan;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -24,6 +27,7 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeUtility;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
@@ -291,10 +295,40 @@ public class NtouMailPlugin extends Plugin {
     }
 
     private String htmlToText(String html) {
+        Spanned parsed;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            return Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY).toString();
+            parsed = Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY);
+        } else {
+            parsed = Html.fromHtml(html);
         }
-        return Html.fromHtml(html).toString();
+
+        SpannableStringBuilder text = new SpannableStringBuilder(parsed);
+        URLSpan[] links = text.getSpans(0, text.length(), URLSpan.class);
+        Arrays.sort(links, (left, right) -> Integer.compare(text.getSpanStart(left), text.getSpanStart(right)));
+        for (int index = links.length - 1; index >= 0; index--) {
+            URLSpan link = links[index];
+            int start = text.getSpanStart(link);
+            int end = text.getSpanEnd(link);
+            String url = safeMailLink(link.getURL());
+            if (start < 0 || end <= start || url.isEmpty()) continue;
+            String label = text.subSequence(start, end).toString().trim();
+            if (!label.equalsIgnoreCase(url)) {
+                text.replace(start, end, label + "\n" + url);
+            }
+        }
+        return text.toString();
+    }
+
+    private String safeMailLink(String value) {
+        if (value == null) return "";
+        String url = value.trim();
+        String lower = url.toLowerCase(Locale.ROOT);
+        return lower.startsWith("https://")
+            || lower.startsWith("http://")
+            || lower.startsWith("mailto:")
+            || lower.startsWith("tel:")
+            ? url
+            : "";
     }
 
     private String trimBody(String body) {

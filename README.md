@@ -21,7 +21,7 @@ App 不會在背景下載或自動安裝。
 
 發布新版時只需確認：
 
-1. `package.json` 的版本、Android `versionName` 與 Release 標籤一致，例如 `1.12.8`／`v1.12.8`。
+1. `package.json` 的版本、Android `versionName` 與 Release 標籤一致，例如 `1.12.9`／`v1.12.9`。
 2. Android `versionCode` 比上一版大。
 3. 建立非草稿、非 prerelease 的 GitHub Release，並上傳固定名稱 `NTOUTAT.apk`。
 4. APK 使用與舊版相同的簽章金鑰，使用者才能直接覆蓋安裝並保留資料。

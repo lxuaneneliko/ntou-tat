@@ -1533,6 +1533,19 @@ button:disabled {
   white-space: pre-wrap;
 }
 
+.mail-body a {
+  color: #64c4ff;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.mail-body a:active {
+  color: #a6defe;
+}
+
 .mail-attachments {
   margin-top: 22px;
   display: grid;

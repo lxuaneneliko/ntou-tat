@@ -42,6 +42,7 @@ import { mailApi } from './api/mail'
 import type { MailCredentials, MailDetail, MailInbox, MailSummary } from './api/mail'
 import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
+import { mailTextTokens } from './mailLinks'
 import { authStore } from './storage/authStorage'
 import { mailCredentialsStore } from './storage/mailCredentialsStorage'
 import {
@@ -2679,7 +2680,20 @@ function MailScreen({ studentId }: { studentId: string }) {
           {detail.recipients.length ? (
             <div className="mail-recipients">收件人：{detail.recipients.join('、')}</div>
           ) : null}
-          <div className="mail-body">{detail.body || '（這封信沒有可顯示的文字內容）'}</div>
+          <div className="mail-body">
+            {mailTextTokens(detail.body || '（這封信沒有可顯示的文字內容）').map((token, index) =>
+              token.type === 'link' ? (
+                <a
+                  href={token.href}
+                  key={`${index}-${token.href}`}
+                  rel="noreferrer"
+                  target={/^https?:/i.test(token.href) ? '_blank' : undefined}
+                >
+                  {token.value}
+                </a>
+              ) : <span key={`${index}-text`}>{token.value}</span>,
+            )}
+          </div>
           {detail.attachments.length ? (
             <div className="mail-attachments">
               <strong>附件</strong>
