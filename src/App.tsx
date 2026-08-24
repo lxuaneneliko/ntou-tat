@@ -45,6 +45,7 @@ import {
   writePersonalCalendarStore,
   type PersonalCalendarStore,
 } from './storage/calendarStorage'
+import { shouldMarkCalendarDate } from './api/publicCalendar'
 import { semestersForStudent } from './semester'
 import {
   clearSemesterCache,
@@ -1512,10 +1513,7 @@ function CalendarScreen({
           {cells.map((day, index) => {
             if (!day) return <span className="calendar-blank" key={`blank-${index}`} />
             const date = isoDate(new Date(cursor.getFullYear(), cursor.getMonth(), day))
-            const dateEvents = events.filter((event) => {
-              const end = event.endsOn || event.startsOn
-              return date >= event.startsOn && date <= end
-            })
+            const dateEvents = events.filter((event) => shouldMarkCalendarDate(event, date))
             const hasOfficialEvent = dateEvents.some((event) => event.source !== 'personal')
             const hasPersonalEvent = dateEvents.some((event) => event.source === 'personal')
             return (

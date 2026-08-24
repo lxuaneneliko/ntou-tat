@@ -27,6 +27,22 @@ const timetableHtml = `
   </table>
 `
 
+const undergraduateCourseListHtml = `
+  <table id="UndergraduateCourses">
+    <tr><td>序號</td><td>課號</td><td>科目名稱</td><td>學分</td><td>授課教師</td><td>開課單位</td></tr>
+    <tr><td>1</td><td>UG1001</td><td>普通物理</td><td>3</td><td>陳老師</td><td>共同教育中心</td></tr>
+  </table>
+`
+
+const undergraduateTimetableHtml = `
+  <table id="table2"><tr><td>列印資訊</td></tr></table>
+  <table id="UndergraduateSchedule">
+    <tr><th>節次</th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th></tr>
+    <tr><td>第一節 08:20~09:10</td><td><div>UG1001<br>普通物理<br>陳老師<br>教學大樓 101</div></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>第二節 09:20~10:10</td><td><div>UG1001<br>普通物理<br>陳老師<br>教學大樓 101</div></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+`
+
 describe('AIS personal timetable parser', () => {
   it('builds the selected semester query without changing private form state', () => {
     const body = new URLSearchParams(buildAisCourseQueryBody(queryHtml, '114-2', 'timetable'))
@@ -51,6 +67,24 @@ describe('AIS personal timetable parser', () => {
       classroom: 'INS101',
       credits: 3,
       day: 2,
+      section: '1',
+      startsAt: '08:20',
+      endsAt: '09:10',
+    })
+    expect(slots[1].section).toBe('2')
+  })
+
+  it('parses the undergraduate table id and column order', () => {
+    const slots = parseAisPersonalTimetable(undergraduateTimetableHtml, undergraduateCourseListHtml)
+
+    expect(slots).toHaveLength(2)
+    expect(slots[0]).toMatchObject({
+      courseCode: 'UG1001',
+      courseTitle: '普通物理',
+      instructor: '陳老師',
+      classroom: '教學大樓 101',
+      credits: 3,
+      day: 1,
       section: '1',
       startsAt: '08:20',
       endsAt: '09:10',

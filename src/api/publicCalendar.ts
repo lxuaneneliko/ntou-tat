@@ -118,3 +118,13 @@ export const filterCalendarRange = (
   from: string,
   to: string,
 ) => events.filter((event) => event.startsOn <= to && (event.endsOn || event.startsOn) >= from)
+
+const holidayTitle = /放假|補假|國定假日|停課|校慶假/i
+
+export const shouldMarkCalendarDate = (event: CalendarEvent, date: string) => {
+  const endsOn = event.endsOn || event.startsOn
+  if (date < event.startsOn || date > endsOn) return false
+  if (event.startsOn === endsOn) return true
+  if (holidayTitle.test(`${event.title} ${event.category}`)) return true
+  return date === event.startsOn || date === endsOn
+}

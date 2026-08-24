@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterCalendarRange, parseNtouPublicCalendar } from './publicCalendar'
+import { filterCalendarRange, parseNtouPublicCalendar, shouldMarkCalendarDate } from './publicCalendar'
 
 const calendarHtml = `
 <div class="calendar">
@@ -51,5 +51,27 @@ describe('NTOU public calendar parser', () => {
   it('keeps an event when its date range overlaps the requested range', () => {
     const events = parseNtouPublicCalendar(calendarHtml)
     expect(filterCalendarRange(events, '2026-09-01', '2026-09-30')).toHaveLength(1)
+  })
+
+  it('marks only the start and end of a long event while keeping its full range', () => {
+    const event = parseNtouPublicCalendar(calendarHtml)[1]
+
+    expect(shouldMarkCalendarDate(event, '2026-08-24')).toBe(true)
+    expect(shouldMarkCalendarDate(event, '2026-08-30')).toBe(false)
+    expect(shouldMarkCalendarDate(event, '2026-09-04')).toBe(true)
+    expect(filterCalendarRange([event], '2026-08-30', '2026-08-30')).toEqual([event])
+  })
+
+  it('marks every date in a multi-day holiday', () => {
+    const holiday = {
+      id: 'holiday',
+      title: '春節放假',
+      startsOn: '2026-02-14',
+      endsOn: '2026-02-22',
+      category: '海大行事曆',
+      source: 'official' as const,
+    }
+
+    expect(shouldMarkCalendarDate(holiday, '2026-02-18')).toBe(true)
   })
 })
