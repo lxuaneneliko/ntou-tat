@@ -10,7 +10,7 @@
 
 | 平台 | 開啟或下載 | 說明 |
 | --- | --- | --- |
-| Android | [下載最新版 APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/app-release.apk) | 具備 AIS 登入、課表與成績功能 |
+| Android | [下載最新版 APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/NTOUTAT.apk) | 具備 AIS 登入、課表與成績功能 |
 | iPhone／iPad／電腦 | [開啟海大 TAT PWA](https://lxuaneneliko.github.io/ntou-tat/) | 可加入主畫面，提供官方行事曆、本機工具與校園連結 |
 
 APK 使用 debug key 簽章，可直接安裝；Android 如顯示未知來源提示，請允許瀏覽器或
