@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "cap:sync": "vite build && cap sync android",
-    "android:debug": "npm run build && cap sync android && cd android && gradlew.bat assembleDebug"
+    "android:debug": "npm run build && cap sync android && cd android && gradlew.bat assembleDebug",
+    "android:install": "node scripts/install-android.mjs",
+    "android:run": "node scripts/install-android.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
