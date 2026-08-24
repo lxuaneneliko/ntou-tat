@@ -522,9 +522,18 @@ private final class PortalWebViewController: UIViewController, WKNavigationDeleg
     private var webView: WKWebView!
     private var progressObservation: NSKeyValueObservation?
 
+    private let zoomLevels: [CGFloat] = [0.75, 0.9, 1.0, 1.15, 1.3, 1.5, 1.8, 2.0]
+    private let defaultZoomIndex: Int = 5 // 1.5 (150%)
+    private var currentZoomIndex: Int = 5
+    private var zoomLabelItem: UIBarButtonItem!
+
     init(url: URL, cookies: [HTTPCookie]) {
         initialURL = url
         self.cookies = cookies
+        let savedIndex = UserDefaults.standard.object(forKey: "ntou_portal_last_zoom_index") as? Int ?? defaultZoomIndex
+        if savedIndex >= 0 && savedIndex < zoomLevels.count {
+            currentZoomIndex = savedIndex
+        }
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -542,11 +551,33 @@ private final class PortalWebViewController: UIViewController, WKNavigationDeleg
             target: self,
             action: #selector(close)
         )
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
+
+        let refreshItem = UIBarButtonItem(
             barButtonSystemItem: .refresh,
             target: self,
             action: #selector(reload)
         )
+        let zoomInItem = UIBarButtonItem(
+            title: "＋",
+            style: .plain,
+            target: self,
+            action: #selector(zoomIn)
+        )
+        zoomLabelItem = UIBarButtonItem(
+            title: "150%",
+            style: .plain,
+            target: self,
+            action: #selector(resetZoom)
+        )
+        let zoomOutItem = UIBarButtonItem(
+            title: "－",
+            style: .plain,
+            target: self,
+            action: #selector(zoomOut)
+        )
+        navigationItem.rightBarButtonItems = [refreshItem, zoomInItem, zoomLabelItem, zoomOutItem]
+        updateZoomDisplay()
+
         navigationController?.navigationBar.tintColor = .white
         navigationController?.navigationBar.barTintColor = UIColor(red: 7 / 255, green: 90 / 255, blue: 153 / 255, alpha: 1)
         navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
@@ -554,6 +585,7 @@ private final class PortalWebViewController: UIViewController, WKNavigationDeleg
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
         webView.allowsBackForwardNavigationGestures = true
@@ -591,6 +623,54 @@ private final class PortalWebViewController: UIViewController, WKNavigationDeleg
 
     @objc private func reload() {
         webView.reload()
+    }
+
+    @objc private func zoomIn() {
+        adjustZoom(delta: 1)
+    }
+
+    @objc private func zoomOut() {
+        adjustZoom(delta: -1)
+    }
+
+    @objc private func resetZoom() {
+        currentZoomIndex = defaultZoomIndex // 150%
+        saveZoomIndex()
+        updateZoomDisplay()
+        applyZoom()
+    }
+
+    private func adjustZoom(delta: Int) {
+        let nextIndex = currentZoomIndex + delta
+        if nextIndex >= 0 && nextIndex < zoomLevels.count {
+            currentZoomIndex = nextIndex
+            saveZoomIndex()
+            updateZoomDisplay()
+            applyZoom()
+        }
+    }
+
+    private func saveZoomIndex() {
+        UserDefaults.standard.set(currentZoomIndex, forKey: "ntou_portal_last_zoom_index")
+    }
+
+    private func updateZoomDisplay() {
+        let percent = Int(round(zoomLevels[currentZoomIndex] * 100))
+        zoomLabelItem?.title = "\(percent)%"
+    }
+
+    private func applyZoom() {
+        guard let webView else { return }
+        let scale = zoomLevels[currentZoomIndex]
+        if #available(iOS 14.0, *) {
+            webView.pageZoom = scale
+        }
+        let js = "if (document.body) { document.body.style.zoom = '\(scale)'; }"
+        webView.evaluateJavaScript(js, completionHandler: nil)
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        applyZoom()
     }
 
     func webView(
