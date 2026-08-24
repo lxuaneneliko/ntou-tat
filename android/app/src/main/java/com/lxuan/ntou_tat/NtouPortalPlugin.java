@@ -242,19 +242,6 @@ public class NtouPortalPlugin extends Plugin {
         });
     }
 
-    @PluginMethod
-    public void openMailPage(PluginCall call) {
-        getActivity().runOnUiThread(() -> {
-            try {
-                Intent intent = new Intent(getContext(), MailWebActivity.class);
-                getActivity().startActivity(intent);
-                call.resolve();
-            } catch (Exception exception) {
-                call.reject("Unable to open NTOU Mail2000", exception);
-            }
-        });
-    }
-
     private NativeResponse execute(
         String initialUrl,
         String initialMethod,

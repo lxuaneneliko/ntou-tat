@@ -21,7 +21,7 @@ App 不會在背景下載或自動安裝。
 
 發布新版時只需確認：
 
-1. `package.json` 的版本、Android `versionName` 與 Release 標籤一致，例如 `1.12.7`／`v1.12.7`。
+1. `package.json` 的版本、Android `versionName` 與 Release 標籤一致，例如 `1.12.8`／`v1.12.8`。
 2. Android `versionCode` 比上一版大。
 3. 建立非草稿、非 prerelease 的 GitHub Release，並上傳固定名稱 `NTOUTAT.apk`。
 4. APK 使用與舊版相同的簽章金鑰，使用者才能直接覆蓋安裝並保留資料。
@@ -34,7 +34,7 @@ App 不會在背景下載或自動安裝。
 - 海大官方行事曆、月份滑動切換與本機個人事件
 - 海大校務系統功能樹與 App 內頁面
 - 海大首頁校務公告、校園連結、交通與緊急聯絡
-- 海大 Mail2000 官方登入與收件匣
+- APK 內獨立登入海大 Mail2000、讀取收件匣與信件文字內容
 - 本機自訂課程、模擬成績與個人頭像
 
 ## 隱私
@@ -42,7 +42,9 @@ App 不會在背景下載或自動安裝。
 - Android App 將帳號、密碼與驗證碼直接送往 `https://ais.ntou.edu.tw`。
 - App 可在使用者選擇「記住我」時，將登入資料存放於 Android Keystore；沒有分析 SDK 或廣告追蹤。
 - AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間。
-- Mail2000 由海大官方頁面直接登入，App 不讀取或儲存郵件密碼。
+- Mail2000 密碼與 AIS 密碼完全分開；App 只把使用者在信箱頁輸入的帳密送往 `mail.ntou.edu.tw:993`。
+- 使用者可選擇是否將 Mail2000 帳密加密儲存在 Android 本機安全區，信箱登出時會清除。
+- 郵件內容由 APK 直接透過加密 IMAP 讀取，不經海大 TAT 自有伺服器，也不會注入郵件 HTML。
 - 頭像和自訂資料只保存在使用者裝置。
 - Git 歷史不包含真實帳號、Cookie、Token、手機截圖、APK 或簽章金鑰。
 - GitHub Release 只提供經過隱私掃描的 Android APK。
