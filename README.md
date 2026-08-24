@@ -11,15 +11,14 @@
 | 平台 | 開啟或下載 | 說明 |
 | --- | --- | --- |
 | Android | [下載最新版 APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/NTOUTAT.apk) | 具備 AIS 登入、課表與成績功能 |
-| iPhone／iPad／電腦 | [開啟海大 TAT PWA](https://lxuaneneliko.github.io/ntou-tat/) | 本機學號登入、官方 AIS 登入入口、行事曆與校園工具 |
+| iPhone／iPad／電腦 | [開啟海大 TAT PWA](https://lxuaneneliko.github.io/ntou-tat/) | 可加入主畫面，提供官方行事曆、本機工具與校園連結 |
 
 APK 使用 debug key 簽章，可直接安裝；Android 如顯示未知來源提示，請允許瀏覽器或
 檔案管理器安裝此 App。
 
-PWA 提供本機學號登入，並可直接開啟海大 AIS 官方登入頁；AIS 密碼不會送到或保存在
-海大 TAT。由於 AIS 未開放跨網域請求，瀏覽器也不能讀取其 `HttpOnly` Session Cookie，
-PWA 無法讀取個人課表與成績；需要 AIS 個人資料時請使用 Android APK。PWA 的海大官方
-行事曆會由 GitHub Actions 每日重新取得並部署。
+海大 AIS 未開放跨網域請求，瀏覽器也不能讀取其 `HttpOnly` Session Cookie，因此 PWA
+不會要求或儲存 AIS 帳密，也無法讀取個人課表與成績。需要 AIS 個人資料時請使用
+Android APK。PWA 的海大官方行事曆會由 GitHub Actions 每日重新取得並部署。
 
 ## 功能
 
@@ -37,7 +36,7 @@ PWA 無法讀取個人課表與成績；需要 AIS 個人資料時請使用 Andr
 - 帳號、密碼與驗證碼只送往 `https://ais.ntou.edu.tw`。
 - App 可在使用者選擇「記住我」時，將登入資料存放於 Android Keystore；沒有自建資料後端、分析 SDK 或廣告追蹤。
 - AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間。
-- PWA 只在該瀏覽器保存本機學號與自訂內容，不接收 AIS 密碼。
+- PWA 不接收 AIS 帳密；自訂內容只保存在該瀏覽器的本機儲存空間。
 - 頭像和自訂資料只保存在使用者裝置。
 - Git 歷史不包含真實帳號、Cookie、Token、手機截圖、APK 或簽章金鑰。
 - GitHub Release 只提供經過隱私掃描的 Android APK。
