@@ -1117,6 +1117,29 @@ button:disabled {
   border-top: 1px solid var(--line);
 }
 
+.source-list-view {
+  min-height: 100%;
+}
+
+.source-list-summary {
+  min-height: 48px;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #8ed0ff;
+  background: linear-gradient(90deg, rgb(26 75 113 / 44%), rgb(17 25 42 / 22%));
+  border-bottom: 1px solid #294861;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.source-list-summary.competition {
+  color: #ffd37a;
+  background: linear-gradient(90deg, rgb(117 75 18 / 42%), rgb(17 25 42 / 22%));
+  border-bottom-color: #5c4727;
+}
+
 .tool-list button,
 .link-list a {
   width: 100%;

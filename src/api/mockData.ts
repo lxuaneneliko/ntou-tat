@@ -5,6 +5,7 @@ import type {
   CourseFile,
   CreditSummary,
   EmergencyContact,
+  ExternalCompetition,
   Grade,
   Semester,
   StudentProfile,
@@ -236,6 +237,16 @@ export const mockAnnouncements: Announcement[] = [
     publishedAt: '2026-07-12',
     pinned: false,
     url: 'https://stu.ntou.edu.tw/',
+  },
+]
+
+export const mockExternalCompetitions: ExternalCompetition[] = [
+  {
+    id: 'mock-u-start-18',
+    title: 'U-start 18 啟航無限參展團隊徵件',
+    publishedAt: '2026-08-04',
+    source: '中原大學創新創業發展中心',
+    url: 'https://cyie.cycu.edu.tw/校外活動/校外創業競賽/',
   },
 ]
 

@@ -5,6 +5,7 @@ import type {
   CampusLink,
   CourseFile,
   CreditSummary,
+  ExternalCompetition,
   Semester,
   StudentProfile,
   TrafficInfo,
@@ -121,6 +122,10 @@ export const createHttpApiClient = (
 
     async getAnnouncements() {
       return request<Announcement[]>('announcements')
+    },
+
+    async getExternalCompetitions() {
+      return request<ExternalCompetition[]>('competitions/external')
     },
 
     async getCalendar(from, to) {

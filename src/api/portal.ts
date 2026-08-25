@@ -6,6 +6,7 @@ import type {
   CampusLink,
   CourseFile,
   CreditSummary,
+  ExternalCompetition,
   Grade,
   LoginChallenge,
   Semester,
@@ -46,12 +47,14 @@ import {
 import { buildAisCourseQueryBody, parseAisPersonalTimetable } from './timetableParser'
 import { currentSemesters } from '../semester'
 import { parseNtouAnnouncements } from './announcementParser'
+import { parseExternalCompetitions } from './competitionParser'
 
 const AIS_BASE_URL = 'https://ais.ntou.edu.tw/'
 const MAINFRAME_URL = new URL('mainframe.aspx', AIS_BASE_URL).toString()
 const MENU_URL = new URL('MenuTree.aspx', AIS_BASE_URL).toString()
 const PUBLIC_CALENDAR_URL = 'https://www.ntou.edu.tw/calendar'
-const PUBLIC_HOME_URL = 'https://www.ntou.edu.tw/'
+const PUBLIC_ANNOUNCEMENTS_URL = 'https://www.ntou.edu.tw/post/%E5%AD%B8%E6%A0%A1%E5%85%AC%E5%91%8A'
+const EXTERNAL_COMPETITIONS_URL = 'https://cyie.cycu.edu.tw/%E6%A0%A1%E5%A4%96%E6%B4%BB%E5%8B%95/%E6%A0%A1%E5%A4%96%E5%89%B5%E6%A5%AD%E7%AB%B6%E8%B3%BD/'
 
 const formHeaders = {
   'Content-Type': 'application/x-www-form-urlencoded',
@@ -461,16 +464,30 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
 
     async getAnnouncements(): Promise<Announcement[]> {
       const response = await portalRequest({
-        url: PUBLIC_HOME_URL,
+        url: PUBLIC_ANNOUNCEMENTS_URL,
         method: 'GET',
         headers: { Accept: 'text/html,application/xhtml+xml' },
       })
       assertOk(response, '無法取得海大校務公告')
       const announcements = parseNtouAnnouncements(response.data)
       if (!announcements.length) {
-        throw new ApiError('海大首頁目前沒有回傳校務公告', 502, 'NTOU_ANNOUNCEMENTS_EMPTY')
+        throw new ApiError('海大學校公告頁目前沒有回傳資料', 502, 'NTOU_ANNOUNCEMENTS_EMPTY')
       }
       return announcements
+    },
+
+    async getExternalCompetitions(): Promise<ExternalCompetition[]> {
+      const response = await portalRequest({
+        url: EXTERNAL_COMPETITIONS_URL,
+        method: 'GET',
+        headers: { Accept: 'text/html,application/xhtml+xml' },
+      })
+      assertOk(response, '無法取得校外競賽')
+      const competitions = parseExternalCompetitions(response.data)
+      if (!competitions.length) {
+        throw new ApiError('校外競賽來源目前沒有回傳資料', 502, 'EXTERNAL_COMPETITIONS_EMPTY')
+      }
+      return competitions
     },
 
     async getCalendar(from, to): Promise<CalendarEvent[]> {

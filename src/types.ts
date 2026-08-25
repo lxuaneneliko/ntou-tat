@@ -90,6 +90,14 @@ export type Announcement = {
   url: string
 }
 
+export type ExternalCompetition = {
+  id: string
+  title: string
+  publishedAt: string
+  source: string
+  url: string
+}
+
 export type Grade = {
   id: string
   courseId: string
@@ -160,6 +168,7 @@ export type TabKey = 'timetable' | 'calendar' | 'grades' | 'mail' | 'more'
 export type MoreView =
   | 'portal'
   | 'announcements'
+  | 'competitions'
   | 'calendar'
   | 'campus'
   | 'traffic'

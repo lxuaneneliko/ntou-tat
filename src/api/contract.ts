@@ -5,6 +5,7 @@ import type {
   CampusLink,
   CourseFile,
   CreditSummary,
+  ExternalCompetition,
   Grade,
   LoginChallenge,
   PortalSystemNode,
@@ -32,6 +33,7 @@ export type NtouApi = {
   getCredits: () => Promise<CreditSummary>
   getCourseFiles: (courseId: string) => Promise<CourseFile[]>
   getAnnouncements: () => Promise<Announcement[]>
+  getExternalCompetitions: () => Promise<ExternalCompetition[]>
   getCalendar: (from: string, to: string) => Promise<CalendarEvent[]>
   getCampusLinks: () => Promise<CampusLink[]>
   getTraffic: () => Promise<TrafficInfo[]>

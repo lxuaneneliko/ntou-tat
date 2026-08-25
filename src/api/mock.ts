@@ -5,6 +5,7 @@ import {
   mockCampusLinks,
   mockCourseFiles,
   mockCredits,
+  mockExternalCompetitions,
   mockGrades,
   mockProfile,
   mockSemesters,
@@ -83,6 +84,11 @@ export const createMockApiClient = (): NtouApi => ({
   async getAnnouncements() {
     await wait()
     return mockAnnouncements
+  },
+
+  async getExternalCompetitions() {
+    await wait()
+    return mockExternalCompetitions
   },
 
   async getCalendar() {

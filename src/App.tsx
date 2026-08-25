@@ -31,6 +31,7 @@ import {
   Loader2,
   ShieldCheck,
   Trash2,
+  Trophy,
   X,
 } from 'lucide-react'
 import './App.css'
@@ -73,6 +74,7 @@ import type {
   CourseFile,
   CourseSummary,
   CreditSummary,
+  ExternalCompetition,
   Grade,
   LoginChallenge,
   MoreView,
@@ -92,6 +94,7 @@ type AppData = {
   grades: Grade[]
   credits: CreditSummary
   announcements: Announcement[]
+  externalCompetitions: ExternalCompetition[]
   calendar: CalendarEvent[]
   campusLinks: CampusLink[]
   traffic: TrafficInfo[]
@@ -550,6 +553,7 @@ function App() {
       semesters,
       ...initialSemester,
       announcements: existing?.announcements ?? [],
+      externalCompetitions: existing?.externalCompetitions ?? [],
       calendar: existing?.calendar ?? [],
       campusLinks: existing?.campusLinks ?? [],
       traffic: existing?.traffic ?? [],
@@ -559,10 +563,11 @@ function App() {
     if (!existing || force) {
       void Promise.all([
         loadOptional('公告', api.getAnnouncements(), existing?.announcements ?? []),
+        loadOptional('校外競賽', api.getExternalCompetitions(), existing?.externalCompetitions ?? []),
         loadOptional('行事曆', api.getCalendar(from, to), existing?.calendar ?? []),
         loadOptional('校園連結', api.getCampusLinks(), existing?.campusLinks ?? []),
         loadOptional('交通資訊', api.getTraffic(), existing?.traffic ?? []),
-      ]).then(([ann, cal, links, traf]) => {
+      ]).then(([ann, competitions, cal, links, traf]) => {
         if (requestId !== dataRequestRef.current) return
         const current = dataRef.current
         if (current) {
@@ -570,6 +575,7 @@ function App() {
           applyData({
             ...current,
             announcements: ann,
+            externalCompetitions: competitions,
             calendar: cal,
             campusLinks: links,
             traffic: traf,
@@ -644,6 +650,7 @@ function App() {
       semesters,
       ...semesterData,
       announcements: current?.announcements ?? existing?.announcements ?? [],
+      externalCompetitions: current?.externalCompetitions ?? existing?.externalCompetitions ?? [],
       calendar: current?.calendar ?? existing?.calendar ?? [],
       campusLinks: current?.campusLinks ?? existing?.campusLinks ?? [],
       traffic: current?.traffic ?? existing?.traffic ?? [],
@@ -2009,6 +2016,7 @@ function MoreScreen({
   const tools: Array<{ icon: typeof Bell; label: string; view: MoreView }> = [
     { icon: Building2, label: '海大校務系統', view: 'portal' },
     { icon: Bell, label: '校務公告', view: 'announcements' },
+    { icon: Trophy, label: '校外競賽', view: 'competitions' },
     { icon: CalendarDays, label: '重要日期', view: 'calendar' },
     { icon: LinkIcon, label: '海大連結', view: 'campus' },
     { icon: Bus, label: '交通與地圖', view: 'traffic' },
@@ -2129,14 +2137,39 @@ function MoreSubview({
 
   if (view === 'announcements') {
     return data.announcements.length ? (
-      <LinkList items={data.announcements.map((item) => ({
-        id: item.id,
-        title: item.title,
-        subtitle: `${item.source} · ${item.publishedAt}`,
-        url: item.url,
-      }))} />
+      <section className="source-list-view">
+        <div className="source-list-summary">
+          <Bell size={18} />
+          <span>海大學校公告 · 共 {data.announcements.length} 筆</span>
+        </div>
+        <LinkList items={data.announcements.map((item) => ({
+          id: item.id,
+          title: item.title,
+          subtitle: `${item.source} · ${item.publishedAt}`,
+          url: item.url,
+        }))} />
+      </section>
     ) : (
-      <div className="inline-empty"><Bell size={24} /><span>海大首頁目前沒有校務公告資料</span></div>
+      <div className="inline-empty"><Bell size={24} /><span>海大學校公告頁目前沒有資料</span></div>
+    )
+  }
+
+  if (view === 'competitions') {
+    return data.externalCompetitions.length ? (
+      <section className="source-list-view">
+        <div className="source-list-summary competition">
+          <Trophy size={18} />
+          <span>中原大學創新創業發展中心 · 最新 {data.externalCompetitions.length} 筆</span>
+        </div>
+        <LinkList items={data.externalCompetitions.map((item) => ({
+          id: item.id,
+          title: item.title,
+          subtitle: `${item.source} · ${item.publishedAt}`,
+          url: item.url,
+        }))} />
+      </section>
+    ) : (
+      <div className="inline-empty"><Trophy size={24} /><span>目前沒有取得校外競賽資料</span></div>
     )
   }
 
@@ -2555,6 +2588,7 @@ function moreViewTitle(view: MoreView) {
   const titles: Record<MoreView, string> = {
     portal: '海大校務系統',
     announcements: '校務公告',
+    competitions: '校外競賽',
     calendar: '重要日期',
     campus: '海大連結',
     traffic: '交通與地圖',
