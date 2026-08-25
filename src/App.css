@@ -1140,6 +1140,134 @@ button:disabled {
   border-bottom-color: #5c4727;
 }
 
+.source-list-summary > span {
+  min-width: 0;
+  flex: 1;
+}
+
+.source-list-summary > button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  background: rgb(255 255 255 / 7%);
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.source-list-summary > button:disabled {
+  opacity: 0.55;
+}
+
+.source-list-warning {
+  padding: 9px 15px;
+  color: #ffd18a;
+  background: #352815;
+  border-bottom: 1px solid #604821;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.inline-retry {
+  min-height: 38px;
+  margin-top: 7px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #cae9ff;
+  background: #17314a;
+  border: 1px solid #315f83;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.campus-map-screen {
+  min-height: calc(100dvh - 140px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: #0c1016;
+}
+
+.campus-map-toolbar {
+  min-height: 58px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #11192a;
+  border-bottom: 1px solid var(--line);
+}
+
+.campus-map-toolbar > div:first-child {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8ed0ff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.campus-map-zoom {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 34px 45px 34px;
+  align-items: center;
+  color: #dce6f4;
+  background: #0b111b;
+  border: 1px solid #2b394d;
+  border-radius: 7px;
+  text-align: center;
+}
+
+.campus-map-zoom button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #8ed0ff;
+  background: transparent;
+}
+
+.campus-map-zoom button:disabled {
+  color: #536174;
+}
+
+.campus-map-zoom span {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.campus-map-scroll {
+  min-height: 360px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #eef2f6;
+  touch-action: pan-x pan-y;
+}
+
+.campus-map-image {
+  max-width: none;
+  height: auto;
+  display: block;
+}
+
+.campus-map-source {
+  margin: 0;
+  padding: 9px 13px;
+  color: var(--muted);
+  background: #111419;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .tool-list button,
 .link-list a {
   width: 100%;

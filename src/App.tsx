@@ -6,7 +6,6 @@ import {
   AlertCircle,
   Bell,
   Building2,
-  Bus,
   Camera,
   CalendarDays,
   ChevronLeft,
@@ -22,6 +21,7 @@ import {
   List as ListIcon,
   LogOut,
   Mail,
+  MapPinned,
   Menu,
   MoreVertical,
   PackageOpen,
@@ -33,6 +33,8 @@ import {
   Trash2,
   Trophy,
   X,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react'
 import './App.css'
 import { apiMode, createNtouApi } from './api'
@@ -43,6 +45,10 @@ import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
 import { MailScreen, type MailScreenHandle } from './MailScreen'
 import { authStore } from './storage/authStorage'
+import {
+  readStoredExternalCompetitions,
+  writeStoredExternalCompetitions,
+} from './storage/externalCompetitionStorage'
 import {
   personalEventsForStudent,
   readPersonalCalendarStore,
@@ -308,6 +314,7 @@ function App() {
   const [isBooting, setIsBooting] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [calendarRefreshing, setCalendarRefreshing] = useState(false)
+  const [competitionRefreshing, setCompetitionRefreshing] = useState(false)
   const [appError, setAppError] = useState<string | null>(null)
   const [loginError, setLoginError] = useState<string | null>(null)
   const [loginBusy, setLoginBusy] = useState(false)
@@ -420,6 +427,7 @@ function App() {
   const dataRequestRef = useRef(0)
   const calendarUpdatedAtRef = useRef(0)
   const calendarRefreshPromiseRef = useRef<Promise<void> | null>(null)
+  const competitionRefreshPromiseRef = useRef<Promise<void> | null>(null)
 
   const applyData = useCallback((nextData: AppData | null) => {
     dataRef.current = nextData
@@ -437,6 +445,30 @@ function App() {
   }, [applyData])
 
   const api = useMemo(() => createNtouApi(handleUnauthorized), [handleUnauthorized])
+
+  const refreshExternalCompetitions = useCallback(async () => {
+    if (competitionRefreshPromiseRef.current) return competitionRefreshPromiseRef.current
+
+    const task = (async () => {
+      setCompetitionRefreshing(true)
+      try {
+        const items = await api.getExternalCompetitions()
+        if (!items.length) throw new Error('競賽來源目前沒有資料')
+        writeStoredExternalCompetitions(items)
+        const current = dataRef.current
+        if (current) applyData({ ...current, externalCompetitions: items })
+      } finally {
+        setCompetitionRefreshing(false)
+      }
+    })()
+
+    competitionRefreshPromiseRef.current = task
+    try {
+      await task
+    } finally {
+      competitionRefreshPromiseRef.current = null
+    }
+  }, [api, applyData])
 
   const refreshOfficialCalendar = useCallback(async () => {
     if (calendarRefreshPromiseRef.current) return calendarRefreshPromiseRef.current
@@ -546,6 +578,9 @@ function App() {
       credits: emptyCredits,
     }
     const initialSemester = cached ?? emptySemester
+    const cachedExternalCompetitions = existing?.externalCompetitions.length
+      ? existing.externalCompetitions
+      : readStoredExternalCompetitions()
 
     // Apply initial profile and cached timetable/grades immediately to render UI instantly
     applyData({
@@ -553,7 +588,7 @@ function App() {
       semesters,
       ...initialSemester,
       announcements: existing?.announcements ?? [],
-      externalCompetitions: existing?.externalCompetitions ?? [],
+      externalCompetitions: cachedExternalCompetitions,
       calendar: existing?.calendar ?? [],
       campusLinks: existing?.campusLinks ?? [],
       traffic: existing?.traffic ?? [],
@@ -563,11 +598,10 @@ function App() {
     if (!existing || force) {
       void Promise.all([
         loadOptional('公告', api.getAnnouncements(), existing?.announcements ?? []),
-        loadOptional('校外競賽', api.getExternalCompetitions(), existing?.externalCompetitions ?? []),
         loadOptional('行事曆', api.getCalendar(from, to), existing?.calendar ?? []),
         loadOptional('校園連結', api.getCampusLinks(), existing?.campusLinks ?? []),
         loadOptional('交通資訊', api.getTraffic(), existing?.traffic ?? []),
-      ]).then(([ann, competitions, cal, links, traf]) => {
+      ]).then(([ann, cal, links, traf]) => {
         if (requestId !== dataRequestRef.current) return
         const current = dataRef.current
         if (current) {
@@ -575,7 +609,6 @@ function App() {
           applyData({
             ...current,
             announcements: ann,
-            externalCompetitions: competitions,
             calendar: cal,
             campusLinks: links,
             traffic: traf,
@@ -650,7 +683,9 @@ function App() {
       semesters,
       ...semesterData,
       announcements: current?.announcements ?? existing?.announcements ?? [],
-      externalCompetitions: current?.externalCompetitions ?? existing?.externalCompetitions ?? [],
+      externalCompetitions: current?.externalCompetitions.length
+        ? current.externalCompetitions
+        : cachedExternalCompetitions,
       calendar: current?.calendar ?? existing?.calendar ?? [],
       campusLinks: current?.campusLinks ?? existing?.campusLinks ?? [],
       traffic: current?.traffic ?? existing?.traffic ?? [],
@@ -1178,6 +1213,8 @@ function App() {
                 onReauthenticate={beginPortalReauthentication}
                 loadPortalMenu={api.getPortalSystemMenu}
                 onOpenPortalPage={api.openPortalSystemPage}
+                onRefreshCompetitions={refreshExternalCompetitions}
+                competitionRefreshing={competitionRefreshing}
               />
             ) : selectedTab === 'timetable' ? (
               <TimetableScreen
@@ -2019,7 +2056,7 @@ function MoreScreen({
     { icon: Trophy, label: '校外競賽', view: 'competitions' },
     { icon: CalendarDays, label: '重要日期', view: 'calendar' },
     { icon: LinkIcon, label: '海大連結', view: 'campus' },
-    { icon: Bus, label: '交通與地圖', view: 'traffic' },
+    { icon: MapPinned, label: '交通與地圖', view: 'traffic' },
     { icon: Phone, label: '緊急聯絡', view: 'emergency' },
     { icon: ShieldCheck, label: '帳號與設定', view: 'settings' },
   ]
@@ -2076,18 +2113,22 @@ function MoreScreen({
 }
 
 function MoreSubview({
+  competitionRefreshing,
   data,
   loadPortalMenu,
   onLogout,
   onOpenPortalPage,
   onReauthenticate,
+  onRefreshCompetitions,
   view,
 }: {
   data: AppData
+  competitionRefreshing: boolean
   loadPortalMenu?: (path: string[]) => Promise<PortalSystemNode[]>
   onLogout: () => Promise<void>
   onOpenPortalPage?: (path: string[]) => Promise<void>
   onReauthenticate: () => Promise<void>
+  onRefreshCompetitions: () => Promise<void>
   view: MoreView
 }) {
   if (view === 'portal') {
@@ -2133,7 +2174,7 @@ function MoreSubview({
   }
 
   if (view === 'campus') return <LinkList items={data.campusLinks} />
-  if (view === 'traffic') return <LinkList items={data.traffic} />
+  if (view === 'traffic') return <CampusMapScreen />
 
   if (view === 'announcements') {
     return data.announcements.length ? (
@@ -2155,21 +2196,12 @@ function MoreSubview({
   }
 
   if (view === 'competitions') {
-    return data.externalCompetitions.length ? (
-      <section className="source-list-view">
-        <div className="source-list-summary competition">
-          <Trophy size={18} />
-          <span>中原大學創新創業發展中心 · 最新 {data.externalCompetitions.length} 筆</span>
-        </div>
-        <LinkList items={data.externalCompetitions.map((item) => ({
-          id: item.id,
-          title: item.title,
-          subtitle: `${item.source} · ${item.publishedAt}`,
-          url: item.url,
-        }))} />
-      </section>
-    ) : (
-      <div className="inline-empty"><Trophy size={24} /><span>目前沒有取得校外競賽資料</span></div>
+    return (
+      <ExternalCompetitionScreen
+        items={data.externalCompetitions}
+        onRefresh={onRefreshCompetitions}
+        refreshing={competitionRefreshing}
+      />
     )
   }
 
@@ -2184,6 +2216,120 @@ function MoreSubview({
     </div>
   ) : (
     <div className="inline-empty"><CalendarDays size={24} /><span>尚未取得海大官方行事曆</span></div>
+  )
+}
+
+function ExternalCompetitionScreen({
+  items,
+  onRefresh,
+  refreshing,
+}: {
+  items: ExternalCompetition[]
+  onRefresh: () => Promise<void>
+  refreshing: boolean
+}) {
+  const [error, setError] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    setError(null)
+    try {
+      await onRefresh()
+    } catch (refreshError) {
+      setError(messageFromError(refreshError))
+    }
+  }, [onRefresh])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  if (!items.length && refreshing) {
+    return (
+      <div className="inline-empty">
+        <RefreshCw className="spin" size={24} />
+        <span>正在取得最新校外競賽</span>
+      </div>
+    )
+  }
+
+  if (!items.length) {
+    return (
+      <div className="inline-empty">
+        <Trophy size={24} />
+        <strong>目前沒有取得校外競賽資料</strong>
+        {error ? <span>{error}</span> : null}
+        <button className="inline-retry" type="button" onClick={() => void refresh()}>
+          <RefreshCw size={17} />重新整理
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <section className="source-list-view">
+      <div className="source-list-summary competition">
+        <Trophy size={18} />
+        <span>中原大學創新創業發展中心 · 最新 {items.length} 筆</span>
+        <button
+          type="button"
+          aria-label="重新整理校外競賽"
+          disabled={refreshing}
+          onClick={() => void refresh()}
+        >
+          <RefreshCw className={refreshing ? 'spin' : undefined} size={17} />
+        </button>
+      </div>
+      {error ? <div className="source-list-warning">更新失敗，暫時顯示上次資料：{error}</div> : null}
+      <LinkList items={items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        subtitle: `${item.source} · ${item.publishedAt}`,
+        url: item.url,
+      }))} />
+    </section>
+  )
+}
+
+function CampusMapScreen() {
+  const [zoom, setZoom] = useState(1)
+
+  return (
+    <section className="campus-map-screen">
+      <div className="campus-map-toolbar">
+        <div>
+          <MapPinned size={19} />
+          <span>海大基隆校區館樓配置簡圖</span>
+        </div>
+        <div className="campus-map-zoom" aria-label="地圖縮放控制">
+          <button
+            type="button"
+            aria-label="縮小地圖"
+            disabled={zoom <= 1}
+            onClick={() => setZoom((value) => Math.max(1, value - 0.5))}
+          >
+            <ZoomOut size={18} />
+          </button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button
+            type="button"
+            aria-label="放大地圖"
+            disabled={zoom >= 3}
+            onClick={() => setZoom((value) => Math.min(3, value + 0.5))}
+          >
+            <ZoomIn size={18} />
+          </button>
+        </div>
+      </div>
+      <div className="campus-map-scroll">
+        <img
+          alt="國立臺灣海洋大學基隆校區館樓配置簡圖"
+          className="campus-map-image"
+          src="/ntou-campus-map-2026.jpg"
+          style={{ width: `${zoom * 100}%` }}
+        />
+      </div>
+      <p className="campus-map-source">海大教務處 2026.7.27 版 · 使用上方按鈕放大後可拖曳查看</p>
+    </section>
   )
 }
 
