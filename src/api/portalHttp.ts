@@ -1,4 +1,4 @@
-import { Capacitor, registerPlugin } from '@capacitor/core'
+import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core'
 import type { HttpHeaders, HttpOptions } from '@capacitor/core'
 import { ApiError } from './errors'
 
@@ -137,6 +137,60 @@ const cookieHeaderFromSetCookie = (headers: HttpHeaders) => {
 export const getPortalCookieHeader = async (responseHeaders?: HttpHeaders) => {
   const cookiesFromHeaders = responseHeaders ? cookieHeaderFromSetCookie(responseHeaders) : ''
   return isNative() ? '' : cookiesFromHeaders
+}
+
+/**
+ * Fetches public web pages without sharing the AIS cookie jar or the custom
+ * Portal transport. Public sources can have different TLS, redirect, and
+ * cookie requirements, so keeping them separate prevents a source-site
+ * failure from being reported as an AIS/Portal failure.
+ */
+export const publicPageRequest = async (
+  options: PortalRequestOptions,
+  sourceLabel: string,
+): Promise<PortalResponse> => {
+  const timeoutMs = options.timeoutMs ?? NATIVE_REQUEST_TIMEOUT_MS
+
+  try {
+    if (isNative()) {
+      const response = await withNativeTimeout(
+        CapacitorHttp.request({
+          url: options.url,
+          method: options.method ?? 'GET',
+          headers: normalizeHeaders(options.headers),
+          data: typeof options.data === 'string' ? options.data : undefined,
+          responseType: 'text',
+          connectTimeout: timeoutMs,
+          readTimeout: timeoutMs,
+        }),
+        `${sourceLabel}連線逾時，請稍後再試`,
+        timeoutMs + 5000,
+      )
+
+      return {
+        status: response.status,
+        data: typeof response.data === 'string' ? response.data : JSON.stringify(response.data ?? ''),
+        headers: response.headers,
+        url: response.url,
+      }
+    }
+
+    const response = await fetch(options.url, {
+      method: options.method ?? 'GET',
+      headers: normalizeHeaders(options.headers),
+      body: typeof options.data === 'string' ? options.data : undefined,
+    })
+
+    return {
+      status: response.status,
+      data: await response.text(),
+      headers: Object.fromEntries(response.headers.entries()),
+      url: response.url,
+    }
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(`${sourceLabel}暫時無法連線，已保留上次資料`, 503, 'PUBLIC_SOURCE_UNAVAILABLE')
+  }
 }
 
 export const portalImageDataUrl = async (url: string, referer: string, cookieHeader?: string) => {

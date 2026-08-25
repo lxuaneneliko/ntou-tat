@@ -25,6 +25,7 @@ import {
   launchPortalSystemPage,
   portalImageDataUrl,
   portalRequest,
+  publicPageRequest,
 } from './portalHttp'
 import {
   hasAisAuthCookie,
@@ -463,11 +464,11 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
     },
 
     async getAnnouncements(): Promise<Announcement[]> {
-      const response = await portalRequest({
+      const response = await publicPageRequest({
         url: PUBLIC_ANNOUNCEMENTS_URL,
         method: 'GET',
         headers: { Accept: 'text/html,application/xhtml+xml' },
-      })
+      }, '海大學校公告')
       assertOk(response, '無法取得海大校務公告')
       const announcements = parseNtouAnnouncements(response.data)
       if (!announcements.length) {
@@ -477,11 +478,11 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
     },
 
     async getExternalCompetitions(): Promise<ExternalCompetition[]> {
-      const response = await portalRequest({
+      const response = await publicPageRequest({
         url: EXTERNAL_COMPETITIONS_URL,
         method: 'GET',
         headers: { Accept: 'text/html,application/xhtml+xml' },
-      })
+      }, '中原大學校外競賽來源')
       assertOk(response, '無法取得校外競賽')
       const competitions = parseExternalCompetitions(response.data)
       if (!competitions.length) {
@@ -491,11 +492,11 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
     },
 
     async getCalendar(from, to): Promise<CalendarEvent[]> {
-      const response = await portalRequest({
+      const response = await publicPageRequest({
         url: PUBLIC_CALENDAR_URL,
         method: 'GET',
         headers: { Accept: 'text/html,application/xhtml+xml' },
-      })
+      }, '海大官方行事曆')
       assertOk(response, '無法取得海大官方行事曆')
       return filterCalendarRange(parseNtouPublicCalendar(response.data), from, to)
     },
