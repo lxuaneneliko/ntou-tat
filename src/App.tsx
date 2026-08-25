@@ -40,7 +40,7 @@ import { emergencyContacts, emptyCredits } from './api/publicData'
 import { clearPortalSession } from './api/portal'
 import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
-import { MailScreen } from './MailScreen'
+import { MailScreen, type MailScreenHandle } from './MailScreen'
 import { authStore } from './storage/authStorage'
 import {
   personalEventsForStudent,
@@ -52,10 +52,10 @@ import { isHolidayCalendarEvent, shouldMarkCalendarDate } from './api/publicCale
 import { semestersForStudent } from './semester'
 import {
   fetchLatestAppUpdate,
+  millisecondsUntilNextUpdateCheck,
+  scheduleNextScheduledUpdateCheck,
   scheduleNextUpdateCheck,
   shouldCheckForUpdate,
-  UPDATE_CHECK_INTERVAL_MS,
-  UPDATE_REMIND_LATER_MS,
   UPDATE_RETRY_INTERVAL_MS,
   type AppUpdate,
 } from './update'
@@ -335,7 +335,34 @@ function App() {
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
   const [availableUpdate, setAvailableUpdate] = useState<AppUpdate | null>(null)
   const [installedVersion, setInstalledVersion] = useState('')
+  const [exitHintVisible, setExitHintVisible] = useState(false)
   const updateCheckRunningRef = useRef(false)
+  const mailScreenRef = useRef<MailScreenHandle>(null)
+  const lastRootBackAtRef = useRef(0)
+  const exitHintTimerRef = useRef<number | undefined>(undefined)
+
+  const clearExitHint = useCallback(() => {
+    lastRootBackAtRef.current = 0
+    setExitHintVisible(false)
+    if (exitHintTimerRef.current !== undefined) {
+      window.clearTimeout(exitHintTimerRef.current)
+      exitHintTimerRef.current = undefined
+    }
+  }, [])
+
+  const requestAppExit = useCallback(() => {
+    const now = Date.now()
+    if (now - lastRootBackAtRef.current <= 2000) {
+      clearExitHint()
+      void CapApp.exitApp()
+      return
+    }
+
+    lastRootBackAtRef.current = now
+    setExitHintVisible(true)
+    if (exitHintTimerRef.current !== undefined) window.clearTimeout(exitHintTimerRef.current)
+    exitHintTimerRef.current = window.setTimeout(() => clearExitHint(), 2000)
+  }, [clearExitHint])
 
   const checkForUpdate = useCallback(async () => {
     if (!Capacitor.isNativePlatform() || updateCheckRunningRef.current || !shouldCheckForUpdate()) {
@@ -347,7 +374,7 @@ function App() {
       const appInfo = await CapApp.getInfo()
       setInstalledVersion(appInfo.version)
       const update = await fetchLatestAppUpdate(appInfo.version)
-      scheduleNextUpdateCheck(UPDATE_CHECK_INTERVAL_MS)
+      scheduleNextScheduledUpdateCheck()
       setAvailableUpdate(update)
     } catch {
       scheduleNextUpdateCheck(UPDATE_RETRY_INTERVAL_MS)
@@ -357,7 +384,7 @@ function App() {
   }, [])
 
   const remindAboutUpdateLater = useCallback(() => {
-    scheduleNextUpdateCheck(UPDATE_REMIND_LATER_MS)
+    scheduleNextScheduledUpdateCheck()
     setAvailableUpdate(null)
   }, [])
 
@@ -637,12 +664,30 @@ function App() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
 
-    void checkForUpdate()
+    let active = true
+    let generation = 0
+    let timer: number | undefined
+
+    const runAndSchedule = async () => {
+      const currentGeneration = ++generation
+      if (timer !== undefined) window.clearTimeout(timer)
+      await checkForUpdate()
+      if (!active || currentGeneration !== generation) return
+      timer = window.setTimeout(() => void runAndSchedule(), millisecondsUntilNextUpdateCheck())
+    }
+
+    void runAndSchedule()
     const updateListener = CapApp.addListener('appStateChange', ({ isActive }) => {
-      if (isActive) void checkForUpdate()
+      active = isActive
+      generation += 1
+      if (timer !== undefined) window.clearTimeout(timer)
+      if (isActive) void runAndSchedule()
     })
 
     return () => {
+      active = false
+      generation += 1
+      if (timer !== undefined) window.clearTimeout(timer)
       void updateListener.then((handle) => handle.remove())
     }
   }, [checkForUpdate])
@@ -686,25 +731,50 @@ function App() {
 
     const handleBackButton = CapApp.addListener('backButton', () => {
       if (availableUpdate) {
+        clearExitHint()
         remindAboutUpdateLater()
+      } else if (headerMenuOpen) {
+        clearExitHint()
+        setHeaderMenuOpen(false)
       } else if (isAddCalendarEventOpen) {
+        clearExitHint()
         setIsAddCalendarEventOpen(false)
       } else if (isAddCourseOpen) {
+        clearExitHint()
         setIsAddCourseOpen(false)
       } else if (isAddGradeOpen) {
+        clearExitHint()
         setIsAddGradeOpen(false)
       } else if (activeCourse) {
+        clearExitHint()
         setActiveCourse(null)
+      } else if (selectedTab === 'mail' && mailScreenRef.current?.goBack()) {
+        clearExitHint()
       } else if (moreView) {
+        clearExitHint()
         setMoreView(null)
       } else {
-        void CapApp.minimizeApp()
+        requestAppExit()
       }
     })
     return () => {
       void handleBackButton.then((h: { remove: () => void }) => h.remove())
     }
-  }, [activeCourse, availableUpdate, moreView, isAddCalendarEventOpen, isAddCourseOpen, isAddGradeOpen, remindAboutUpdateLater])
+  }, [
+    activeCourse,
+    availableUpdate,
+    clearExitHint,
+    headerMenuOpen,
+    isAddCalendarEventOpen,
+    isAddCourseOpen,
+    isAddGradeOpen,
+    moreView,
+    remindAboutUpdateLater,
+    requestAppExit,
+    selectedTab,
+  ])
+
+  useEffect(() => () => clearExitHint(), [clearExitHint])
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
@@ -949,13 +1019,17 @@ function App() {
       update={availableUpdate}
       onClose={remindAboutUpdateLater}
       onDownload={() => {
-        scheduleNextUpdateCheck(UPDATE_REMIND_LATER_MS)
+        scheduleNextScheduledUpdateCheck()
         setAvailableUpdate(null)
       }}
     />
   ) : null
 
-  if (isBooting) return <><LoadingScreen />{updateSheet}</>
+  const exitHint = exitHintVisible ? (
+    <div className="exit-hint" role="status">再按一次返回鍵即可離開海大 TAT</div>
+  ) : null
+
+  if (isBooting) return <><LoadingScreen />{updateSheet}{exitHint}</>
 
   if (!session || !data) {
     return (
@@ -970,6 +1044,7 @@ function App() {
         onLogin={handleLogin}
       />
       {updateSheet}
+      {exitHint}
       </>
     )
   }
@@ -1139,7 +1214,7 @@ function App() {
                 }}
               />
             ) : selectedTab === 'mail' ? (
-              <MailScreen studentId={data.profile.id} />
+              <MailScreen ref={mailScreenRef} studentId={data.profile.id} />
             ) : (
               <MoreScreen
                 avatarUrl={customAvatar}
@@ -1264,6 +1339,7 @@ function App() {
         ) : null}
 
         {updateSheet}
+        {exitHint}
       </div>
     </div>
   )

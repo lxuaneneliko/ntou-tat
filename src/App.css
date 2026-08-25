@@ -847,6 +847,31 @@ button:disabled {
   background: #ffcf63;
 }
 
+.exit-hint {
+  position: fixed;
+  z-index: 1200;
+  left: 50%;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  max-width: calc(100vw - 32px);
+  padding: 11px 16px;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 7px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: exit-hint-in 160ms ease-out both;
+}
+
+@keyframes exit-hint-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 .calendar-markers .holiday,
 .agenda-row.holiday .agenda-dot {
   background: #ff6b81;
@@ -1217,6 +1242,31 @@ button:disabled {
 .mail-account-actions button:active,
 .mail-detail-toolbar button:active {
   background: rgba(255, 255, 255, 0.08);
+}
+
+.mail-account-actions .mail-notification-button.active {
+  color: #6fc7ff;
+  background: rgba(111, 199, 255, 0.12);
+}
+
+.mail-account-actions button:disabled {
+  opacity: 0.55;
+}
+
+@media (max-width: 380px) {
+  .mail-account-strip {
+    gap: 9px;
+  }
+
+  .mail-account-actions button {
+    width: 36px;
+  }
+
+  .mail-account-strip > div:not(.mail-account-actions) span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .mail-error {

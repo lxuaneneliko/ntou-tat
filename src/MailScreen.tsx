@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Browser } from '@capacitor/browser'
 import {
   AlertCircle,
   Archive,
   ArrowLeft,
+  Bell,
   Download,
   File,
   Forward,
@@ -43,6 +44,10 @@ const PAGE_SIZE = 30
 const MAX_OUTGOING_BYTES = 20 * 1024 * 1024
 
 type ComposeState = MailDraft & { mode: 'new' | 'reply' | 'forward' }
+
+export type MailScreenHandle = {
+  goBack: () => boolean
+}
 
 const emptyCompose = (): ComposeState => ({ mode: 'new', to: '', cc: '', bcc: '', subject: '', body: '', attachments: [] })
 
@@ -108,7 +113,7 @@ const connectMailFrameLinks = (frame: HTMLIFrameElement) => {
   })
 }
 
-export function MailScreen({ studentId }: { studentId: string }) {
+export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(function MailScreen({ studentId }, ref) {
   const [account, setAccount] = useState(studentId)
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(true)
@@ -121,6 +126,8 @@ export function MailScreen({ studentId }: { studentId: string }) {
   const [busy, setBusy] = useState(false)
   const [paging, setPaging] = useState(false)
   const [actionBusy, setActionBusy] = useState(false)
+  const [notificationBusy, setNotificationBusy] = useState(false)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [detailBusyUid, setDetailBusyUid] = useState<string | null>(null)
   const [showHeaders, setShowHeaders] = useState(false)
   const [showRemoteImages, setShowRemoteImages] = useState(false)
@@ -133,9 +140,29 @@ export function MailScreen({ studentId }: { studentId: string }) {
 
   const currentFolder = folders.find((folder) => folder.id === folderId)
 
+  useImperativeHandle(ref, () => ({
+    goBack: () => {
+      if (compose) {
+        setCompose(null)
+        return true
+      }
+      if (detail) {
+        setDetail(null)
+        return true
+      }
+      return false
+    },
+  }), [compose, detail])
+
   const handleAuthFailure = useCallback(async (loadError: unknown) => {
     if (mailErrorCode(loadError) !== 'MAIL_AUTH_FAILED') return false
+    try {
+      await mailApi.setNotifications(false)
+    } catch {
+      // Credential cleanup below remains authoritative for the signed-out UI.
+    }
     await mailCredentialsStore.clear()
+    setNotificationsEnabled(false)
     setCredentials(null)
     setPassword('')
     setPage(null)
@@ -177,6 +204,18 @@ export function MailScreen({ studentId }: { studentId: string }) {
     })
     return () => { cancelled = true }
   }, [loadMailbox])
+
+  useEffect(() => {
+    let cancelled = false
+    void mailApi.getNotificationSettings()
+      .then((settings) => {
+        if (!cancelled) setNotificationsEnabled(settings.enabled)
+      })
+      .catch(() => {
+        if (!cancelled) setNotificationsEnabled(false)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   const login = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -367,8 +406,37 @@ export function MailScreen({ studentId }: { studentId: string }) {
     }
   }
 
+  const toggleNotifications = async () => {
+    if (!credentials || notificationBusy) return
+    const nextEnabled = !notificationsEnabled
+    setNotificationBusy(true)
+    setError(null)
+    try {
+      const settings = await mailApi.setNotifications(nextEnabled, nextEnabled ? credentials : undefined)
+      setNotificationsEnabled(settings.enabled)
+      if (settings.enabled) {
+        await mailCredentialsStore.save(credentials)
+        setRemember(true)
+        setNotice('新信通知已開啟；背景會定期檢查 Mail2000')
+      } else {
+        setNotice('新信通知已關閉')
+      }
+    } catch (notificationError) {
+      setNotificationsEnabled(false)
+      setError(mailErrorMessage(notificationError))
+    } finally {
+      setNotificationBusy(false)
+    }
+  }
+
   const logoutMail = async () => {
+    try {
+      await mailApi.setNotifications(false)
+    } catch {
+      // Signing out still clears the local credentials if background work is unavailable.
+    }
     await mailCredentialsStore.clear()
+    setNotificationsEnabled(false)
     setCredentials(null)
     setPage(null)
     setFolders([])
@@ -488,6 +556,17 @@ export function MailScreen({ studentId }: { studentId: string }) {
         <span className="mail-account-icon"><Mail size={25} /></span>
         <div><strong>Mail2000</strong><span>{page?.account ?? credentials.account}@mail.ntou.edu.tw</span></div>
         <div className="mail-account-actions">
+          <button
+            className={notificationsEnabled ? 'mail-notification-button active' : 'mail-notification-button'}
+            type="button"
+            aria-label={notificationsEnabled ? '關閉新信通知' : '開啟新信通知'}
+            aria-pressed={notificationsEnabled}
+            title={notificationsEnabled ? '新信通知：已開啟' : '新信通知：已關閉'}
+            disabled={notificationBusy}
+            onClick={() => void toggleNotifications()}
+          >
+            {notificationBusy ? <Loader2 className="spin" size={19} /> : <Bell fill={notificationsEnabled ? 'currentColor' : 'none'} size={19} />}
+          </button>
           <button type="button" aria-label="新增郵件" onClick={() => setCompose(emptyCompose())}><PenLine size={20} /></button>
           <button type="button" aria-label="重新整理" disabled={busy} onClick={() => void loadMailbox(credentials, folderId)}><RefreshCw className={busy ? 'spin' : ''} size={20} /></button>
           <button type="button" aria-label="登出信箱" onClick={() => void logoutMail()}><LogOut size={20} /></button>
@@ -513,4 +592,4 @@ export function MailScreen({ studentId }: { studentId: string }) {
       <button className="mail-compose-fab" type="button" aria-label="新增郵件" onClick={() => setCompose(emptyCompose())}><PenLine size={22} /></button>
     </section>
   )
-}
+})

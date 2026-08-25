@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isNewerVersion, parseLatestRelease, releaseHighlights } from './update'
+import { isNewerVersion, nextScheduledUpdateCheckAt, parseLatestRelease, releaseHighlights } from './update'
 
 describe('app update helpers', () => {
   it('compares numeric version segments', () => {
@@ -42,5 +42,22 @@ describe('app update helpers', () => {
       '新增功能',
       '詳細說明',
     ])
+  })
+
+  it('checks for app updates at 04:30, 10:30, 16:30, and 22:30', () => {
+    const cases = [
+      [new Date(2026, 7, 25, 1, 0).getTime(), 25, 4],
+      [new Date(2026, 7, 25, 6, 0).getTime(), 25, 10],
+      [new Date(2026, 7, 25, 12, 0).getTime(), 25, 16],
+      [new Date(2026, 7, 25, 18, 0).getTime(), 25, 22],
+      [new Date(2026, 7, 25, 23, 0).getTime(), 26, 4],
+    ]
+
+    cases.forEach(([now, expectedDate, expectedHour]) => {
+      const scheduled = new Date(nextScheduledUpdateCheckAt(now))
+      expect(scheduled.getDate()).toBe(expectedDate)
+      expect(scheduled.getHours()).toBe(expectedHour)
+      expect(scheduled.getMinutes()).toBe(30)
+    })
   })
 })

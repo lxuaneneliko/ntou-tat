@@ -1,6 +1,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core'
 
 export type MailCredentials = { account: string; password: string }
+export type MailNotificationSettings = { enabled: boolean; permissionGranted: boolean }
 export type MailFolderKind = 'inbox' | 'sent' | 'drafts' | 'archive' | 'trash' | 'spam' | 'starred' | 'custom'
 export type MailFolder = { id: string; name: string; kind: MailFolderKind; unread: number; total: number }
 export type MailSummary = {
@@ -48,6 +49,8 @@ export type MailDraft = {
 
 type NativeMailPlugin = {
   login(options: MailCredentials): Promise<{ account: string }>
+  getNotificationSettings(): Promise<MailNotificationSettings>
+  setNotifications(options: { enabled: boolean; account?: string; password?: string }): Promise<MailNotificationSettings>
   listFolders(options: MailCredentials): Promise<{ folders: MailFolder[] }>
   listMessages(options: MailCredentials & { folder: string; offset?: number; limit?: number }): Promise<MailInbox>
   getMessage(options: MailCredentials & { folder: string; uid: string }): Promise<MailDetail>
@@ -59,6 +62,7 @@ type NativeMailPlugin = {
 
 const NativeMail = registerPlugin<NativeMailPlugin>('NtouMail')
 const isMailMock = import.meta.env.VITE_NTOU_AUTH_MODE === 'mock'
+let mockNotificationsEnabled = false
 
 const mockFolders: MailFolder[] = [
   { id: 'INBOX', name: '收件匣', kind: 'inbox', unread: 2, total: 5 },
@@ -94,6 +98,22 @@ export const mailApi = {
     requireNative()
     if (isMailMock) return { account: normalizeMailAccount(credentials.account) }
     return NativeMail.login(normalizedCredentials(credentials))
+  },
+  async getNotificationSettings() {
+    requireNative()
+    if (isMailMock) return { enabled: mockNotificationsEnabled, permissionGranted: true }
+    return NativeMail.getNotificationSettings()
+  },
+  async setNotifications(enabled: boolean, credentials?: MailCredentials) {
+    requireNative()
+    if (isMailMock) {
+      mockNotificationsEnabled = enabled
+      return { enabled, permissionGranted: true }
+    }
+    return NativeMail.setNotifications({
+      enabled,
+      ...(credentials ? normalizedCredentials(credentials) : {}),
+    })
   },
   async listFolders(credentials: MailCredentials) {
     requireNative()

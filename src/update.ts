@@ -1,11 +1,10 @@
 export const LATEST_RELEASE_URL =
   'https://api.github.com/repos/lxuaneneliko/ntou-tat/releases/latest'
 
-export const UPDATE_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000
-export const UPDATE_REMIND_LATER_MS = 24 * 60 * 60 * 1000
 export const UPDATE_RETRY_INTERVAL_MS = 60 * 60 * 1000
 
-const NEXT_UPDATE_CHECK_KEY = 'ntou-update-next-check-at-v1'
+const NEXT_UPDATE_CHECK_KEY = 'ntou-update-next-check-at-v4'
+const DAILY_UPDATE_CHECK_HOURS = [4, 10, 16, 22]
 
 type GitHubReleaseAsset = {
   browser_download_url?: unknown
@@ -130,10 +129,42 @@ export const shouldCheckForUpdate = (now = Date.now()) => {
   }
 }
 
+export const nextScheduledUpdateCheckAt = (now = Date.now()) => {
+  const current = new Date(now)
+  for (const hour of DAILY_UPDATE_CHECK_HOURS) {
+    const candidate = new Date(current)
+    candidate.setHours(hour, 30, 0, 0)
+    if (candidate.getTime() > now) return candidate.getTime()
+  }
+
+  const nextMorning = new Date(current)
+  nextMorning.setDate(nextMorning.getDate() + 1)
+  nextMorning.setHours(DAILY_UPDATE_CHECK_HOURS[0], 30, 0, 0)
+  return nextMorning.getTime()
+}
+
 export const scheduleNextUpdateCheck = (delay: number, now = Date.now()) => {
   try {
     localStorage.setItem(NEXT_UPDATE_CHECK_KEY, String(now + delay))
   } catch {
     // Update checks still work when WebView storage is unavailable.
   }
+}
+
+export const scheduleNextScheduledUpdateCheck = (now = Date.now()) => {
+  try {
+    localStorage.setItem(NEXT_UPDATE_CHECK_KEY, String(nextScheduledUpdateCheckAt(now)))
+  } catch {
+    // The foreground timer still uses the next scheduled window without storage.
+  }
+}
+
+export const millisecondsUntilNextUpdateCheck = (now = Date.now()) => {
+  try {
+    const stored = Number(localStorage.getItem(NEXT_UPDATE_CHECK_KEY) ?? 0)
+    if (Number.isFinite(stored) && stored > now) return stored - now
+  } catch {
+    // Fall through to the next scheduled window when storage is unavailable.
+  }
+  return Math.max(1000, nextScheduledUpdateCheckAt(now) - now)
 }

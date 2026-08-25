@@ -1,7 +1,9 @@
 package com.lxuan.ntou_tat;
 
+import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Base64;
 import androidx.core.content.FileProvider;
 import com.getcapacitor.JSArray;
@@ -10,6 +12,8 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 import jakarta.activation.DataHandler;
 import jakarta.mail.Address;
 import jakarta.mail.AuthenticationFailedException;
@@ -43,7 +47,10 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
 
-@CapacitorPlugin(name = "NtouMail")
+@CapacitorPlugin(
+    name = "NtouMail",
+    permissions = { @Permission(alias = "notifications", strings = { Manifest.permission.POST_NOTIFICATIONS }) }
+)
 public class NtouMailPlugin extends Plugin {
 
     private static final String HOST = "mail.ntou.edu.tw";
@@ -72,6 +79,39 @@ public class NtouMailPlugin extends Plugin {
                 closeStore(store);
             }
         });
+    }
+
+    @PluginMethod
+    public void getNotificationSettings(PluginCall call) {
+        call.resolve(notificationSettingsJson());
+    }
+
+    @PluginMethod
+    public void setNotifications(PluginCall call) {
+        boolean enabled = Boolean.TRUE.equals(call.getBoolean("enabled", false));
+        if (!enabled) {
+            MailNotificationWorker.disable(getContext());
+            call.resolve(notificationSettingsJson());
+            return;
+        }
+
+        if (readCredentials(call) == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            && !MailNotificationWorker.canPostNotifications(getContext())) {
+            requestPermissionForAlias("notifications", call, "notificationPermissionCallback");
+            return;
+        }
+        enableNotifications(call);
+    }
+
+    @PermissionCallback
+    public void notificationPermissionCallback(PluginCall call) {
+        if (!MailNotificationWorker.canPostNotifications(getContext())) {
+            MailNotificationWorker.disable(getContext());
+            call.reject("未允許通知權限，Mail2000 新信通知仍為關閉", "MAIL_NOTIFICATION_PERMISSION_DENIED");
+            return;
+        }
+        enableNotifications(call);
     }
 
     @PluginMethod
@@ -378,6 +418,47 @@ public class NtouMailPlugin extends Plugin {
             return null;
         }
         return new Credentials(account, password);
+    }
+
+    private void enableNotifications(PluginCall call) {
+        Credentials credentials = readCredentials(call);
+        if (credentials == null) return;
+        getBridge().execute(() -> {
+            Store store = null;
+            Folder folder = null;
+            try {
+                store = connect(credentials);
+                folder = openFolder(store, "INBOX", Folder.READ_ONLY);
+                UIDFolder uidFolder = asUidFolder(folder);
+                int count = folder.getMessageCount();
+                long latestUid = count > 0 ? uidFolder.getUID(folder.getMessage(count)) : 0L;
+                long uidValidity = uidFolder.getUIDValidity();
+                MailNotificationWorker.enable(
+                    getContext(),
+                    credentials.account,
+                    credentials.password,
+                    latestUid,
+                    uidValidity
+                );
+                call.resolve(notificationSettingsJson());
+            } catch (Exception exception) {
+                reject(call, exception);
+            } finally {
+                closeFolder(folder, false);
+                closeStore(store);
+            }
+        });
+    }
+
+    private JSObject notificationSettingsJson() {
+        boolean permissionGranted = MailNotificationWorker.canPostNotifications(getContext());
+        if (!permissionGranted && MailNotificationWorker.isEnabled(getContext())) {
+            MailNotificationWorker.disable(getContext());
+        }
+        JSObject result = new JSObject();
+        result.put("enabled", MailNotificationWorker.isEnabled(getContext()) && permissionGranted);
+        result.put("permissionGranted", permissionGranted);
+        return result;
     }
 
     private Session createSession() {
