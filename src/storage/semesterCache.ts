@@ -90,6 +90,9 @@ export const semesterCacheProgress = (entry: SemesterCacheEntry) => {
   return (timetableReady ? 50 : 0) + (entry.gradesCached ? 50 : 0)
 }
 
+export const shouldPrefetchSemester = (entry: SemesterCacheEntry) =>
+  semesterCacheProgress(entry) < 100
+
 export const markEmptyTimetableVerified = (
   entry: SemesterCacheEntry,
   verifiedAt = new Date().toISOString(),

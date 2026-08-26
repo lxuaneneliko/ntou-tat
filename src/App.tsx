@@ -91,6 +91,7 @@ import {
   markEmptyTimetableVerified,
   readSemesterCache,
   semesterCacheProgress,
+  shouldPrefetchSemester,
   shouldRecoverEmptyTimetable,
   withCachedGrades,
   withCachedTimetable,
@@ -702,6 +703,12 @@ function App() {
         const current = dataRef.current
         if (!current) break
 
+        const cachedBeforePrefetch = await readCachedSemesterEntry(
+          current.profile.id,
+          semesterId,
+        )
+        if (!shouldPrefetchSemester(cachedBeforePrefetch)) continue
+
         setSemesterPrefetchProgress({
           semesterId,
           percent: 0,
@@ -800,7 +807,7 @@ function App() {
     })
 
     semesterPrefetchTaskRef.current = task
-  }, [loadLoginChallenge, loadSemesterIntoCache])
+  }, [loadLoginChallenge, loadSemesterIntoCache, readCachedSemesterEntry])
 
   runSemesterPrefetchRef.current = runSemesterPrefetchQueue
 

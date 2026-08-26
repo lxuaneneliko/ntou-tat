@@ -5,6 +5,7 @@ import {
   markEmptyTimetableVerified,
   normalizeSemesterCacheEntry,
   semesterCacheProgress,
+  shouldPrefetchSemester,
   shouldRecoverEmptyTimetable,
   withCachedGrades,
   withCachedTimetable,
@@ -97,6 +98,7 @@ describe('semester cache', () => {
     expect(completed.timetableCached).toBe(true)
     expect(completed.gradesCached).toBe(true)
     expect(semesterCacheProgress(completed)).toBe(100)
+    expect(shouldPrefetchSemester(completed)).toBe(false)
     expect(completed.timetableSavedAt).toBe('2026-08-26T01:00:00.000Z')
     expect(completed.gradesSavedAt).toBe('2026-08-26T01:01:00.000Z')
   })
@@ -123,9 +125,11 @@ describe('semester cache', () => {
 
     expect(shouldRecoverEmptyTimetable(entry)).toBe(true)
     expect(semesterCacheProgress(entry)).toBe(50)
+    expect(shouldPrefetchSemester(entry)).toBe(true)
     const verified = markEmptyTimetableVerified(entry, '2026-08-26T01:02:00.000Z')
     expect(shouldRecoverEmptyTimetable(verified)).toBe(false)
     expect(semesterCacheProgress(verified)).toBe(100)
+    expect(shouldPrefetchSemester(verified)).toBe(false)
     expect(verified.timetableEmptyVerifiedAt).toBe('2026-08-26T01:02:00.000Z')
   })
 })
