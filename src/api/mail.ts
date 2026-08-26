@@ -31,9 +31,7 @@ export type MailDetail = MailSummary & {
   messageId: string
   references: string
   body: string
-  bodyHtml: string
   attachments: MailAttachment[]
-  inlineImages: Record<string, string>
 }
 export type MailOutgoingAttachment = { name: string; mimeType: string; data: string }
 export type MailDraft = {
@@ -136,8 +134,7 @@ export const mailApi = {
         ...summary, unread: false, recipients: [`${normalizeMailAccount(credentials.account)}@mail.ntou.edu.tw`], cc: [],
         replyTo: [summary.senderAddress], messageId: `<mock-${uid}@mail.ntou.edu.tw>`, references: '',
         body: '同學您好：\n\n本信包含完整排版、連結、表格與附件，用來確認海大 TAT 信箱畫面。\n\n海大首頁：https://www.ntou.edu.tw/',
-        bodyHtml: '<div style="font-family:Arial,sans-serif"><h2 style="color:#0758ad">選課結果通知</h2><p>同學您好，您的選課結果已完成。</p><table style="width:100%;border-collapse:collapse"><tr><th style="padding:8px;border:1px solid #bbb">課程</th><th style="padding:8px;border:1px solid #bbb">狀態</th></tr><tr><td style="padding:8px;border:1px solid #bbb">資料結構</td><td style="padding:8px;border:1px solid #bbb">選課成功</td></tr></table><p><a href="https://www.ntou.edu.tw/">查看海大網站</a></p><img alt="外部圖片" src="https://www.ntou.edu.tw/var/file/0/1000/img/ntou_logo.png"></div>',
-        attachments: [{ id: '0.1', name: '選課結果.pdf', mimeType: 'application/pdf', size: 245760, inline: false }], inlineImages: {},
+        attachments: [{ id: '0.1', name: '選課結果.pdf', mimeType: 'application/pdf', size: 245760, inline: false }],
       }
     }
     return NativeMail.getMessage({ ...normalizedCredentials(credentials), folder, uid })

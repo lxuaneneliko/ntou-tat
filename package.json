@@ -1,7 +1,7 @@
 {
   "name": "ntou-tat",
   "private": true,
-  "version": "1.13.4",
+  "version": "1.13.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,7 +22,6 @@
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/status-bar": "^8.0.3",
     "capacitor-secure-storage-plugin": "^0.13.0",
-    "dompurify": "^3.4.14",
     "lucide-react": "^1.26.0",
     "onnxruntime-web": "^1.27.0",
     "react": "^19.2.7",

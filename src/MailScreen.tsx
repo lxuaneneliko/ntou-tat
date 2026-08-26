@@ -36,7 +36,6 @@ import type {
   MailSummary,
 } from './api/mail'
 import { mailApi } from './api/mail'
-import { safeMailHtml } from './mailHtml'
 import { mailTextTokens } from './mailLinks'
 import { mailCredentialsStore } from './storage/mailCredentialsStorage'
 
@@ -102,17 +101,6 @@ const openMailLink = async (href: string) => {
   if (/^(mailto:|tel:)/i.test(href)) window.location.href = href
 }
 
-const connectMailFrameLinks = (frame: HTMLIFrameElement) => {
-  frame.contentDocument?.addEventListener('click', (event) => {
-    const target = event.target
-    const anchor = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null
-    const href = anchor?.href ?? ''
-    if (!/^(https?:|mailto:|tel:)/i.test(href)) return
-    event.preventDefault()
-    void openMailLink(href)
-  })
-}
-
 export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(function MailScreen({ studentId }, ref) {
   const [account, setAccount] = useState(studentId)
   const [password, setPassword] = useState('')
@@ -130,8 +118,6 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [detailBusyUid, setDetailBusyUid] = useState<string | null>(null)
   const [showHeaders, setShowHeaders] = useState(false)
-  const [showRemoteImages, setShowRemoteImages] = useState(false)
-  const [plainText, setPlainText] = useState(false)
   const [compose, setCompose] = useState<ComposeState | null>(null)
   const [showCopyFields, setShowCopyFields] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -285,8 +271,6 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
     try {
       const nextDetail = await mailApi.getMessage(credentials, folderId, message.uid)
       setDetail(nextDetail)
-      setPlainText(!nextDetail.bodyHtml)
-      setShowRemoteImages(false)
       setShowHeaders(false)
       if (message.unread) updateSummary(message.uid, { unread: false })
     } catch (loadError) {
@@ -451,11 +435,6 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
     return (page?.messages ?? []).filter((message) => `${message.sender} ${message.senderAddress} ${message.subject}`.toLocaleLowerCase('zh-TW').includes(needle))
   }, [page?.messages, query])
 
-  const safeHtml = useMemo(
-    () => detail?.bodyHtml ? safeMailHtml(detail.bodyHtml, detail.inlineImages, showRemoteImages) : null,
-    [detail?.bodyHtml, detail?.inlineImages, showRemoteImages],
-  )
-
   if (!credentials) {
     return (
       <section className="mail-screen mail-login-screen">
@@ -539,11 +518,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
             <button type="button" onClick={startForward}><Forward size={17} /><span>轉寄</span></button>
             <label><span className="sr-only">移動郵件</span><select aria-label="移動郵件" value="" onChange={(event) => void moveCurrent(event.target.value)}><option value="">移動到…</option>{folders.filter((folder) => folder.id !== folderId).map((folder) => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label>
           </div>
-          {detail.bodyHtml && detail.body ? <div className="mail-body-mode"><button className={!plainText ? 'active' : ''} type="button" onClick={() => setPlainText(false)}>原始排版</button><button className={plainText ? 'active' : ''} type="button" onClick={() => setPlainText(true)}>純文字</button></div> : null}
-          {!plainText && safeHtml ? <>
-            {safeHtml.hasRemoteImages && !showRemoteImages ? <button className="mail-remote-images" type="button" onClick={() => setShowRemoteImages(true)}>為保護隱私，外部圖片已封鎖。點此顯示圖片</button> : null}
-            <iframe className="mail-html-frame" title="郵件內容" sandbox="allow-same-origin" srcDoc={safeHtml.srcDoc} onLoad={(event) => connectMailFrameLinks(event.currentTarget)} />
-          </> : <div className="mail-body">{mailTextTokens(detail.body || '（這封信沒有可顯示的文字內容）').map((token, index) => token.type === 'link' ? <a href={token.href} key={`${index}-${token.href}`} rel="noreferrer" onClick={(event) => { event.preventDefault(); void openMailLink(token.href) }}>{token.value}</a> : <span key={`${index}-text`}>{token.value}</span>)}</div>}
+          <div className="mail-body">{mailTextTokens(detail.body || '（這封信沒有可顯示的文字內容）').map((token, index) => token.type === 'link' ? <a href={token.href} key={`${index}-${token.href}`} rel="noreferrer" onClick={(event) => { event.preventDefault(); void openMailLink(token.href) }}>{token.value}</a> : <span key={`${index}-text`}>{token.value}</span>)}</div>
           {detail.attachments.length ? <div className="mail-attachments"><strong>附件（{detail.attachments.length}）</strong>{detail.attachments.map((attachment) => <button type="button" key={attachment.id} onClick={() => credentials && void mailApi.openAttachment(credentials, folderId, detail.uid, attachment.id).catch((attachmentError) => setError(mailErrorMessage(attachmentError)))}><File size={19} /><span><b>{attachment.name}</b><small>{attachment.mimeType}{attachment.size ? ` · ${fileSize(attachment.size)}` : ''}</small></span><Download size={18} /></button>)}</div> : null}
         </article>
       </section>

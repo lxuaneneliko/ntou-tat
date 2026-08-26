@@ -58,7 +58,6 @@ public class NtouMailPlugin extends Plugin {
     private static final int SMTP_PORT = 465;
     private static final int MAX_PAGE_SIZE = 50;
     private static final int MAX_BODY_CHARACTERS = 2_000_000;
-    private static final int MAX_INLINE_IMAGE_BYTES = 3 * 1024 * 1024;
     private static final int MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
     private static final int MAX_OUTGOING_BYTES = 20 * 1024 * 1024;
 
@@ -220,9 +219,7 @@ public class NtouMailPlugin extends Plugin {
                 result.put("messageId", firstHeader(message, "Message-ID"));
                 result.put("references", firstHeader(message, "References"));
                 result.put("body", trimBody(content.text));
-                result.put("bodyHtml", trimBody(content.html));
                 result.put("attachments", attachmentMetadata(message));
-                result.put("inlineImages", inlineImages(message));
                 call.resolve(result);
             } catch (Exception exception) {
                 reject(call, exception);
@@ -628,25 +625,6 @@ public class NtouMailPlugin extends Plugin {
         }
     }
 
-    private JSObject inlineImages(Part root) throws MessagingException, IOException {
-        JSObject images = new JSObject();
-        collectInlineImages(root, images);
-        return images;
-    }
-
-    private void collectInlineImages(Part part, JSObject images) throws MessagingException, IOException {
-        String contentId = firstHeader(part, "Content-ID");
-        if (part.isMimeType("image/*") && !contentId.isEmpty() && part.getSize() <= MAX_INLINE_IMAGE_BYTES) {
-            byte[] bytes = readBytes(part.getInputStream(), MAX_INLINE_IMAGE_BYTES);
-            images.put(stripContentId(contentId), "data:" + baseMimeType(part.getContentType()) + ";base64," + Base64.encodeToString(bytes, Base64.NO_WRAP));
-            return;
-        }
-        if (part.isMimeType("multipart/*")) {
-            Multipart multipart = (Multipart) part.getContent();
-            for (int index = 0; index < multipart.getCount(); index++) collectInlineImages(multipart.getBodyPart(index), images);
-        }
-    }
-
     private Part findPart(Part root, String partId) throws MessagingException, IOException {
         Part current = root;
         for (String segment : partId.split("\\.")) {
@@ -789,11 +767,6 @@ public class NtouMailPlugin extends Plugin {
     private String baseMimeType(String contentType) {
         if (contentType == null || contentType.trim().isEmpty()) return "application/octet-stream";
         return contentType.split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
-    }
-
-    private String stripContentId(String value) {
-        String result = value.trim();
-        return result.startsWith("<") && result.endsWith(">") ? result.substring(1, result.length() - 1) : result;
     }
 
     private String safeFileName(String value) {
