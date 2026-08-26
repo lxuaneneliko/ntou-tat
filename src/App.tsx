@@ -2630,7 +2630,7 @@ function ExternalCompetitionScreen({
     <section className="source-list-view">
       <div className="source-list-summary competition">
         <Trophy size={18} />
-        <span>中原大學創新創業發展中心 · 最新 {items.length} 筆</span>
+        <span>創新創業發展中心 · 最新 {items.length} 筆</span>
         <button
           type="button"
           aria-label="重新整理校外競賽"
@@ -2644,7 +2644,7 @@ function ExternalCompetitionScreen({
       <LinkList items={items.map((item) => ({
         id: item.id,
         title: item.title,
-        subtitle: `${item.source} · ${item.publishedAt}`,
+        subtitle: `${item.source.replace(/^中原大學/, '')} · ${item.publishedAt}`,
         url: item.url,
       }))} />
     </section>
