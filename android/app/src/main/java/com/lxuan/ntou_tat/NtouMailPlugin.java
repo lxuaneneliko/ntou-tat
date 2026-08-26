@@ -4,6 +4,9 @@ import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
+import android.text.style.URLSpan;
 import android.util.Base64;
 import androidx.core.content.FileProvider;
 import com.getcapacitor.JSArray;
@@ -43,8 +46,10 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TimeZone;
 
 @CapacitorPlugin(
@@ -58,6 +63,7 @@ public class NtouMailPlugin extends Plugin {
     private static final int SMTP_PORT = 465;
     private static final int MAX_PAGE_SIZE = 50;
     private static final int MAX_BODY_CHARACTERS = 2_000_000;
+    private static final int MAX_INLINE_IMAGE_BYTES = 8 * 1024 * 1024;
     private static final int MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
     private static final int MAX_OUTGOING_BYTES = 20 * 1024 * 1024;
 
@@ -219,6 +225,7 @@ public class NtouMailPlugin extends Plugin {
                 result.put("messageId", firstHeader(message, "Message-ID"));
                 result.put("references", firstHeader(message, "References"));
                 result.put("body", trimBody(content.text));
+                result.put("bodyImages", bodyImages(message, content.html));
                 result.put("attachments", attachmentMetadata(message));
                 call.resolve(result);
             } catch (Exception exception) {
@@ -625,6 +632,117 @@ public class NtouMailPlugin extends Plugin {
         }
     }
 
+    private JSArray bodyImages(Part root, String html) throws MessagingException, IOException {
+        JSArray images = new JSArray();
+        Set<String> seen = new HashSet<>();
+        collectInlineBodyImages(root, "", images, seen);
+        collectHtmlBodyImages(html, images, seen);
+        return images;
+    }
+
+    private void collectInlineBodyImages(Part part, String partId, JSArray images, Set<String> seen)
+        throws MessagingException, IOException {
+        String contentId = firstHeader(part, "Content-ID");
+        boolean inline = Part.INLINE.equalsIgnoreCase(part.getDisposition()) || !contentId.isEmpty();
+        if (part.isMimeType("image/*") && inline) {
+            int size = part.getSize();
+            if (size > MAX_INLINE_IMAGE_BYTES) return;
+            byte[] bytes;
+            try {
+                bytes = readBytes(part.getInputStream(), MAX_INLINE_IMAGE_BYTES);
+            } catch (IOException ignored) {
+                return;
+            }
+            String id = !contentId.isEmpty() ? contentId.replaceAll("^<|>$", "") : partId;
+            if (!seen.add("inline:" + id)) return;
+            String mimeType = baseMimeType(part.getContentType());
+            String fileName = decodeHeader(part.getFileName(), "信件內嵌圖片");
+            JSObject image = new JSObject();
+            image.put("id", "inline-" + (id.isEmpty() ? images.length() : id));
+            image.put("name", fileName);
+            image.put("mimeType", mimeType);
+            image.put("src", "data:" + mimeType + ";base64," + Base64.encodeToString(bytes, Base64.NO_WRAP));
+            image.put("external", false);
+            images.put(image);
+            return;
+        }
+        if (part.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) part.getContent();
+            for (int index = 0; index < multipart.getCount(); index++) {
+                String childId = partId.isEmpty() ? String.valueOf(index) : partId + "." + index;
+                collectInlineBodyImages(multipart.getBodyPart(index), childId, images, seen);
+            }
+        }
+    }
+
+    private void collectHtmlBodyImages(String html, JSArray images, Set<String> seen) {
+        if (html == null || html.trim().isEmpty()) return;
+        Spanned rich = android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_LEGACY);
+
+        for (ImageSpan span : rich.getSpans(0, rich.length(), ImageSpan.class)) {
+            String source = span.getSource() == null ? "" : span.getSource().trim();
+            if (isSafeRemoteImageUrl(source)) {
+                addRemoteBodyImage(images, seen, source, imageNameFromUrl(source));
+            } else if (source.regionMatches(true, 0, "data:image/", 0, "data:image/".length())
+                && source.length() <= MAX_INLINE_IMAGE_BYTES * 2 && seen.add(source)) {
+                JSObject image = new JSObject();
+                image.put("id", "embedded-" + Integer.toHexString(source.hashCode()));
+                image.put("name", "信件內嵌圖片");
+                image.put("mimeType", source.substring(5, Math.max(5, source.indexOf(';'))));
+                image.put("src", source);
+                image.put("external", false);
+                images.put(image);
+            }
+        }
+
+        for (URLSpan span : rich.getSpans(0, rich.length(), URLSpan.class)) {
+            String url = span.getURL() == null ? "" : span.getURL().trim();
+            String label = rich.subSequence(rich.getSpanStart(span), rich.getSpanEnd(span)).toString().trim();
+            if (isSafeRemoteImageUrl(url) && looksLikeImage(label, url)) {
+                addRemoteBodyImage(images, seen, url, label.isEmpty() ? imageNameFromUrl(url) : label);
+            }
+        }
+    }
+
+    private void addRemoteBodyImage(JSArray images, Set<String> seen, String url, String name) {
+        if (!seen.add(url)) return;
+        JSObject image = new JSObject();
+        image.put("id", "remote-" + Integer.toHexString(url.hashCode()));
+        image.put("name", name);
+        image.put("mimeType", imageMimeType(name + " " + url));
+        image.put("src", url);
+        image.put("external", true);
+        images.put(image);
+    }
+
+    private boolean isSafeRemoteImageUrl(String value) {
+        try {
+            Uri url = Uri.parse(value);
+            return "https".equalsIgnoreCase(url.getScheme()) && url.getHost() != null && !url.getHost().isEmpty();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private boolean looksLikeImage(String label, String url) {
+        return (label + " " + url).toLowerCase(Locale.ROOT)
+            .matches("(?s).*\\.(png|jpe?g|gif|webp|bmp)(?:[^a-z0-9].*|$)");
+    }
+
+    private String imageNameFromUrl(String value) {
+        String segment = Uri.parse(value).getLastPathSegment();
+        return segment == null || segment.trim().isEmpty() ? "信件圖片" : segment;
+    }
+
+    private String imageMimeType(String value) {
+        String lower = value.toLowerCase(Locale.ROOT);
+        if (lower.contains(".png")) return "image/png";
+        if (lower.contains(".gif")) return "image/gif";
+        if (lower.contains(".webp")) return "image/webp";
+        if (lower.contains(".bmp")) return "image/bmp";
+        return "image/jpeg";
+    }
+
     private Part findPart(Part root, String partId) throws MessagingException, IOException {
         Part current = root;
         for (String segment : partId.split("\\.")) {
@@ -706,14 +824,33 @@ public class NtouMailPlugin extends Plugin {
     private String decodeHeader(String value, String fallback) {
         if (value == null || value.trim().isEmpty()) return fallback;
         try {
-            return MimeUtility.decodeText(value).trim();
+            return decodeMimeHeader(value);
         } catch (Exception ignored) {
             return value.trim();
         }
     }
 
+    static String decodeMimeHeader(String value) throws Exception {
+        return MimeUtility.decodeText(value.replace("?==?", "?= =?"))
+            .replace("\uFFFD", "")
+            .replaceAll("×(?=\\S)", "× ")
+            .trim();
+    }
+
     private String htmlToText(String html) {
-        return android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_LEGACY).toString();
+        Spanned rich = android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_LEGACY);
+        StringBuilder text = new StringBuilder(rich.toString());
+        URLSpan[] links = rich.getSpans(0, rich.length(), URLSpan.class);
+        Arrays.sort(links, (left, right) -> Integer.compare(rich.getSpanEnd(right), rich.getSpanEnd(left)));
+        for (URLSpan link : links) {
+            String url = link.getURL() == null ? "" : link.getURL().trim();
+            int start = rich.getSpanStart(link);
+            int end = rich.getSpanEnd(link);
+            if (url.isEmpty() || start < 0 || end < start) continue;
+            String label = rich.subSequence(start, end).toString().trim();
+            if (!label.equalsIgnoreCase(url)) text.insert(end, "：" + url);
+        }
+        return text.toString();
     }
 
     private String trimBody(String body) {

@@ -8,6 +8,7 @@ import {
   Download,
   File,
   Forward,
+  Image as ImageIcon,
   Inbox,
   KeyRound,
   Loader2,
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react'
 import type {
   MailCredentials,
+  MailBodyImage,
   MailDetail,
   MailDraft,
   MailFolder,
@@ -117,6 +119,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   const [notificationBusy, setNotificationBusy] = useState(false)
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [detailBusyUid, setDetailBusyUid] = useState<string | null>(null)
+  const [failedBodyImages, setFailedBodyImages] = useState<Set<string>>(new Set())
   const [showHeaders, setShowHeaders] = useState(false)
   const [compose, setCompose] = useState<ComposeState | null>(null)
   const [showCopyFields, setShowCopyFields] = useState(false)
@@ -271,6 +274,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
     try {
       const nextDetail = await mailApi.getMessage(credentials, folderId, message.uid)
       setDetail(nextDetail)
+      setFailedBodyImages(new Set())
       setShowHeaders(false)
       if (message.unread) updateSummary(message.uid, { unread: false })
     } catch (loadError) {
@@ -519,6 +523,19 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
             <label><span className="sr-only">移動郵件</span><select aria-label="移動郵件" value="" onChange={(event) => void moveCurrent(event.target.value)}><option value="">移動到…</option>{folders.filter((folder) => folder.id !== folderId).map((folder) => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label>
           </div>
           <div className="mail-body">{mailTextTokens(detail.body || '（這封信沒有可顯示的文字內容）').map((token, index) => token.type === 'link' ? <a href={token.href} key={`${index}-${token.href}`} rel="noreferrer" onClick={(event) => { event.preventDefault(); void openMailLink(token.href) }}>{token.value}</a> : <span key={`${index}-text`}>{token.value}</span>)}</div>
+          {detail.bodyImages.length ? <div className="mail-body-images">
+            <strong><ImageIcon size={18} />信件圖片（{detail.bodyImages.length}）</strong>
+            {detail.bodyImages.map((image: MailBodyImage) => failedBodyImages.has(image.id) ? (
+              <button className="mail-body-image-fallback" type="button" key={image.id} onClick={() => image.external && void openMailLink(image.src)}>
+                <ImageIcon size={22} /><span><b>{image.name}</b><small>{image.external ? '圖片無法直接載入，點此開啟原始連結' : '圖片資料無法顯示'}</small></span>
+              </button>
+            ) : (
+              <figure key={image.id}>
+                <img src={image.src} alt={image.name} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailedBodyImages((current) => new Set(current).add(image.id))} />
+                <figcaption>{image.name}</figcaption>
+              </figure>
+            ))}
+          </div> : null}
           {detail.attachments.length ? <div className="mail-attachments"><strong>附件（{detail.attachments.length}）</strong>{detail.attachments.map((attachment) => <button type="button" key={attachment.id} onClick={() => credentials && void mailApi.openAttachment(credentials, folderId, detail.uid, attachment.id).catch((attachmentError) => setError(mailErrorMessage(attachmentError)))}><File size={19} /><span><b>{attachment.name}</b><small>{attachment.mimeType}{attachment.size ? ` · ${fileSize(attachment.size)}` : ''}</small></span><Download size={18} /></button>)}</div> : null}
         </article>
       </section>
