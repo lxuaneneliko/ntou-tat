@@ -90,6 +90,7 @@ import {
   clearSemesterCache,
   markEmptyTimetableVerified,
   readSemesterCache,
+  semesterCacheProgress,
   shouldRecoverEmptyTimetable,
   withCachedGrades,
   withCachedTimetable,
@@ -133,9 +134,8 @@ type AppData = {
 type SemesterData = Pick<AppData, 'timetable' | 'grades' | 'credits'>
 
 type SemesterPrefetchProgress = {
-  completed: number
-  total: number
   semesterId: string
+  percent: number
 }
 
 type CalendarEventDraft = Pick<
@@ -355,7 +355,6 @@ function App() {
   const [fileLoadingId, setFileLoadingId] = useState<string | null>(null)
   const [isBooting, setIsBooting] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [semesterLoadingId, setSemesterLoadingId] = useState<string | null>(null)
   const [semesterPrefetchProgress, setSemesterPrefetchProgress] = useState<SemesterPrefetchProgress | null>(null)
   const [calendarRefreshing, setCalendarRefreshing] = useState(false)
   const [competitionRefreshing, setCompetitionRefreshing] = useState(false)
@@ -485,8 +484,6 @@ function App() {
   const semesterPrefetchRunningRef = useRef(false)
   const semesterPrefetchTaskRef = useRef<Promise<void> | null>(null)
   const semesterPrefetchGenerationRef = useRef(0)
-  const semesterPrefetchCompletedRef = useRef(0)
-  const semesterPrefetchTotalRef = useRef(0)
   const runSemesterPrefetchRef = useRef<() => void>(() => {})
   const appActiveRef = useRef(true)
   const dataRequestRef = useRef(0)
@@ -505,7 +502,6 @@ function App() {
     semesterPrefetchQueueRef.current = []
     semesterPrefetchQueuedRef.current.clear()
     setSemesterPrefetchProgress(null)
-    setSemesterLoadingId(null)
     await authStore.clearSession()
     setSession(null)
     applyData(null)
@@ -627,13 +623,14 @@ function App() {
     studentId: string,
     semesterId: string,
     force: boolean,
+    onProgress?: (percent: number) => void,
   ) => {
     let entry = await readCachedSemesterEntry(studentId, semesterId)
     const errors: string[] = []
     let requested = false
 
+    if (!force) onProgress?.(semesterCacheProgress(entry))
     semesterLoadInFlightRef.current.add(semesterId)
-    setSemesterLoadingId(semesterId)
     try {
       if (force || !entry.timetableCached) {
         requested = true
@@ -641,6 +638,7 @@ function App() {
           const timetable = await api.getTimetable(semesterId)
           entry = withCachedTimetable(entry, timetable)
           await persistSemesterEntry(studentId, semesterId, entry)
+          if (!force) onProgress?.(semesterCacheProgress(entry))
         } catch (error) {
           if (error instanceof UnauthorizedError) throw error
           errors.push(`課表：${messageFromError(error)}`)
@@ -653,6 +651,7 @@ function App() {
           const grades = await api.getGrades(semesterId)
           entry = withCachedGrades(entry, grades, creditSummaryFromGrades(grades))
           await persistSemesterEntry(studentId, semesterId, entry)
+          if (!force) onProgress?.(semesterCacheProgress(entry))
         } catch (error) {
           if (error instanceof UnauthorizedError) throw error
           errors.push(`成績：${messageFromError(error)}`)
@@ -663,6 +662,7 @@ function App() {
         if (force) {
           entry = markEmptyTimetableVerified(entry)
           await persistSemesterEntry(studentId, semesterId, entry)
+          if (!force) onProgress?.(semesterCacheProgress(entry))
         } else {
           requested = true
           try {
@@ -672,6 +672,7 @@ function App() {
               entry = markEmptyTimetableVerified(entry)
             }
             await persistSemesterEntry(studentId, semesterId, entry)
+            onProgress?.(semesterCacheProgress(entry))
           } catch (error) {
             if (error instanceof UnauthorizedError) throw error
             errors.push(`課表再次確認：${messageFromError(error)}`)
@@ -682,7 +683,6 @@ function App() {
       return { entry, errors, requested }
     } finally {
       semesterLoadInFlightRef.current.delete(semesterId)
-      setSemesterLoadingId((current) => current === semesterId ? null : current)
     }
   }, [api, persistSemesterEntry, readCachedSemesterEntry])
 
@@ -703,14 +703,19 @@ function App() {
         if (!current) break
 
         setSemesterPrefetchProgress({
-          completed: semesterPrefetchCompletedRef.current,
-          total: semesterPrefetchTotalRef.current,
           semesterId,
+          percent: 0,
         })
 
         try {
-          const result = await loadSemesterIntoCache(current.profile.id, semesterId, false)
-          semesterPrefetchCompletedRef.current += 1
+          const result = await loadSemesterIntoCache(
+            current.profile.id,
+            semesterId,
+            false,
+            (percent) => setSemesterPrefetchProgress((progress) =>
+              progress?.semesterId === semesterId ? { semesterId, percent } : progress,
+            ),
+          )
           if (result.errors.length) {
             setAppError(`歷史資料預載已暫停：${result.errors.join('；')}`)
             semesterPrefetchGenerationRef.current += 1
@@ -752,8 +757,7 @@ function App() {
 
   const enqueueSemesterPrefetch = useCallback((semesters: Semester[], prioritySemesterId: string) => {
     if (!semesterPrefetchRunningRef.current && !semesterPrefetchQueueRef.current.length) {
-      semesterPrefetchCompletedRef.current = 0
-      semesterPrefetchTotalRef.current = 0
+      setSemesterPrefetchProgress(null)
     }
     const ordered = [
       prioritySemesterId,
@@ -767,7 +771,6 @@ function App() {
       ) return
       semesterPrefetchQueuedRef.current.add(semesterId)
       semesterPrefetchQueueRef.current.push(semesterId)
-      semesterPrefetchTotalRef.current += 1
     })
 
     const priorityIndex = semesterPrefetchQueueRef.current.indexOf(prioritySemesterId)
@@ -1133,10 +1136,7 @@ function App() {
     semesterPrefetchGenerationRef.current += 1
     semesterPrefetchQueueRef.current = []
     semesterPrefetchQueuedRef.current.clear()
-    semesterPrefetchCompletedRef.current = 0
-    semesterPrefetchTotalRef.current = 0
     setSemesterPrefetchProgress(null)
-    setSemesterLoadingId(null)
     await authStore.clearSession()
     const { credentialsStore } = await import('./storage/credentialsStorage')
     await credentialsStore.clearCredentials()
@@ -1157,7 +1157,6 @@ function App() {
     semesterPrefetchQueueRef.current = []
     semesterPrefetchQueuedRef.current.clear()
     setSemesterPrefetchProgress(null)
-    setSemesterLoadingId(null)
     await authStore.clearSession()
     await clearPortalSession()
     setSession(null)
@@ -1450,19 +1449,22 @@ function App() {
         <main className="main-content">
           {semesterPrefetchProgress ? (
             <div className="semester-prefetch-banner" role="status">
-              <Loader2 className="spin" size={17} />
-              <span>
-                <b>
-                  {semesterLoadingId === selectedSemester ? '正在讀取目前畫面' : '背景準備歷史資料'}
-                  {' · '}{semesterPrefetchProgress.semesterId}
-                </b>
-                <small>
-                  課表與成績會逐學期存入快取 · {Math.min(
-                    semesterPrefetchProgress.completed + 1,
-                    semesterPrefetchProgress.total,
-                  )}/{semesterPrefetchProgress.total}
-                </small>
-              </span>
+              <div className="semester-prefetch-meta">
+                <b>{semesterPrefetchProgress.semesterId}</b>
+                <strong>{semesterPrefetchProgress.percent}%</strong>
+              </div>
+              <div
+                className="semester-prefetch-track"
+                role="progressbar"
+                aria-label={`${semesterPrefetchProgress.semesterId} 課表與成績快取進度`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={semesterPrefetchProgress.percent}
+              >
+                <i style={{
+                  '--semester-prefetch-width': `${semesterPrefetchProgress.percent}%`,
+                } as CSSProperties} />
+              </div>
             </div>
           ) : null}
           {appError ? (

@@ -313,10 +313,9 @@ button:disabled {
 
 .semester-prefetch-banner {
   margin: 10px 12px 0;
-  padding: 9px 11px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  padding: 10px 11px 11px;
+  display: grid;
+  gap: 8px;
   color: #dcecff;
   background: linear-gradient(90deg, #172c43 0%, #172432 100%);
   border: 1px solid #315779;
@@ -324,22 +323,41 @@ button:disabled {
   box-shadow: inset 3px 0 0 #53b7ff;
 }
 
-.semester-prefetch-banner > span {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
+.semester-prefetch-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.semester-prefetch-banner b {
+.semester-prefetch-meta b,
+.semester-prefetch-meta strong {
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
 }
 
-.semester-prefetch-banner small {
-  color: #93abc3;
-  font-size: 10px;
-  line-height: 1.35;
+.semester-prefetch-meta strong {
+  color: #78c9ff;
+  font-variant-numeric: tabular-nums;
+}
+
+.semester-prefetch-track {
+  height: 5px;
+  overflow: hidden;
+  background: #0d1824;
+  border: 1px solid #29455f;
+  border-radius: 999px;
+}
+
+.semester-prefetch-track i {
+  width: var(--semester-prefetch-width, 0%);
+  height: 100%;
+  display: block;
+  background: linear-gradient(90deg, #2f95db, #77cfff);
+  border-radius: inherit;
+  box-shadow: 0 0 9px rgb(83 183 255 / 55%);
+  transition: width 260ms cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 
 .error-banner {

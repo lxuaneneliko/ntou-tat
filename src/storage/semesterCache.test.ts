@@ -4,6 +4,7 @@ import type { Grade, TimetableResponse } from '../types'
 import {
   markEmptyTimetableVerified,
   normalizeSemesterCacheEntry,
+  semesterCacheProgress,
   shouldRecoverEmptyTimetable,
   withCachedGrades,
   withCachedTimetable,
@@ -71,6 +72,7 @@ describe('semester cache', () => {
   })
 
   it('marks timetable and grades independently so partial progress can resume', () => {
+    expect(semesterCacheProgress(emptyEntry())).toBe(0)
     const timetable: TimetableResponse = {
       semesterId: '114-2',
       updatedAt: '2026-08-26T01:00:00.000Z',
@@ -83,6 +85,7 @@ describe('semester cache', () => {
     )
     expect(afterTimetable.timetableCached).toBe(true)
     expect(afterTimetable.gradesCached).toBe(false)
+    expect(semesterCacheProgress(afterTimetable)).toBe(50)
 
     const grades: Grade[] = []
     const completed = withCachedGrades(
@@ -93,6 +96,7 @@ describe('semester cache', () => {
     )
     expect(completed.timetableCached).toBe(true)
     expect(completed.gradesCached).toBe(true)
+    expect(semesterCacheProgress(completed)).toBe(100)
     expect(completed.timetableSavedAt).toBe('2026-08-26T01:00:00.000Z')
     expect(completed.gradesSavedAt).toBe('2026-08-26T01:01:00.000Z')
   })
@@ -118,8 +122,10 @@ describe('semester cache', () => {
     )
 
     expect(shouldRecoverEmptyTimetable(entry)).toBe(true)
+    expect(semesterCacheProgress(entry)).toBe(50)
     const verified = markEmptyTimetableVerified(entry, '2026-08-26T01:02:00.000Z')
     expect(shouldRecoverEmptyTimetable(verified)).toBe(false)
+    expect(semesterCacheProgress(verified)).toBe(100)
     expect(verified.timetableEmptyVerifiedAt).toBe('2026-08-26T01:02:00.000Z')
   })
 })

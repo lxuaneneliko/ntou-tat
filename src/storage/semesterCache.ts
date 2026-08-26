@@ -85,6 +85,11 @@ export const shouldRecoverEmptyTimetable = (entry: SemesterCacheEntry) =>
   entry.grades.length > 0 &&
   !entry.timetableEmptyVerifiedAt
 
+export const semesterCacheProgress = (entry: SemesterCacheEntry) => {
+  const timetableReady = entry.timetableCached && !shouldRecoverEmptyTimetable(entry)
+  return (timetableReady ? 50 : 0) + (entry.gradesCached ? 50 : 0)
+}
+
 export const markEmptyTimetableVerified = (
   entry: SemesterCacheEntry,
   verifiedAt = new Date().toISOString(),
