@@ -707,19 +707,66 @@ function App() {
           percent: 0,
         })
 
+        let visualPercent = 0
+        let progressLimit = 49
+        const publishVisualProgress = () => {
+          setSemesterPrefetchProgress((progress) =>
+            progress?.semesterId === semesterId
+              ? { semesterId, percent: visualPercent }
+              : progress,
+          )
+        }
+        const progressTimer = window.setInterval(() => {
+          if (visualPercent >= progressLimit) return
+          visualPercent = Math.min(progressLimit, visualPercent + 1)
+          publishVisualProgress()
+        }, 120)
+
         try {
           const result = await loadSemesterIntoCache(
             current.profile.id,
             semesterId,
             false,
-            (percent) => setSemesterPrefetchProgress((progress) =>
-              progress?.semesterId === semesterId ? { semesterId, percent } : progress,
-            ),
+            (actualPercent) => {
+              progressLimit = actualPercent >= 50 ? 99 : 49
+            },
           )
+          window.clearInterval(progressTimer)
           if (result.errors.length) {
             setAppError(`歷史資料預載已暫停：${result.errors.join('；')}`)
             semesterPrefetchGenerationRef.current += 1
             break
+          }
+
+          const completionFrom = visualPercent
+          const completionStartedAt = performance.now()
+          const completionDuration = Math.max(320, (99 - completionFrom) * 7)
+          while (
+            visualPercent < 99 &&
+            appActiveRef.current &&
+            generation === semesterPrefetchGenerationRef.current
+          ) {
+            await new Promise<void>((resolve) => window.setTimeout(resolve, 16))
+            const elapsed = performance.now() - completionStartedAt
+            const ratio = Math.min(1, elapsed / completionDuration)
+            const nextPercent = Math.min(
+              99,
+              Math.floor(completionFrom + (99 - completionFrom) * ratio),
+            )
+            if (nextPercent > visualPercent) {
+              visualPercent = nextPercent
+              publishVisualProgress()
+            }
+          }
+
+          if (
+            appActiveRef.current &&
+            generation === semesterPrefetchGenerationRef.current
+          ) {
+            await new Promise<void>((resolve) => window.setTimeout(resolve, 140))
+            visualPercent = 100
+            publishVisualProgress()
+            await new Promise<void>((resolve) => window.setTimeout(resolve, 260))
           }
         } catch (error) {
           if (error instanceof UnauthorizedError) {
@@ -733,6 +780,8 @@ function App() {
           }
           semesterPrefetchGenerationRef.current += 1
           break
+        } finally {
+          window.clearInterval(progressTimer)
         }
       }
     })().finally(() => {
@@ -1449,10 +1498,7 @@ function App() {
         <main className="main-content">
           {semesterPrefetchProgress ? (
             <div className="semester-prefetch-banner" role="status">
-              <div className="semester-prefetch-meta">
-                <b>{semesterPrefetchProgress.semesterId}</b>
-                <strong>{semesterPrefetchProgress.percent}%</strong>
-              </div>
+              <b>{semesterPrefetchProgress.semesterId}</b>
               <div
                 className="semester-prefetch-track"
                 role="progressbar"
@@ -1465,6 +1511,7 @@ function App() {
                   '--semester-prefetch-width': `${semesterPrefetchProgress.percent}%`,
                 } as CSSProperties} />
               </div>
+              <strong>{semesterPrefetchProgress.percent}%</strong>
             </div>
           ) : null}
           {appError ? (

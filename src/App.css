@@ -313,9 +313,11 @@ button:disabled {
 
 .semester-prefetch-banner {
   margin: 10px 12px 0;
-  padding: 10px 11px 11px;
+  padding: 9px 11px;
   display: grid;
-  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
   color: #dcecff;
   background: linear-gradient(90deg, #172c43 0%, #172432 100%);
   border: 1px solid #315779;
@@ -323,21 +325,15 @@ button:disabled {
   box-shadow: inset 3px 0 0 #53b7ff;
 }
 
-.semester-prefetch-meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.semester-prefetch-meta b,
-.semester-prefetch-meta strong {
+.semester-prefetch-banner > b,
+.semester-prefetch-banner > strong {
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
-.semester-prefetch-meta strong {
+.semester-prefetch-banner > strong {
   color: #78c9ff;
   font-variant-numeric: tabular-nums;
 }
