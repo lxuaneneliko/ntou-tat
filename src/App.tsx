@@ -3,6 +3,12 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { App as CapApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import {
+  BarcodeFormat,
+  BarcodeScanner,
+  GoogleBarcodeScannerModuleInstallState,
+} from '@capacitor-mlkit/barcode-scanning'
+import QRCode from 'qrcode'
+import {
   AlertCircle,
   Bell,
   Building2,
@@ -27,11 +33,15 @@ import {
   PackageOpen,
   Phone,
   Plus,
+  QrCode,
   RefreshCw,
+  ScanLine,
   Loader2,
+  Pencil,
   ShieldCheck,
   Trash2,
   Trophy,
+  Users,
   X,
   ZoomIn,
   ZoomOut,
@@ -45,6 +55,15 @@ import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
 import { MailScreen, type MailScreenHandle } from './MailScreen'
 import { authStore } from './storage/authStorage'
+import {
+  decodeTimetableShare,
+  encodeTimetableShare,
+  importTimetablePreview,
+  readSharedTimetables,
+  writeSharedTimetables,
+  type SharedTimetable,
+  type TimetableSharePreview,
+} from './timetableShare'
 import {
   readStoredExternalCompetitions,
   writeStoredExternalCompetitions,
@@ -343,6 +362,11 @@ function App() {
     readPersonalCalendarStore,
   )
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
+  const [sharedTimetables, setSharedTimetables] = useState<SharedTimetable[]>(readSharedTimetables)
+  const [selectedTimetableSource, setSelectedTimetableSource] = useState('mine')
+  const [timetableDialog, setTimetableDialog] = useState<'share' | 'scan' | 'rename' | null>(null)
+  const [activeCourseSlot, setActiveCourseSlot] = useState<TimetableSlot | null>(null)
+  const [activeCourseIsShared, setActiveCourseIsShared] = useState(false)
   const [availableUpdate, setAvailableUpdate] = useState<AppUpdate | null>(null)
   const [installedVersion, setInstalledVersion] = useState('')
   const [exitHintVisible, setExitHintVisible] = useState(false)
@@ -417,6 +441,10 @@ function App() {
   const savePersonalCalendarStore = (nextStore: PersonalCalendarStore) => {
     setPersonalCalendarStore(nextStore)
     writePersonalCalendarStore(nextStore)
+  }
+  const saveSharedTimetables = (items: SharedTimetable[]) => {
+    setSharedTimetables(items)
+    writeSharedTimetables(items)
   }
   const saveCustomAvatar = (dataUrl: string) => {
     storeAvatar(dataUrl)
@@ -775,6 +803,9 @@ function App() {
       if (availableUpdate) {
         clearExitHint()
         remindAboutUpdateLater()
+      } else if (timetableDialog) {
+        clearExitHint()
+        setTimetableDialog(null)
       } else if (headerMenuOpen) {
         clearExitHint()
         setHeaderMenuOpen(false)
@@ -814,6 +845,7 @@ function App() {
     remindAboutUpdateLater,
     requestAppExit,
     selectedTab,
+    timetableDialog,
   ])
 
   useEffect(() => () => clearExitHint(), [clearExitHint])
@@ -950,7 +982,9 @@ function App() {
     }
   }
 
-  const openCourse = async (course: CourseSummary) => {
+  const openCourse = async (course: CourseSummary, slot?: TimetableSlot) => {
+    setActiveCourseSlot(slot ?? null)
+    setActiveCourseIsShared(false)
     setActiveCourse(course)
     if (courseFiles[course.id]) return
     setFileLoadingId(course.id)
@@ -1001,6 +1035,19 @@ function App() {
       return !deletedForSem.includes(key)
     })
   }, [data?.timetable, customCourses, deletedCourses, selectedSemester])
+
+  const selectedSharedTimetable = useMemo(
+    () => sharedTimetables.find((item) => item.id === selectedTimetableSource) ?? null,
+    [selectedTimetableSource, sharedTimetables],
+  )
+  const displayedTimetableSlots = selectedSharedTimetable?.slots ?? mergedSlots
+
+  useEffect(() => {
+    if (selectedTimetableSource === 'mine') return
+    if (!sharedTimetables.some((item) => item.id === selectedTimetableSource)) {
+      setSelectedTimetableSource('mine')
+    }
+  }, [selectedTimetableSource, sharedTimetables])
 
   const mergedGrades = useMemo(() => {
     if (!data?.grades) return []
@@ -1130,7 +1177,7 @@ function App() {
                 </button>
                 {headerMenuOpen ? (
                   <div className="header-menu" role="menu">
-                    {selectedTab === 'timetable' ? (
+                    {selectedTab === 'timetable' && !selectedSharedTimetable ? (
                       <button
                         type="button"
                         role="menuitem"
@@ -1142,6 +1189,61 @@ function App() {
                         <Plus size={17} />
                         <span>新增自訂課程</span>
                       </button>
+                    ) : null}
+                    {selectedTab === 'timetable' && !selectedSharedTimetable ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setHeaderMenuOpen(false)
+                          setTimetableDialog('share')
+                        }}
+                      >
+                        <QrCode size={17} />
+                        <span>顯示我的 QR Code</span>
+                      </button>
+                    ) : null}
+                    {selectedTab === 'timetable' ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setHeaderMenuOpen(false)
+                          setTimetableDialog('scan')
+                        }}
+                      >
+                        <ScanLine size={17} />
+                        <span>掃描同學課表</span>
+                      </button>
+                    ) : null}
+                    {selectedTab === 'timetable' && selectedSharedTimetable ? (
+                      <>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setHeaderMenuOpen(false)
+                            setTimetableDialog('rename')
+                          }}
+                        >
+                          <Pencil size={17} />
+                          <span>重新命名這份課表</span>
+                        </button>
+                        <button
+                          className="header-menu-danger"
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setHeaderMenuOpen(false)
+                            if (!confirm(`確定要刪除「${selectedSharedTimetable.displayName}」嗎？`)) return
+                            saveSharedTimetables(sharedTimetables.filter((item) => item.id !== selectedSharedTimetable.id))
+                            setSelectedTimetableSource('mine')
+                          }}
+                        >
+                          <Trash2 size={17} />
+                          <span>刪除這份課表</span>
+                        </button>
+                      </>
                     ) : null}
                     {selectedTab === 'grades' ? (
                       <button
@@ -1180,6 +1282,10 @@ function App() {
             semesters={data.semesters}
             selectedSemester={selectedSemester}
             onSemesterChange={changeSemester}
+            selectedTimetableSource={selectedTab === 'timetable' ? selectedTimetableSource : undefined}
+            sharedTimetables={selectedTab === 'timetable' ? sharedTimetables : undefined}
+            onTimetableSourceChange={selectedTab === 'timetable' ? setSelectedTimetableSource : undefined}
+            sharedSemesterId={selectedSharedTimetable?.semesterId}
             timetableViewMode={selectedTab === 'timetable' ? timetableViewMode : undefined}
             onTimetableViewModeChange={
               selectedTab === 'timetable'
@@ -1218,9 +1324,18 @@ function App() {
               />
             ) : selectedTab === 'timetable' ? (
               <TimetableScreen
-                slots={mergedSlots}
+                slots={displayedTimetableSlots}
                 viewMode={timetableViewMode}
-                onOpenCourse={(slot) => void openCourse(coursesFromTimetable([slot])[0])}
+                onOpenCourse={(slot) => {
+                  const course = coursesFromTimetable([slot])[0]
+                  if (selectedSharedTimetable) {
+                    setActiveCourseSlot(slot)
+                    setActiveCourseIsShared(true)
+                    setActiveCourse(course)
+                    return
+                  }
+                  void openCourse(course, slot)
+                }}
               />
             ) : selectedTab === 'calendar' ? (
               <CalendarScreen
@@ -1300,7 +1415,9 @@ function App() {
             files={courseFiles[activeCourse.id] ?? []}
             loading={fileLoadingId === activeCourse.id}
             onClose={() => setActiveCourse(null)}
-            onDeleteCourse={(courseTitle) => {
+            slot={activeCourseSlot}
+            isSharedSnapshot={activeCourseIsShared}
+            onDeleteCourse={activeCourseIsShared ? undefined : (courseTitle) => {
               if (!confirm(`確定要從課表中刪除「${courseTitle}」嗎？`)) return
               const currentDeleted = deletedCourses[selectedSemester] || []
               const targetSlot = mergedSlots.find((s) => s.courseTitle === courseTitle)
@@ -1382,6 +1499,48 @@ function App() {
           />
         ) : null}
 
+        {timetableDialog === 'share' ? (
+          <TimetableShareSheet
+            initialName={`${data.profile.name || '我的'}的課表`}
+            semesterId={selectedSemester}
+            slots={mergedSlots}
+            onClose={() => setTimetableDialog(null)}
+          />
+        ) : null}
+
+        {timetableDialog === 'scan' ? (
+          <TimetableScanSheet
+            onClose={() => setTimetableDialog(null)}
+            onImport={(preview, displayName) => {
+              const existing = sharedTimetables.find((item) => item.id === preview.id)
+              if (existing && !confirm(`「${existing.displayName}」已存在，要用這次掃描的快照取代嗎？`)) {
+                return false
+              }
+              const imported = importTimetablePreview(preview, displayName)
+              saveSharedTimetables([
+                ...sharedTimetables.filter((item) => item.id !== imported.id),
+                imported,
+              ])
+              setSelectedTimetableSource(imported.id)
+              setTimetableDialog(null)
+              return true
+            }}
+          />
+        ) : null}
+
+        {timetableDialog === 'rename' && selectedSharedTimetable ? (
+          <RenameTimetableSheet
+            initialName={selectedSharedTimetable.displayName}
+            onClose={() => setTimetableDialog(null)}
+            onSave={(displayName) => {
+              saveSharedTimetables(sharedTimetables.map((item) => (
+                item.id === selectedSharedTimetable.id ? { ...item, displayName } : item
+              )))
+              setTimetableDialog(null)
+            }}
+          />
+        ) : null}
+
         {updateSheet}
         {exitHint}
       </div>
@@ -1451,23 +1610,33 @@ function UpdateSheet({
 
 function StudentStrip({
   onSemesterChange,
+  onTimetableSourceChange,
   onTimetableViewModeChange,
   profile,
   selectedSemester,
+  selectedTimetableSource,
   semesters,
+  sharedSemesterId,
+  sharedTimetables,
   timetableViewMode,
 }: {
   onSemesterChange: (semesterId: string) => Promise<void>
+  onTimetableSourceChange?: (sourceId: string) => void
   onTimetableViewModeChange?: (mode: 'grid' | 'list') => void
   profile: StudentProfile
   selectedSemester: string
+  selectedTimetableSource?: string
   semesters: Semester[]
+  sharedSemesterId?: string
+  sharedTimetables?: SharedTimetable[]
   timetableViewMode?: 'grid' | 'list'
 }) {
+  const isShared = Boolean(selectedTimetableSource && selectedTimetableSource !== 'mine')
   return (
-    <div className="student-strip">
+    <div className={`student-strip ${selectedTimetableSource ? 'timetable-student-strip' : ''}`}>
       <div className="student-identity">
-        <strong>{profile.id}</strong>
+        <strong>{isShared ? '同學課表' : profile.id}</strong>
+        {isShared ? <span className="snapshot-badge">唯讀快照</span> : null}
       </div>
       <div className="student-strip-controls">
         {timetableViewMode && onTimetableViewModeChange ? (
@@ -1497,17 +1666,39 @@ function StudentStrip({
         <label className="semester-select">
           <span className="sr-only">學期</span>
           <select
-            value={selectedSemester}
+            disabled={isShared}
+            value={isShared ? sharedSemesterId : selectedSemester}
             onChange={(event) => void onSemesterChange(event.target.value)}
           >
-            {semesters.map((semester) => (
-              <option key={semester.id} value={semester.id}>
-                {semester.id}
+            {isShared ? (
+              <option value={sharedSemesterId}>{sharedSemesterId}</option>
+            ) : (
+              semesters.map((semester) => (
+                <option key={semester.id} value={semester.id}>
+                  {semester.id}
+                </option>
+              ))
+            )}
+          </select>
+        </label>
+      </div>
+      {selectedTimetableSource && onTimetableSourceChange ? (
+        <label className="timetable-source-select">
+          <Users size={17} />
+          <span className="sr-only">課表來源</span>
+          <select
+            value={selectedTimetableSource}
+            onChange={(event) => onTimetableSourceChange(event.target.value)}
+          >
+            <option value="mine">我的課表</option>
+            {sharedTimetables?.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.displayName}
               </option>
             ))}
           </select>
         </label>
-      </div>
+      ) : null}
     </div>
   )
 }
@@ -2521,16 +2712,24 @@ function LinkList({
 function CourseSheet({
   course,
   files,
+  isSharedSnapshot,
   loading,
   onClose,
   onDeleteCourse,
+  slot,
 }: {
   course: CourseSummary
   files: CourseFile[]
+  isSharedSnapshot?: boolean
   loading: boolean
   onClose: () => void
   onDeleteCourse?: (title: string) => void
+  slot?: TimetableSlot | null
 }) {
+  const weekday = slot ? weekdays.find((item) => item.value === slot.day)?.short : undefined
+  const scheduleText = slot
+    ? `週${weekday ?? slot.day} ${slot.startsAt || `第 ${slot.section} 節`}${slot.endsAt ? `–${slot.endsAt}` : ''}`
+    : ''
   return (
     <div className="sheet-backdrop" role="presentation" onClick={onClose}>
       <section className="course-sheet" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
@@ -2544,6 +2743,7 @@ function CourseSheet({
         <dl>
           <div><dt>授課教師</dt><dd>{course.instructor || '—'}</dd></div>
           <div><dt>上課地點</dt><dd>{course.classroom || '—'}</dd></div>
+          {scheduleText ? <div><dt>上課時間</dt><dd>{scheduleText}</dd></div> : null}
           <div><dt>學分</dt><dd>{course.credits || '—'}</dd></div>
         </dl>
 
@@ -2572,8 +2772,13 @@ function CourseSheet({
           </button>
         ) : null}
 
-        <div className="section-label">課程檔案</div>
-        {loading ? (
+        <div className="section-label">{isSharedSnapshot ? '課表來源' : '課程檔案'}</div>
+        {isSharedSnapshot ? (
+          <div className="shared-course-note">
+            <Users size={18} />
+            <span>這是從 QR Code 匯入的唯讀課表快照，不會影響你的選課資料。</span>
+          </div>
+        ) : loading ? (
           <div className="loading-line" />
         ) : files.length ? (
           files.map((file) => (
@@ -2586,6 +2791,255 @@ function CourseSheet({
         ) : (
           <div className="muted-row">尚未取得課程檔案</div>
         )}
+      </section>
+    </div>
+  )
+}
+
+function TimetableShareSheet({
+  initialName,
+  onClose,
+  semesterId,
+  slots,
+}: {
+  initialName: string
+  onClose: () => void
+  semesterId: string
+  slots: TimetableSlot[]
+}) {
+  const [ownerName, setOwnerName] = useState(initialName)
+  const [qrDataUrl, setQrDataUrl] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    const renderQrCode = async () => {
+      try {
+        setError('')
+        const payload = encodeTimetableShare({ ownerName, semesterId, slots })
+        const dataUrl = await QRCode.toDataURL(payload, {
+          width: 840,
+          margin: 3,
+          errorCorrectionLevel: 'M',
+          color: { dark: '#082a43', light: '#ffffff' },
+        })
+        if (active) setQrDataUrl(dataUrl)
+      } catch (renderError) {
+        if (active) {
+          setQrDataUrl('')
+          setError(messageFromError(renderError))
+        }
+      }
+    }
+    const timer = window.setTimeout(() => void renderQrCode(), 120)
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [ownerName, semesterId, slots])
+
+  return (
+    <div className="sheet-backdrop timetable-share-backdrop" role="presentation" onClick={onClose}>
+      <section className="course-sheet timetable-share-sheet" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+        <div className="sheet-handle" />
+        <button className="sheet-close" type="button" aria-label="關閉" onClick={onClose}>
+          <X size={21} />
+        </button>
+        <div className="timetable-sheet-heading">
+          <div className="timetable-sheet-icon"><QrCode size={24} /></div>
+          <div><span>課表快照</span><h2>顯示我的 QR Code</h2></div>
+        </div>
+
+        <label className="timetable-name-field">
+          <span>給同學看到的名稱</span>
+          <input maxLength={30} value={ownerName} onChange={(event) => setOwnerName(event.target.value)} />
+        </label>
+
+        <div className="timetable-qr-ticket">
+          <div className="timetable-qr-ticket-top">
+            <span>海大 TAT</span>
+            <strong>{semesterId}</strong>
+          </div>
+          <div className="timetable-qr-canvas">
+            {qrDataUrl ? <img src={qrDataUrl} alt={`${ownerName}的課表 QR Code`} /> : <Loader2 className="spin" size={34} />}
+          </div>
+          <strong className="timetable-qr-name">{ownerName || '請輸入名稱'}</strong>
+          <span className="timetable-qr-meta">{coursesFromTimetable(slots).length} 門課 · 掃描後匯入唯讀快照</span>
+        </div>
+
+        {error ? <div className="timetable-share-error"><AlertCircle size={17} />{error}</div> : null}
+        <p className="timetable-privacy-note">
+          <ShieldCheck size={16} />QR Code 只包含這學期的課表內容與上方名稱，不含學號、帳密或 Mail 資料。
+        </p>
+      </section>
+    </div>
+  )
+}
+
+function TimetableScanSheet({
+  onClose,
+  onImport,
+}: {
+  onClose: () => void
+  onImport: (preview: TimetableSharePreview, displayName: string) => boolean
+}) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [status, setStatus] = useState('')
+  const [preview, setPreview] = useState<TimetableSharePreview | null>(null)
+  const [displayName, setDisplayName] = useState('')
+
+  const ensureAndroidScannerModule = async () => {
+    if (Capacitor.getPlatform() !== 'android') return
+    const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable()
+    if (available) return
+
+    setStatus('第一次使用，正在準備掃描元件…')
+    await new Promise<void>((resolve, reject) => {
+      let settled = false
+      let removeListener: () => void = () => undefined
+      const finish = (errorMessage?: string) => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(timeout)
+        void removeListener()
+        if (errorMessage) reject(new Error(errorMessage))
+        else resolve()
+      }
+      const timeout = window.setTimeout(() => finish('掃描元件下載逾時，請確認網路後再試一次'), 60_000)
+      void BarcodeScanner.addListener('googleBarcodeScannerModuleInstallProgress', (event) => {
+        if (event.state === GoogleBarcodeScannerModuleInstallState.DOWNLOADING && event.progress !== undefined) {
+          setStatus(`正在準備掃描元件 ${event.progress}%`)
+        } else if (event.state === GoogleBarcodeScannerModuleInstallState.COMPLETED) {
+          finish()
+        } else if (
+          event.state === GoogleBarcodeScannerModuleInstallState.FAILED ||
+          event.state === GoogleBarcodeScannerModuleInstallState.CANCELED
+        ) {
+          finish('掃描元件準備失敗，請確認 Google Play 服務與網路連線')
+        }
+      }).then((listener) => {
+        removeListener = () => { void listener.remove() }
+        return BarcodeScanner.installGoogleBarcodeScannerModule()
+      }).catch((installError) => finish(messageFromError(installError)))
+    })
+  }
+
+  const startScan = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      setError('請在 Android 手機版海大 TAT 使用相機掃描')
+      return
+    }
+    setBusy(true)
+    setError('')
+    setStatus('正在開啟相機…')
+    try {
+      const { supported } = await BarcodeScanner.isSupported()
+      if (!supported) throw new Error('這台裝置沒有可用的相機掃描功能')
+      await ensureAndroidScannerModule()
+      setStatus('')
+      const result = await BarcodeScanner.scan({ formats: [BarcodeFormat.QrCode], autoZoom: true })
+      const rawValue = result.barcodes[0]?.rawValue || result.barcodes[0]?.displayValue
+      if (!rawValue) throw new Error('沒有讀到 QR Code 內容，請再試一次')
+      const decoded = decodeTimetableShare(rawValue)
+      setPreview(decoded)
+      setDisplayName(decoded.ownerName)
+    } catch (scanError) {
+      const message = messageFromError(scanError)
+      if (!/cancel|取消/i.test(message)) setError(message)
+    } finally {
+      setBusy(false)
+      setStatus('')
+    }
+  }
+
+  return (
+    <div className="sheet-backdrop timetable-share-backdrop" role="presentation" onClick={onClose}>
+      <section className="course-sheet timetable-scan-sheet" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+        <div className="sheet-handle" />
+        <button className="sheet-close" type="button" aria-label="關閉" onClick={onClose}>
+          <X size={21} />
+        </button>
+        <div className="timetable-sheet-heading">
+          <div className="timetable-sheet-icon"><ScanLine size={24} /></div>
+          <div><span>同學課表</span><h2>掃描課表 QR Code</h2></div>
+        </div>
+
+        {preview ? (
+          <>
+            <div className="timetable-import-preview">
+              <div><Users size={21} /><span>掃描成功</span></div>
+              <strong>{preview.ownerName}</strong>
+              <dl>
+                <div><dt>學期</dt><dd>{preview.semesterId}</dd></div>
+                <div><dt>課程</dt><dd>{coursesFromTimetable(preview.slots).length} 門</dd></div>
+                <div><dt>快照時間</dt><dd>{new Date(preview.generatedAt).toLocaleString('zh-TW', { hour12: false })}</dd></div>
+              </dl>
+            </div>
+            <label className="timetable-name-field">
+              <span>儲存在 App 裡的名稱</span>
+              <input maxLength={40} value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+            </label>
+            <button
+              className="timetable-primary-action"
+              type="button"
+              disabled={!displayName.trim()}
+              onClick={() => onImport(preview, displayName.trim())}
+            >
+              <Users size={19} />新增同學課表
+            </button>
+            <button className="timetable-secondary-action" type="button" onClick={() => void startScan()}>
+              重新掃描
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="timetable-scan-illustration" aria-hidden="true">
+              <div className="scan-corner scan-corner-a" />
+              <div className="scan-corner scan-corner-b" />
+              <QrCode size={72} strokeWidth={1.35} />
+              <div className="scan-line" />
+            </div>
+            <p className="timetable-scan-copy">請對準同學手機上的「海大 TAT 課表 QR Code」。掃描後會先讓你確認名稱、學期和課程數量。</p>
+            <button className="timetable-primary-action" type="button" disabled={busy} onClick={() => void startScan()}>
+              {busy ? <Loader2 className="spin" size={19} /> : <Camera size={19} />}
+              {status || '開啟相機掃描'}
+            </button>
+          </>
+        )}
+        {error ? <div className="timetable-share-error"><AlertCircle size={17} />{error}</div> : null}
+        <p className="timetable-privacy-note"><ShieldCheck size={16} />匯入內容只會儲存在這台手機，不會上傳到伺服器。</p>
+      </section>
+    </div>
+  )
+}
+
+function RenameTimetableSheet({
+  initialName,
+  onClose,
+  onSave,
+}: {
+  initialName: string
+  onClose: () => void
+  onSave: (displayName: string) => void
+}) {
+  const [displayName, setDisplayName] = useState(initialName)
+  return (
+    <div className="sheet-backdrop" role="presentation" onClick={onClose}>
+      <section className="course-sheet timetable-rename-sheet" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+        <div className="sheet-handle" />
+        <button className="sheet-close" type="button" aria-label="關閉" onClick={onClose}><X size={21} /></button>
+        <div className="timetable-sheet-heading">
+          <div className="timetable-sheet-icon"><Pencil size={22} /></div>
+          <div><span>同學課表</span><h2>重新命名</h2></div>
+        </div>
+        <label className="timetable-name-field">
+          <span>課表名稱</span>
+          <input autoFocus maxLength={40} value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+        </label>
+        <button className="timetable-primary-action" type="button" disabled={!displayName.trim()} onClick={() => onSave(displayName.trim())}>
+          儲存名稱
+        </button>
       </section>
     </div>
   )

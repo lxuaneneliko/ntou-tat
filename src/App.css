@@ -131,6 +131,10 @@ button:disabled {
   font-size: 14px;
 }
 
+.header-menu .header-menu-danger {
+  color: #ff9ca8;
+}
+
 .header-icon,
 .plain-icon,
 .sheet-close,
@@ -845,6 +849,58 @@ button:disabled {
 .calendar-markers .official,
 .agenda-row.official .agenda-dot {
   background: #ffcf63;
+}
+
+.timetable-student-strip {
+  flex-wrap: wrap;
+  row-gap: 7px;
+}
+
+.timetable-source-select {
+  min-width: 0;
+  flex: 1 0 100%;
+  height: 38px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  color: #8dc9f4;
+  background: linear-gradient(90deg, rgba(18, 112, 173, 0.18), rgba(18, 112, 173, 0.05));
+  border: 1px solid rgba(90, 172, 225, 0.25);
+  border-radius: 6px;
+}
+
+.timetable-source-select select {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  color: #edf7ff;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.timetable-source-select option {
+  color: #f2f4f7;
+  background: #24282e;
+}
+
+.snapshot-badge {
+  padding: 3px 7px;
+  color: #8ed0f5;
+  background: rgba(44, 151, 214, 0.12);
+  border: 1px solid rgba(72, 174, 230, 0.24);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.semester-select select:disabled {
+  opacity: 0.78;
 }
 
 .exit-hint {
@@ -2453,6 +2509,342 @@ button:disabled {
   border-radius: 16px;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.64);
   animation: sheet-enter 260ms cubic-bezier(0.2, 0.82, 0.25, 1) both;
+}
+
+.timetable-share-backdrop {
+  z-index: 80;
+}
+
+.timetable-share-sheet,
+.timetable-scan-sheet,
+.timetable-rename-sheet {
+  max-height: min(91dvh, 860px);
+  background:
+    linear-gradient(150deg, rgba(30, 126, 190, 0.13), transparent 32%),
+    #111923;
+  border-color: #344553;
+  border-radius: 14px 14px 0 0;
+}
+
+.timetable-sheet-heading {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timetable-sheet-heading > div:last-child {
+  min-width: 0;
+}
+
+.timetable-sheet-heading span {
+  display: block;
+  margin-bottom: 2px;
+  color: #71bde9;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.timetable-sheet-heading h2 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.timetable-sheet-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #e6f6ff;
+  background: #0a6da8;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 74, 118, 0.32);
+}
+
+.timetable-name-field {
+  margin-top: 17px;
+  display: grid;
+  gap: 7px;
+}
+
+.timetable-name-field > span {
+  color: #aab5c1;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.timetable-name-field input {
+  width: 100%;
+  height: 45px;
+  padding: 0 12px;
+  color: #f5f8fb;
+  background: #202a34;
+  border: 1px solid #3d4d5d;
+  border-radius: 7px;
+  outline: 0;
+  font-size: 15px;
+}
+
+.timetable-name-field input:focus {
+  border-color: #3a9bd4;
+  box-shadow: 0 0 0 3px rgba(58, 155, 212, 0.13);
+}
+
+.timetable-qr-ticket {
+  width: min(100%, 372px);
+  margin: 17px auto 0;
+  padding: 13px 17px 18px;
+  color: #08283d;
+  background: #f7fbfd;
+  border: 1px solid #d8eaf3;
+  border-radius: 15px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+}
+
+.timetable-qr-ticket-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #37657d;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.timetable-qr-ticket-top strong {
+  padding: 4px 8px;
+  color: #0c6295;
+  background: #e2f2fb;
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.timetable-qr-canvas {
+  width: min(67vw, 286px);
+  aspect-ratio: 1;
+  margin: 8px auto 5px;
+  display: grid;
+  place-items: center;
+  color: #0b6eaa;
+}
+
+.timetable-qr-canvas img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.timetable-qr-name,
+.timetable-qr-meta {
+  display: block;
+  text-align: center;
+}
+
+.timetable-qr-name {
+  overflow-wrap: anywhere;
+  font-size: 17px;
+}
+
+.timetable-qr-meta {
+  margin-top: 4px;
+  color: #648194;
+  font-size: 10px;
+}
+
+.timetable-privacy-note {
+  margin: 14px 1px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: #8d9aa7;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.timetable-privacy-note svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #64b6e6;
+}
+
+.timetable-share-error {
+  margin-top: 12px;
+  padding: 10px 11px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #ffb1b8;
+  background: rgba(151, 44, 60, 0.18);
+  border: 1px solid rgba(211, 83, 101, 0.3);
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.timetable-scan-illustration {
+  position: relative;
+  width: min(64vw, 248px);
+  aspect-ratio: 1;
+  margin: 24px auto 17px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #7ac4eb;
+  background:
+    radial-gradient(circle at center, rgba(36, 148, 212, 0.12), transparent 64%),
+    #0b131c;
+  border: 1px solid #253b4b;
+  border-radius: 15px;
+}
+
+.scan-corner {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-color: #5ec0f3;
+  border-style: solid;
+}
+
+.scan-corner-a {
+  top: 18px;
+  left: 18px;
+  border-width: 3px 0 0 3px;
+  border-radius: 6px 0 0;
+}
+
+.scan-corner-b {
+  right: 18px;
+  bottom: 18px;
+  border-width: 0 3px 3px 0;
+  border-radius: 0 0 6px;
+}
+
+.scan-line {
+  position: absolute;
+  left: 29px;
+  right: 29px;
+  top: 35%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #58d2ff 14%, #58d2ff 86%, transparent);
+  box-shadow: 0 0 12px rgba(88, 210, 255, 0.8);
+  animation: qr-scan 2.1s ease-in-out infinite alternate;
+}
+
+.timetable-scan-copy {
+  margin: 0 4px 17px;
+  color: #aeb9c4;
+  font-size: 12px;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.timetable-primary-action,
+.timetable-secondary-action {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.timetable-primary-action {
+  margin-top: 16px;
+  color: #061924;
+  background: #66c2ed;
+  box-shadow: 0 9px 24px rgba(47, 156, 211, 0.18);
+}
+
+.timetable-primary-action:disabled {
+  opacity: 0.52;
+}
+
+.timetable-secondary-action {
+  margin-top: 8px;
+  min-height: 42px;
+  color: #c2d3df;
+  background: transparent;
+  border: 1px solid #334756;
+}
+
+.timetable-import-preview {
+  margin-top: 20px;
+  padding: 15px;
+  background: #182632;
+  border: 1px solid #304859;
+  border-radius: 10px;
+}
+
+.timetable-import-preview > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #68c3ed;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.timetable-import-preview > strong {
+  display: block;
+  margin: 10px 0 12px;
+  overflow-wrap: anywhere;
+  color: #f2f7fa;
+  font-size: 20px;
+}
+
+.timetable-import-preview dl {
+  margin: 0;
+  border-top: 1px solid #31424e;
+}
+
+.timetable-import-preview dl > div {
+  min-height: 37px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #2b3b47;
+}
+
+.timetable-import-preview dt {
+  color: #8897a3;
+  font-size: 11px;
+}
+
+.timetable-import-preview dd {
+  margin: 0;
+  color: #dbe5eb;
+  font-size: 11px;
+}
+
+.shared-course-note {
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #b7c5cf;
+  background: rgba(44, 145, 200, 0.09);
+  border: 1px solid rgba(73, 161, 211, 0.2);
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.shared-course-note svg {
+  flex: 0 0 auto;
+  color: #66bce7;
+}
+
+@keyframes qr-scan {
+  from { transform: translateY(-46px); opacity: 0.5; }
+  to { transform: translateY(72px); opacity: 1; }
 }
 
 .update-sheet .sheet-handle {
