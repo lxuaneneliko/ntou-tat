@@ -1962,44 +1962,196 @@ button:disabled {
   text-underline-offset: 3px;
 }
 
-.mail-body-images {
+.mail-body-flow {
   display: grid;
-  gap: 12px;
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 1px solid #303943;
+  align-content: start;
+  gap: 15px;
+  white-space: normal;
 }
 
-.mail-body-images > strong {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #dce5ed;
-  font-size: 13px;
+.mail-body-text {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
-.mail-body-images figure {
-  margin: 0;
-  overflow: hidden;
-  background: #fff;
-  border: 1px solid #394550;
-  border-radius: 8px;
-}
-
-.mail-body-images img {
-  display: block;
+.mail-external-images-banner {
   width: 100%;
+  min-height: 54px;
+  margin-top: 15px;
+  padding: 9px 11px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  color: #cfeafa;
+  background: linear-gradient(90deg, rgba(18, 102, 153, 0.2), rgba(18, 102, 153, 0.06));
+  border: 1px solid #2d617e;
+  border-radius: 7px;
+  text-align: left;
+}
+
+.mail-external-images-banner > svg {
+  color: #65bee9;
+}
+
+.mail-external-images-banner span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.mail-external-images-banner b {
+  font-size: 11px;
+}
+
+.mail-external-images-banner small {
+  overflow: hidden;
+  color: #90aebe;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mail-external-images-banner strong {
+  padding: 6px 8px;
+  color: #65c8f6;
+  background: rgba(65, 159, 207, 0.12);
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.mail-content-image {
+  width: 100%;
+  margin: 0;
+  justify-self: start;
+}
+
+.mail-content-image > button {
+  position: relative;
+  max-width: 100%;
+  padding: 0;
+  display: block;
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, #171d23 25%, transparent 25%),
+    linear-gradient(-45deg, #171d23 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #171d23 75%),
+    linear-gradient(-45deg, transparent 75%, #171d23 75%),
+    #12171c;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-size: 12px 12px;
+  border: 1px solid #35424d;
+  border-radius: 7px;
+  text-align: left;
+}
+
+.mail-content-image.wide > button {
+  width: 100%;
+}
+
+.mail-content-image.portrait {
+  max-width: min(100%, 340px);
+}
+
+.mail-content-image.compact {
+  width: auto;
+  max-width: min(100%, 190px);
+}
+
+.mail-content-image img {
+  max-width: 100%;
   height: auto;
-  max-height: 70dvh;
+  display: block;
   object-fit: contain;
 }
 
-.mail-body-images figcaption {
-  padding: 8px 10px;
-  overflow-wrap: anywhere;
-  color: #cbd5df;
-  background: #1b222a;
+.mail-content-image.wide img {
+  width: 100%;
+  max-height: 78dvh;
+}
+
+.mail-content-image.portrait img {
+  width: auto;
+  max-height: 78dvh;
+  margin: 0 auto;
+}
+
+.mail-content-image.compact img {
+  width: auto;
+  max-height: 140px;
+}
+
+.mail-image-zoom {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  padding: 5px 7px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #eef8ff;
+  background: rgba(5, 13, 19, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  backdrop-filter: blur(5px);
+}
+
+.mail-content-image.compact .mail-image-zoom {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0;
+}
+
+.mail-content-image figcaption {
+  max-width: 100%;
+  padding: 6px 2px 0;
+  overflow: hidden;
+  color: #8795a3;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mail-remote-image-gate {
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #bed8e6;
+  background: #141d24;
+  border: 1px dashed #385467;
+  border-radius: 7px;
+  text-align: left;
+}
+
+.mail-remote-image-gate svg {
+  flex: 0 0 auto;
+  color: #5dafd8;
+}
+
+.mail-remote-image-gate span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.mail-remote-image-gate b {
   font-size: 11px;
+}
+
+.mail-remote-image-gate small {
+  overflow: hidden;
+  color: #8194a2;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mail-body-image-fallback {
@@ -2023,6 +2175,88 @@ button:disabled {
 
 .mail-body-image-fallback small {
   color: #8f9cab;
+}
+
+.mail-extra-images {
+  margin-top: 16px;
+  border-top: 1px solid #2f3841;
+  border-bottom: 1px solid #2f3841;
+}
+
+.mail-extra-images summary {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  color: #aebdca;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  list-style: none;
+}
+
+.mail-extra-images summary::-webkit-details-marker {
+  display: none;
+}
+
+.mail-extra-images summary small {
+  min-width: 23px;
+  padding: 3px 7px;
+  color: #76bfe6;
+  background: #1d303c;
+  border-radius: 999px;
+  text-align: center;
+}
+
+.mail-extra-images > div {
+  padding: 2px 0 13px;
+  display: grid;
+  gap: 11px;
+}
+
+.mail-image-viewer {
+  position: fixed;
+  z-index: 1400;
+  inset: 0;
+  padding: calc(56px + env(safe-area-inset-top)) 12px calc(38px + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  place-items: center;
+  color: #e9f2f8;
+  background: rgba(3, 7, 10, 0.97);
+  animation: backdrop-enter 160ms ease-out both;
+}
+
+.mail-image-viewer > button {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 10px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: #eaf4f9;
+  background: #182129;
+  border: 1px solid #34414a;
+  border-radius: 50%;
+}
+
+.mail-image-viewer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  touch-action: pinch-zoom;
+}
+
+.mail-image-viewer > span {
+  max-width: 100%;
+  padding-top: 12px;
+  overflow: hidden;
+  color: #a8b5be;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mail-attachments {

@@ -2,6 +2,7 @@ package com.lxuan.ntou_tat;
 
 import android.Manifest;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.text.Spanned;
@@ -46,8 +47,10 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
@@ -225,7 +228,9 @@ public class NtouMailPlugin extends Plugin {
                 result.put("messageId", firstHeader(message, "Message-ID"));
                 result.put("references", firstHeader(message, "References"));
                 result.put("body", trimBody(content.text));
-                result.put("bodyImages", bodyImages(message, content.html));
+                BodyPresentation presentation = bodyPresentation(message, content.html, content.text);
+                result.put("bodyImages", presentation.images);
+                result.put("bodyBlocks", presentation.blocks);
                 result.put("attachments", attachmentMetadata(message));
                 call.resolve(result);
             } catch (Exception exception) {
@@ -614,7 +619,12 @@ public class NtouMailPlugin extends Plugin {
     }
 
     private void collectAttachments(Part part, String partId, JSArray items) throws MessagingException, IOException {
-        if (isDownloadablePart(part) && !partId.isEmpty()) {
+        boolean inlineBodyImage = part.isMimeType("image/*") && (
+            Part.INLINE.equalsIgnoreCase(part.getDisposition())
+                || !firstHeader(part, "Content-ID").isEmpty()
+                || !firstHeader(part, "Content-Location").isEmpty()
+        );
+        if (isDownloadablePart(part) && !inlineBodyImage && !partId.isEmpty()) {
             JSObject item = new JSObject();
             item.put("id", partId);
             item.put("name", decodeHeader(part.getFileName(), "附件"));
@@ -624,6 +634,7 @@ public class NtouMailPlugin extends Plugin {
             items.put(item);
             return;
         }
+        if (inlineBodyImage) return;
         if (part.isMimeType("multipart/*")) {
             Multipart multipart = (Multipart) part.getContent();
             for (int index = 0; index < multipart.getCount(); index++) {
@@ -632,18 +643,33 @@ public class NtouMailPlugin extends Plugin {
         }
     }
 
-    private JSArray bodyImages(Part root, String html) throws MessagingException, IOException {
-        JSArray images = new JSArray();
+    private BodyPresentation bodyPresentation(Part root, String html, String fallbackText)
+        throws MessagingException, IOException {
+        BodyPresentation presentation = new BodyPresentation();
         Set<String> seen = new HashSet<>();
-        collectInlineBodyImages(root, "", images, seen);
-        collectHtmlBodyImages(html, images, seen);
-        return images;
+        Map<String, String> sourceToId = new HashMap<>();
+        Map<String, String> contentToId = new HashMap<>();
+        Map<String, JSObject> imageById = new HashMap<>();
+        collectInlineBodyImages(root, "", presentation.images, seen, sourceToId, contentToId, imageById);
+        collectHtmlBodyImages(html, presentation.images, seen, sourceToId, imageById);
+        presentation.blocks = contentBlocks(html, fallbackText, sourceToId, imageById);
+        return presentation;
     }
 
-    private void collectInlineBodyImages(Part part, String partId, JSArray images, Set<String> seen)
-        throws MessagingException, IOException {
+    private void collectInlineBodyImages(
+        Part part,
+        String partId,
+        JSArray images,
+        Set<String> seen,
+        Map<String, String> sourceToId,
+        Map<String, String> contentToId,
+        Map<String, JSObject> imageById
+    ) throws MessagingException, IOException {
         String contentId = firstHeader(part, "Content-ID");
-        boolean inline = Part.INLINE.equalsIgnoreCase(part.getDisposition()) || !contentId.isEmpty();
+        String contentLocation = firstHeader(part, "Content-Location");
+        boolean inline = Part.INLINE.equalsIgnoreCase(part.getDisposition())
+            || !contentId.isEmpty()
+            || !contentLocation.isEmpty();
         if (part.isMimeType("image/*") && inline) {
             int size = part.getSize();
             if (size > MAX_INLINE_IMAGE_BYTES) return;
@@ -653,66 +679,216 @@ public class NtouMailPlugin extends Plugin {
             } catch (IOException ignored) {
                 return;
             }
-            String id = !contentId.isEmpty() ? contentId.replaceAll("^<|>$", "") : partId;
-            if (!seen.add("inline:" + id)) return;
+            String sourceId = !contentId.isEmpty() ? contentId.replaceAll("^<|>$", "") : partId;
             String mimeType = baseMimeType(part.getContentType());
             String fileName = decodeHeader(part.getFileName(), "信件內嵌圖片");
+            BitmapFactory.Options dimensions = new BitmapFactory.Options();
+            dimensions.inJustDecodeBounds = true;
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.length, dimensions);
+            int width = Math.max(0, dimensions.outWidth);
+            int height = Math.max(0, dimensions.outHeight);
+            if (isTrackingImage(width, height)) return;
+
+            String contentKey = mimeType + ":" + Arrays.hashCode(bytes);
+            String existingId = contentToId.get(contentKey);
+            if (existingId != null) {
+                registerImageAliases(sourceToId, sourceId, partId, fileName, contentLocation, existingId);
+                return;
+            }
+
+            String id = "inline-" + (sourceId.isEmpty() ? images.length() : sourceId);
+            if (!seen.add(id)) return;
             JSObject image = new JSObject();
-            image.put("id", "inline-" + (id.isEmpty() ? images.length() : id));
+            image.put("id", id);
             image.put("name", fileName);
             image.put("mimeType", mimeType);
             image.put("src", "data:" + mimeType + ";base64," + Base64.encodeToString(bytes, Base64.NO_WRAP));
             image.put("external", false);
+            image.put("width", width);
+            image.put("height", height);
+            image.put("referenced", false);
             images.put(image);
+            imageById.put(id, image);
+            contentToId.put(contentKey, id);
+            registerImageAliases(sourceToId, sourceId, partId, fileName, contentLocation, id);
             return;
         }
         if (part.isMimeType("multipart/*")) {
             Multipart multipart = (Multipart) part.getContent();
             for (int index = 0; index < multipart.getCount(); index++) {
                 String childId = partId.isEmpty() ? String.valueOf(index) : partId + "." + index;
-                collectInlineBodyImages(multipart.getBodyPart(index), childId, images, seen);
+                collectInlineBodyImages(
+                    multipart.getBodyPart(index), childId, images, seen, sourceToId, contentToId, imageById
+                );
             }
         }
     }
 
-    private void collectHtmlBodyImages(String html, JSArray images, Set<String> seen) {
+    private void collectHtmlBodyImages(
+        String html,
+        JSArray images,
+        Set<String> seen,
+        Map<String, String> sourceToId,
+        Map<String, JSObject> imageById
+    ) {
         if (html == null || html.trim().isEmpty()) return;
         Spanned rich = android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_LEGACY);
 
         for (ImageSpan span : rich.getSpans(0, rich.length(), ImageSpan.class)) {
             String source = span.getSource() == null ? "" : span.getSource().trim();
             if (isSafeRemoteImageUrl(source)) {
-                addRemoteBodyImage(images, seen, source, imageNameFromUrl(source));
+                addRemoteBodyImage(images, seen, source, imageNameFromUrl(source), sourceToId, imageById);
             } else if (source.regionMatches(true, 0, "data:image/", 0, "data:image/".length())
-                && source.length() <= MAX_INLINE_IMAGE_BYTES * 2 && seen.add(source)) {
+                && source.length() <= MAX_INLINE_IMAGE_BYTES * 2) {
+                String id = "embedded-" + Integer.toHexString(source.hashCode());
+                if (!seen.add(id)) {
+                    sourceToId.put(imageSourceKey(source), id);
+                    continue;
+                }
+                int separator = source.indexOf(';');
                 JSObject image = new JSObject();
-                image.put("id", "embedded-" + Integer.toHexString(source.hashCode()));
+                image.put("id", id);
                 image.put("name", "信件內嵌圖片");
-                image.put("mimeType", source.substring(5, Math.max(5, source.indexOf(';'))));
+                image.put("mimeType", separator > 5 ? source.substring(5, separator) : "image/*");
                 image.put("src", source);
                 image.put("external", false);
+                image.put("width", 0);
+                image.put("height", 0);
+                image.put("referenced", false);
                 images.put(image);
-            }
-        }
-
-        for (URLSpan span : rich.getSpans(0, rich.length(), URLSpan.class)) {
-            String url = span.getURL() == null ? "" : span.getURL().trim();
-            String label = rich.subSequence(rich.getSpanStart(span), rich.getSpanEnd(span)).toString().trim();
-            if (isSafeRemoteImageUrl(url) && looksLikeImage(label, url)) {
-                addRemoteBodyImage(images, seen, url, label.isEmpty() ? imageNameFromUrl(url) : label);
+                imageById.put(id, image);
+                sourceToId.put(imageSourceKey(source), id);
             }
         }
     }
 
-    private void addRemoteBodyImage(JSArray images, Set<String> seen, String url, String name) {
-        if (!seen.add(url)) return;
+    private void addRemoteBodyImage(
+        JSArray images,
+        Set<String> seen,
+        String url,
+        String name,
+        Map<String, String> sourceToId,
+        Map<String, JSObject> imageById
+    ) {
+        String id = "remote-" + Integer.toHexString(url.hashCode());
+        if (!seen.add(id)) {
+            sourceToId.put(imageSourceKey(url), id);
+            return;
+        }
         JSObject image = new JSObject();
-        image.put("id", "remote-" + Integer.toHexString(url.hashCode()));
+        image.put("id", id);
         image.put("name", name);
         image.put("mimeType", imageMimeType(name + " " + url));
         image.put("src", url);
         image.put("external", true);
+        image.put("width", 0);
+        image.put("height", 0);
+        image.put("referenced", false);
         images.put(image);
+        imageById.put(id, image);
+        sourceToId.put(imageSourceKey(url), id);
+    }
+
+    private void registerImageAliases(
+        Map<String, String> sourceToId,
+        String contentId,
+        String partId,
+        String fileName,
+        String contentLocation,
+        String imageId
+    ) {
+        if (contentId != null && !contentId.trim().isEmpty()) {
+            sourceToId.put(imageSourceKey("cid:" + contentId), imageId);
+            sourceToId.put(imageSourceKey(contentId), imageId);
+        }
+        if (partId != null && !partId.trim().isEmpty()) sourceToId.put(imageSourceKey(partId), imageId);
+        if (fileName != null && !fileName.trim().isEmpty()) sourceToId.put(imageSourceKey(fileName), imageId);
+        if (contentLocation != null && !contentLocation.trim().isEmpty()) {
+            sourceToId.put(imageSourceKey(contentLocation), imageId);
+        }
+    }
+
+    private JSArray contentBlocks(
+        String html,
+        String fallbackText,
+        Map<String, String> sourceToId,
+        Map<String, JSObject> imageById
+    ) {
+        JSArray blocks = new JSArray();
+        if (html == null || html.trim().isEmpty()) {
+            addTextBlock(blocks, trimBody(fallbackText));
+            return blocks;
+        }
+
+        Spanned rich = android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_LEGACY);
+        ImageSpan[] spans = rich.getSpans(0, rich.length(), ImageSpan.class);
+        Arrays.sort(spans, Comparator.comparingInt(rich::getSpanStart));
+        int cursor = 0;
+        Set<String> placed = new HashSet<>();
+        for (ImageSpan span : spans) {
+            int start = Math.max(cursor, rich.getSpanStart(span));
+            int end = Math.max(start, rich.getSpanEnd(span));
+            addTextBlock(blocks, richTextSlice(rich, cursor, start));
+            String source = span.getSource() == null ? "" : span.getSource().trim();
+            String imageId = sourceToId.get(imageSourceKey(source));
+            if (imageId != null && placed.add(imageId)) {
+                JSObject block = new JSObject();
+                block.put("type", "image");
+                block.put("imageId", imageId);
+                blocks.put(block);
+                JSObject image = imageById.get(imageId);
+                if (image != null) image.put("referenced", true);
+            }
+            cursor = end;
+        }
+        addTextBlock(blocks, richTextSlice(rich, cursor, rich.length()));
+        if (blocks.length() == 0) addTextBlock(blocks, trimBody(fallbackText));
+        return blocks;
+    }
+
+    private String richTextSlice(Spanned rich, int start, int end) {
+        if (end <= start) return "";
+        StringBuilder text = new StringBuilder(rich.subSequence(start, end).toString());
+        URLSpan[] links = rich.getSpans(start, end, URLSpan.class);
+        Arrays.sort(links, (left, right) -> Integer.compare(rich.getSpanEnd(right), rich.getSpanEnd(left)));
+        for (URLSpan link : links) {
+            int linkStart = rich.getSpanStart(link);
+            int linkEnd = rich.getSpanEnd(link);
+            if (linkStart < start || linkEnd > end || linkEnd < linkStart) continue;
+            String url = link.getURL() == null ? "" : link.getURL().trim();
+            String label = rich.subSequence(linkStart, linkEnd).toString().trim();
+            int insertion = linkEnd - start;
+            if (!url.isEmpty() && !label.equalsIgnoreCase(url) && insertion >= 0 && insertion <= text.length()) {
+                text.insert(insertion, "：" + url);
+            }
+        }
+        return text.toString()
+            .replace("\uFFFC", "")
+            .replace('\u00A0', ' ')
+            .replaceAll("[ \\t]+\\n", "\n")
+            .replaceAll("\\n{3,}", "\n\n")
+            .trim();
+    }
+
+    private void addTextBlock(JSArray blocks, String value) {
+        String text = trimBody(value);
+        if (text.isEmpty()) return;
+        JSObject block = new JSObject();
+        block.put("type", "text");
+        block.put("text", text);
+        blocks.put(block);
+    }
+
+    private String imageSourceKey(String value) {
+        if (value == null) return "";
+        String source = value.trim().replaceAll("^<|>$", "");
+        return source.regionMatches(true, 0, "cid:", 0, 4)
+            ? "cid:" + source.substring(4).replaceAll("^<|>$", "").toLowerCase(Locale.ROOT)
+            : source;
+    }
+
+    private boolean isTrackingImage(int width, int height) {
+        return width > 0 && height > 0 && (width <= 4 || height <= 4 || (long) width * height <= 64);
     }
 
     private boolean isSafeRemoteImageUrl(String value) {
@@ -722,11 +898,6 @@ public class NtouMailPlugin extends Plugin {
         } catch (Exception ignored) {
             return false;
         }
-    }
-
-    private boolean looksLikeImage(String label, String url) {
-        return (label + " " + url).toLowerCase(Locale.ROOT)
-            .matches("(?s).*\\.(png|jpe?g|gif|webp|bmp)(?:[^a-z0-9].*|$)");
     }
 
     private String imageNameFromUrl(String value) {
@@ -992,5 +1163,10 @@ public class NtouMailPlugin extends Plugin {
             if (!other.text.trim().isEmpty()) text = text.isEmpty() ? other.text : text + "\n\n" + other.text;
             if (!other.html.trim().isEmpty()) html = html.isEmpty() ? other.html : html + "<hr>" + other.html;
         }
+    }
+
+    private static class BodyPresentation {
+        final JSArray images = new JSArray();
+        JSArray blocks = new JSArray();
     }
 }

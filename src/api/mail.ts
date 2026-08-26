@@ -25,7 +25,19 @@ export type MailInbox = {
   messages: MailSummary[]
 }
 export type MailAttachment = { id: string; name: string; mimeType: string; size: number; inline: boolean }
-export type MailBodyImage = { id: string; name: string; mimeType: string; src: string; external: boolean }
+export type MailBodyImage = {
+  id: string
+  name: string
+  mimeType: string
+  src: string
+  external: boolean
+  width?: number
+  height?: number
+  referenced?: boolean
+}
+export type MailBodyBlock =
+  | { type: 'text'; text: string }
+  | { type: 'image'; imageId: string }
 export type MailDetail = MailSummary & {
   recipients: string[]
   cc: string[]
@@ -34,6 +46,7 @@ export type MailDetail = MailSummary & {
   references: string
   body: string
   bodyImages: MailBodyImage[]
+  bodyBlocks: MailBodyBlock[]
   attachments: MailAttachment[]
 }
 export type MailOutgoingAttachment = { name: string; mimeType: string; data: string }
@@ -143,13 +156,22 @@ export const mailApi = {
       return normalizeSummary({
         ...summary, unread: false, recipients: [`${normalizeMailAccount(credentials.account)}@mail.ntou.edu.tw`], cc: [],
         replyTo: [summary.senderAddress], messageId: `<mock-${uid}@mail.ntou.edu.tw>`, references: '',
-        body: '同學您好：\n\n本信包含完整排版、連結、表格與附件，用來確認海大 TAT 信箱畫面。\n\n海大首頁：https://www.ntou.edu.tw/',
-        bodyImages: [{ id: 'mock-poster', name: '課程海報.png', mimeType: 'image/svg+xml', src: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22360%22 viewBox=%220 0 640 360%22%3E%3Crect width=%22640%22 height=%22360%22 fill=%22%23075b9f%22/%3E%3Ccircle cx=%22540%22 cy=%2280%22 r=%22120%22 fill=%22%233bb7e8%22 opacity=%22.55%22/%3E%3Ctext x=%2248%22 y=%22155%22 fill=%22white%22 font-size=%2246%22 font-family=%22sans-serif%22 font-weight=%22700%22%3ECOURSE POSTER%3C/text%3E%3Ctext x=%2248%22 y=%22215%22 fill=%22%23d9f4ff%22 font-size=%2226%22 font-family=%22sans-serif%22%3EMail2000 inline image preview%3C/text%3E%3C/svg%3E', external: false }],
+        body: '同學您好：\n\n這張課程海報現在會留在原本的段落位置，不會被堆到信件最下面。\n\n海大首頁：https://www.ntou.edu.tw/',
+        bodyImages: [{ id: 'mock-poster', name: '課程海報.png', mimeType: 'image/svg+xml', src: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22360%22 viewBox=%220 0 640 360%22%3E%3Crect width=%22640%22 height=%22360%22 fill=%22%23075b9f%22/%3E%3Ccircle cx=%22540%22 cy=%2280%22 r=%22120%22 fill=%22%233bb7e8%22 opacity=%22.55%22/%3E%3Ctext x=%2248%22 y=%22155%22 fill=%22white%22 font-size=%2246%22 font-family=%22sans-serif%22 font-weight=%22700%22%3ECOURSE POSTER%3C/text%3E%3Ctext x=%2248%22 y=%22215%22 fill=%22%23d9f4ff%22 font-size=%2226%22 font-family=%22sans-serif%22%3EMail2000 inline image preview%3C/text%3E%3C/svg%3E', external: false, width: 640, height: 360, referenced: true }],
+        bodyBlocks: [
+          { type: 'text', text: '同學您好：\n\n這張課程海報現在會留在原本的段落位置，不會被堆到信件最下面。' },
+          { type: 'image', imageId: 'mock-poster' },
+          { type: 'text', text: '海大首頁：https://www.ntou.edu.tw/' },
+        ] as MailBodyBlock[],
         attachments: [{ id: '0.1', name: '選課結果.pdf', mimeType: 'application/pdf', size: 245760, inline: false }],
       })
     }
     const message = await NativeMail.getMessage({ ...normalizedCredentials(credentials), folder, uid })
-    return normalizeSummary({ ...message, bodyImages: Array.isArray(message.bodyImages) ? message.bodyImages : [] })
+    const bodyImages = Array.isArray(message.bodyImages) ? message.bodyImages : []
+    const bodyBlocks = Array.isArray(message.bodyBlocks) && message.bodyBlocks.length
+      ? message.bodyBlocks
+      : [{ type: 'text' as const, text: message.body || '' }]
+    return normalizeSummary({ ...message, bodyImages, bodyBlocks })
   },
   async setFlag(credentials: MailCredentials, folder: string, uid: string, flag: 'seen' | 'flagged', value: boolean) {
     requireNative()

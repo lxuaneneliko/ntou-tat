@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Browser } from '@capacitor/browser'
 import {
   AlertCircle,
@@ -26,9 +27,11 @@ import {
   Star,
   Trash2,
   X,
+  ZoomIn,
 } from 'lucide-react'
 import type {
   MailCredentials,
+  MailBodyBlock,
   MailBodyImage,
   MailDetail,
   MailDraft,
@@ -85,6 +88,101 @@ const fileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+type MailImageKind = 'wide' | 'portrait' | 'compact' | 'hidden'
+
+const imageKind = (image: MailBodyImage, width = image.width ?? 0, height = image.height ?? 0): MailImageKind => {
+  if (width > 0 && height > 0 && (width <= 4 || height <= 4 || width * height <= 64)) return 'hidden'
+  if (width > 0 && height > 0 && width <= 180 && height <= 140) return 'compact'
+  if (width > 0 && height > width * 1.35) return 'portrait'
+  return 'wide'
+}
+
+const isTrustedMailImage = (image: MailBodyImage) => {
+  if (!image.external) return true
+  try {
+    const host = new URL(image.src).hostname.toLowerCase()
+    return host === 'ntou.edu.tw' || host.endsWith('.ntou.edu.tw')
+  } catch {
+    return false
+  }
+}
+
+const mailImageHost = (image: MailBodyImage) => {
+  try {
+    return new URL(image.src).hostname
+  } catch {
+    return '外部網站'
+  }
+}
+
+const usefulImageName = (name: string) => {
+  const value = name.trim()
+  if (!value || /^(信件圖片|信件內嵌圖片|inline image|image)$/i.test(value)) return false
+  if (/^[a-f\d-]{20,}(?:\.[a-z]{2,5})?$/i.test(value)) return false
+  if (/^(image|img|logo|spacer|pixel)\d*(?:\.[a-z]{2,5})?$/i.test(value)) return false
+  return value.length <= 80
+}
+
+const mailText = (value: string, keyPrefix: string) => mailTextTokens(value).map((token, index) => (
+  token.type === 'link'
+    ? <a href={token.href} key={`${keyPrefix}-${index}-${token.href}`} rel="noreferrer" onClick={(event) => { event.preventDefault(); void openMailLink(token.href) }}>{token.value}</a>
+    : <span key={`${keyPrefix}-${index}-text`}>{token.value}</span>
+))
+
+function MailBodyPicture({
+  allowExternal,
+  failed,
+  image,
+  onAllowExternal,
+  onFailed,
+  onOpen,
+}: {
+  allowExternal: boolean
+  failed: boolean
+  image: MailBodyImage
+  onAllowExternal: () => void
+  onFailed: () => void
+  onOpen: () => void
+}) {
+  const [kind, setKind] = useState<MailImageKind>(() => imageKind(image))
+  if (kind === 'hidden') return null
+
+  if (image.external && !allowExternal) {
+    return (
+      <button className="mail-remote-image-gate" type="button" onClick={onAllowExternal}>
+        <ShieldCheck size={19} />
+        <span><b>外部圖片已隱藏</b><small>{mailImageHost(image)} · 點一下載入</small></span>
+      </button>
+    )
+  }
+
+  if (failed) {
+    return (
+      <button className="mail-body-image-fallback" type="button" onClick={() => image.external && void openMailLink(image.src)}>
+        <ImageIcon size={21} />
+        <span><b>{usefulImageName(image.name) ? image.name : '圖片無法顯示'}</b><small>{image.external ? '點此開啟原始連結' : '內嵌圖片資料可能已損毀'}</small></span>
+      </button>
+    )
+  }
+
+  return (
+    <figure className={`mail-content-image ${kind}`}>
+      <button type="button" aria-label={`放大圖片${usefulImageName(image.name) ? `：${image.name}` : ''}`} onClick={onOpen}>
+        <img
+          src={image.src}
+          alt={usefulImageName(image.name) ? image.name : '信件圖片'}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={onFailed}
+          onLoad={(event) => setKind(imageKind(image, event.currentTarget.naturalWidth, event.currentTarget.naturalHeight))}
+        />
+        <span className="mail-image-zoom"><ZoomIn size={15} />點擊放大</span>
+      </button>
+      {usefulImageName(image.name) ? <figcaption>{image.name}</figcaption> : null}
+    </figure>
+  )
+}
+
 const fileToAttachment = (file: globalThis.File): Promise<MailOutgoingAttachment> => new Promise((resolve, reject) => {
   const reader = new FileReader()
   reader.onerror = () => reject(new Error(`無法讀取附件：${file.name}`))
@@ -120,6 +218,8 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [detailBusyUid, setDetailBusyUid] = useState<string | null>(null)
   const [failedBodyImages, setFailedBodyImages] = useState<Set<string>>(new Set())
+  const [externalImagesVisible, setExternalImagesVisible] = useState(false)
+  const [activeBodyImage, setActiveBodyImage] = useState<MailBodyImage | null>(null)
   const [showHeaders, setShowHeaders] = useState(false)
   const [compose, setCompose] = useState<ComposeState | null>(null)
   const [showCopyFields, setShowCopyFields] = useState(false)
@@ -128,9 +228,26 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   const attachmentInput = useRef<HTMLInputElement>(null)
 
   const currentFolder = folders.find((folder) => folder.id === folderId)
+  const bodyImagesById = useMemo(
+    () => new Map((detail?.bodyImages ?? []).map((image) => [image.id, image])),
+    [detail],
+  )
+  const bodyBlocks: MailBodyBlock[] = detail?.bodyBlocks?.length
+    ? detail.bodyBlocks
+    : [{ type: 'text', text: detail?.body || '（這封信沒有可顯示的文字內容）' }]
+  const blockedExternalImages = (detail?.bodyImages ?? []).filter(
+    (image) => image.external && image.referenced !== false && !isTrustedMailImage(image),
+  )
+  const extraBodyImages = (detail?.bodyImages ?? []).filter(
+    (image) => image.referenced === false && imageKind(image) !== 'hidden',
+  )
 
   useImperativeHandle(ref, () => ({
     goBack: () => {
+      if (activeBodyImage) {
+        setActiveBodyImage(null)
+        return true
+      }
       if (compose) {
         setCompose(null)
         return true
@@ -141,7 +258,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
       }
       return false
     },
-  }), [compose, detail])
+  }), [activeBodyImage, compose, detail])
 
   const handleAuthFailure = useCallback(async (loadError: unknown) => {
     if (mailErrorCode(loadError) !== 'MAIL_AUTH_FAILED') return false
@@ -275,6 +392,8 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
       const nextDetail = await mailApi.getMessage(credentials, folderId, message.uid)
       setDetail(nextDetail)
       setFailedBodyImages(new Set())
+      setExternalImagesVisible(false)
+      setActiveBodyImage(null)
       setShowHeaders(false)
       if (message.unread) updateSummary(message.uid, { unread: false })
     } catch (loadError) {
@@ -493,7 +612,19 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   }
 
   if (detail) {
+    const renderBodyImage = (image: MailBodyImage, key: string) => (
+      <MailBodyPicture
+        allowExternal={externalImagesVisible || isTrustedMailImage(image)}
+        failed={failedBodyImages.has(image.id)}
+        image={image}
+        key={key}
+        onAllowExternal={() => setExternalImagesVisible(true)}
+        onFailed={() => setFailedBodyImages((current) => new Set(current).add(image.id))}
+        onOpen={() => setActiveBodyImage(image)}
+      />
+    )
     return (
+      <>
       <section className="mail-screen mail-detail-screen">
         <div className="mail-detail-toolbar">
           <button type="button" aria-label="返回信箱" onClick={() => setDetail(null)}><ArrowLeft size={22} /></button>
@@ -522,23 +653,40 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
             <button type="button" onClick={startForward}><Forward size={17} /><span>轉寄</span></button>
             <label><span className="sr-only">移動郵件</span><select aria-label="移動郵件" value="" onChange={(event) => void moveCurrent(event.target.value)}><option value="">移動到…</option>{folders.filter((folder) => folder.id !== folderId).map((folder) => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label>
           </div>
-          <div className="mail-body">{mailTextTokens(detail.body || '（這封信沒有可顯示的文字內容）').map((token, index) => token.type === 'link' ? <a href={token.href} key={`${index}-${token.href}`} rel="noreferrer" onClick={(event) => { event.preventDefault(); void openMailLink(token.href) }}>{token.value}</a> : <span key={`${index}-text`}>{token.value}</span>)}</div>
-          {detail.bodyImages.length ? <div className="mail-body-images">
-            <strong><ImageIcon size={18} />信件圖片（{detail.bodyImages.length}）</strong>
-            {detail.bodyImages.map((image: MailBodyImage) => failedBodyImages.has(image.id) ? (
-              <button className="mail-body-image-fallback" type="button" key={image.id} onClick={() => image.external && void openMailLink(image.src)}>
-                <ImageIcon size={22} /><span><b>{image.name}</b><small>{image.external ? '圖片無法直接載入，點此開啟原始連結' : '圖片資料無法顯示'}</small></span>
-              </button>
-            ) : (
-              <figure key={image.id}>
-                <img src={image.src} alt={image.name} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailedBodyImages((current) => new Set(current).add(image.id))} />
-                <figcaption>{image.name}</figcaption>
-              </figure>
-            ))}
-          </div> : null}
+          {blockedExternalImages.length && !externalImagesVisible ? (
+            <button className="mail-external-images-banner" type="button" onClick={() => setExternalImagesVisible(true)}>
+              <ShieldCheck size={18} />
+              <span><b>已保護你的隱私</b><small>這封信有 {blockedExternalImages.length} 張外部圖片尚未載入</small></span>
+              <strong>顯示</strong>
+            </button>
+          ) : null}
+          <div className="mail-body mail-body-flow">
+            {bodyBlocks.map((block, index) => {
+              if (block.type === 'text') {
+                return <div className="mail-body-text" key={`text-${index}`}>{mailText(block.text, `body-${index}`)}</div>
+              }
+              const image = bodyImagesById.get(block.imageId)
+              return image ? renderBodyImage(image, `body-image-${block.imageId}-${index}`) : null
+            })}
+          </div>
+          {extraBodyImages.length ? (
+            <details className="mail-extra-images">
+              <summary><ImageIcon size={17} /><span>其他內嵌圖片</span><small>{extraBodyImages.length}</small></summary>
+              <div>{extraBodyImages.map((image) => renderBodyImage(image, `extra-${image.id}`))}</div>
+            </details>
+          ) : null}
           {detail.attachments.length ? <div className="mail-attachments"><strong>附件（{detail.attachments.length}）</strong>{detail.attachments.map((attachment) => <button type="button" key={attachment.id} onClick={() => credentials && void mailApi.openAttachment(credentials, folderId, detail.uid, attachment.id).catch((attachmentError) => setError(mailErrorMessage(attachmentError)))}><File size={19} /><span><b>{attachment.name}</b><small>{attachment.mimeType}{attachment.size ? ` · ${fileSize(attachment.size)}` : ''}</small></span><Download size={18} /></button>)}</div> : null}
         </article>
       </section>
+      {activeBodyImage ? createPortal(
+          <div className="mail-image-viewer" role="presentation" onClick={() => setActiveBodyImage(null)}>
+            <button type="button" aria-label="關閉圖片" onClick={() => setActiveBodyImage(null)}><X size={24} /></button>
+            <img src={activeBodyImage.src} alt={usefulImageName(activeBodyImage.name) ? activeBodyImage.name : '信件圖片'} onClick={(event) => event.stopPropagation()} />
+            {usefulImageName(activeBodyImage.name) ? <span>{activeBodyImage.name}</span> : null}
+          </div>,
+          document.body,
+        ) : null}
+      </>
     )
   }
 
