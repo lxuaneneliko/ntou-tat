@@ -168,6 +168,7 @@ export type TabKey = 'timetable' | 'calendar' | 'grades' | 'mail' | 'more'
 export type MoreView =
   | 'portal'
   | 'announcements'
+  | 'departments'
   | 'competitions'
   | 'calendar'
   | 'campus'

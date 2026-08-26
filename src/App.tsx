@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
+import type { CSSProperties, PointerEvent as ReactPointerEvent, RefObject } from 'react'
 import { App as CapApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import {
@@ -54,6 +54,7 @@ import { clearPortalSession } from './api/portal'
 import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
 import { MailScreen, type MailScreenHandle } from './MailScreen'
+import { DepartmentSitesScreen, type DepartmentSitesScreenHandle } from './DepartmentSitesScreen'
 import { authStore } from './storage/authStorage'
 import {
   decodeTimetableShare,
@@ -372,6 +373,7 @@ function App() {
   const [exitHintVisible, setExitHintVisible] = useState(false)
   const updateCheckRunningRef = useRef(false)
   const mailScreenRef = useRef<MailScreenHandle>(null)
+  const departmentSitesRef = useRef<DepartmentSitesScreenHandle>(null)
   const lastRootBackAtRef = useRef(0)
   const exitHintTimerRef = useRef<number | undefined>(undefined)
 
@@ -823,6 +825,8 @@ function App() {
         setActiveCourse(null)
       } else if (selectedTab === 'mail' && mailScreenRef.current?.goBack()) {
         clearExitHint()
+      } else if (moreView === 'departments' && departmentSitesRef.current?.goBack()) {
+        clearExitHint()
       } else if (moreView) {
         clearExitHint()
         setMoreView(null)
@@ -1146,7 +1150,10 @@ function App() {
         <header className="app-header">
           <div className="header-main">
             {moreView ? (
-              <button className="header-icon" type="button" aria-label="返回" onClick={() => setMoreView(null)}>
+              <button className="header-icon" type="button" aria-label="返回" onClick={() => {
+                if (moreView === 'departments' && departmentSitesRef.current?.goBack()) return
+                setMoreView(null)
+              }}>
                 <ChevronLeft size={24} />
               </button>
             ) : null}
@@ -1321,6 +1328,7 @@ function App() {
                 onOpenPortalPage={api.openPortalSystemPage}
                 onRefreshCompetitions={refreshExternalCompetitions}
                 competitionRefreshing={competitionRefreshing}
+                departmentSitesRef={departmentSitesRef}
               />
             ) : selectedTab === 'timetable' ? (
               <TimetableScreen
@@ -2244,6 +2252,7 @@ function MoreScreen({
   const tools: Array<{ icon: typeof Bell; label: string; view: MoreView }> = [
     { icon: Building2, label: '海大校務系統', view: 'portal' },
     { icon: Bell, label: '校務公告', view: 'announcements' },
+    { icon: Building2, label: '各系校網', view: 'departments' },
     { icon: Trophy, label: '校外競賽', view: 'competitions' },
     { icon: CalendarDays, label: '重要日期', view: 'calendar' },
     { icon: LinkIcon, label: '海大連結', view: 'campus' },
@@ -2306,6 +2315,7 @@ function MoreScreen({
 function MoreSubview({
   competitionRefreshing,
   data,
+  departmentSitesRef,
   loadPortalMenu,
   onLogout,
   onOpenPortalPage,
@@ -2315,6 +2325,7 @@ function MoreSubview({
 }: {
   data: AppData
   competitionRefreshing: boolean
+  departmentSitesRef: RefObject<DepartmentSitesScreenHandle | null>
   loadPortalMenu?: (path: string[]) => Promise<PortalSystemNode[]>
   onLogout: () => Promise<void>
   onOpenPortalPage?: (path: string[]) => Promise<void>
@@ -2385,6 +2396,8 @@ function MoreSubview({
       <div className="inline-empty"><Bell size={24} /><span>海大學校公告頁目前沒有資料</span></div>
     )
   }
+
+  if (view === 'departments') return <DepartmentSitesScreen ref={departmentSitesRef} />
 
   if (view === 'competitions') {
     return (
@@ -3188,6 +3201,7 @@ function moreViewTitle(view: MoreView) {
   const titles: Record<MoreView, string> = {
     portal: '海大校務系統',
     announcements: '校務公告',
+    departments: '各系校網',
     competitions: '校外競賽',
     calendar: '重要日期',
     campus: '海大連結',

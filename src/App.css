@@ -1225,6 +1225,401 @@ button:disabled {
   line-height: 1.45;
 }
 
+.department-directory,
+.department-feed {
+  min-height: calc(100dvh - 140px);
+  background: radial-gradient(circle at 88% 2%, rgba(21, 116, 167, 0.18), transparent 220px), #0f1216;
+}
+
+.department-directory-hero {
+  min-height: 92px;
+  padding: 15px 16px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  background: linear-gradient(115deg, #102331, #121920 68%);
+  border-bottom: 1px solid #2b3d48;
+}
+
+.department-directory-count {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #dff4ff;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
+  background: #0b6b9f;
+  border: 1px solid #55b8e4;
+  border-radius: 50% 50% 46% 54%;
+  box-shadow: 0 8px 24px rgba(0, 79, 122, 0.35);
+}
+
+.department-directory-hero > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.department-directory-hero strong {
+  color: #f1f7fb;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+}
+
+.department-directory-hero div span {
+  color: #9fb4c0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.department-search {
+  height: 44px;
+  margin: 13px 14px 6px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #82919d;
+  background: #171c21;
+  border: 1px solid #303942;
+  border-radius: 8px;
+}
+
+.department-search:focus-within {
+  color: #66c5f2;
+  border-color: #438caf;
+  box-shadow: 0 0 0 2px rgba(56, 153, 201, 0.12);
+}
+
+.department-search input {
+  min-width: 0;
+  flex: 1;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.department-search input::placeholder {
+  color: #707b85;
+}
+
+.department-college-list {
+  padding: 4px 12px 24px;
+  display: grid;
+  gap: 10px;
+}
+
+.department-college {
+  overflow: hidden;
+  background: rgba(22, 26, 31, 0.92);
+  border: 1px solid #2a3037;
+  border-radius: 9px;
+}
+
+.department-college > header {
+  min-height: 37px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #181e24;
+  border-bottom: 1px solid #2a3037;
+}
+
+.department-college > header > span {
+  width: 4px;
+  height: 17px;
+  background: var(--college-accent);
+  border-radius: 3px;
+}
+
+.department-college > header strong {
+  min-width: 0;
+  flex: 1;
+  color: #dce7ee;
+  font-size: 12px;
+}
+
+.department-college > header small {
+  color: #798690;
+  font-size: 9px;
+}
+
+.department-grid {
+  padding: 7px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.department-grid > button {
+  min-width: 0;
+  min-height: 66px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 35px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  text-align: left;
+  background: #11161b;
+  border: 1px solid #292f35;
+  border-radius: 7px;
+  animation: row-enter 320ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  animation-delay: calc(var(--department-index) * 35ms);
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+}
+
+.department-grid > button:active {
+  background: #192129;
+  border-color: color-mix(in srgb, var(--college-accent) 65%, #323941);
+  transform: translateY(1px);
+}
+
+.department-monogram,
+.department-feed-monogram {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  color: #dff5ff;
+  font-size: 10px;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--college-accent) 34%, #17232b);
+  border: 1px solid color-mix(in srgb, var(--college-accent) 58%, #2a343c);
+  border-radius: 50%;
+}
+
+.department-grid > button > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.department-grid strong,
+.department-grid small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.department-grid strong {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.department-grid small {
+  color: #808b94;
+  font-size: 8px;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.department-grid > button > svg {
+  color: #596771;
+}
+
+.department-feed-heading {
+  min-height: 72px;
+  padding: 9px 11px;
+  display: grid;
+  grid-template-columns: 38px 39px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(105deg, color-mix(in srgb, var(--college-accent) 20%, #12181d), #151a1f 72%);
+  border-bottom: 1px solid color-mix(in srgb, var(--college-accent) 35%, #2c3339);
+}
+
+.department-feed-heading > button,
+.department-feed-heading > a,
+.department-feed-summary > button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: #d8e5ec;
+  background: transparent;
+  border-radius: 50%;
+}
+
+.department-feed-heading > button:active,
+.department-feed-heading > a:active,
+.department-feed-summary > button:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.department-feed-monogram {
+  width: 39px;
+  height: 39px;
+}
+
+.department-feed-heading > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.department-feed-heading strong,
+.department-feed-heading span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.department-feed-heading strong {
+  color: #eef5f9;
+  font-size: 14px;
+}
+
+.department-feed-heading div span {
+  color: #91a0aa;
+  font-size: 9px;
+}
+
+.department-category-strip {
+  padding: 8px 10px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #11161a;
+  border-bottom: 1px solid #2a3036;
+}
+
+.department-category-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.department-category-strip button {
+  min-height: 33px;
+  padding: 6px 12px;
+  flex: 0 0 auto;
+  color: #a7b1b9;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #1c2228;
+  border: 1px solid #323940;
+  border-radius: 5px;
+}
+
+.department-category-strip button.active {
+  color: #f2fbff;
+  background: color-mix(in srgb, var(--college-accent) 48%, #17303e);
+  border-color: color-mix(in srgb, var(--college-accent) 72%, #3b4a53);
+}
+
+.department-feed-summary {
+  min-height: 52px;
+  padding: 8px 11px 8px 14px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 9px;
+  color: color-mix(in srgb, var(--college-accent) 78%, white);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--college-accent) 14%, #13191e), #13171b);
+  border-bottom: 1px solid #2b3238;
+}
+
+.department-feed-summary > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.department-feed-summary b {
+  overflow: hidden;
+  color: #dce8ee;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.department-feed-summary small {
+  color: #7f8c96;
+  font-size: 8px;
+}
+
+.department-feed-warning {
+  min-height: 43px;
+  padding: 8px 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffd18a;
+  font-size: 10px;
+  line-height: 1.4;
+  background: #302515;
+  border-bottom: 1px solid #59431f;
+}
+
+.department-post-list {
+  border-top: 1px solid rgba(255, 255, 255, 0.015);
+}
+
+.department-post-list > a {
+  min-height: 67px;
+  padding: 10px 13px;
+  display: grid;
+  grid-template-columns: 33px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  background: #111419;
+  border-bottom: 1px solid #292e34;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.department-post-list > a:active {
+  background: #191f25;
+  transform: translateX(2px);
+}
+
+.department-post-icon {
+  width: 33px;
+  height: 33px;
+  display: grid;
+  place-items: center;
+  color: var(--college-accent);
+  background: color-mix(in srgb, var(--college-accent) 13%, #151a1f);
+  border: 1px solid color-mix(in srgb, var(--college-accent) 32%, #30373d);
+  border-radius: 6px;
+}
+
+.department-post-list > a > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.department-post-list strong {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.department-post-list small {
+  color: #7f8b95;
+  font-size: 9px;
+}
+
+.department-post-list > a > svg {
+  color: #66737d;
+}
+
+@media (max-width: 359px) {
+  .department-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .inline-retry {
   min-height: 38px;
   margin-top: 7px;
