@@ -24,7 +24,6 @@ import {
   Handshake,
   KeyRound,
   LayoutGrid,
-  Link as LinkIcon,
   List as ListIcon,
   LogOut,
   Mail,
@@ -56,6 +55,7 @@ import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
 import { MailScreen, type MailScreenHandle } from './MailScreen'
 import { DepartmentSitesScreen, type DepartmentSitesScreenHandle } from './DepartmentSitesScreen'
+import { AdministrativeUnitsScreen, type AdministrativeUnitsScreenHandle } from './AdministrativeUnitsScreen'
 import { authStore } from './storage/authStorage'
 import {
   decodeTimetableShare,
@@ -406,6 +406,7 @@ function App() {
   const updateCheckRunningRef = useRef(false)
   const mailScreenRef = useRef<MailScreenHandle>(null)
   const departmentSitesRef = useRef<DepartmentSitesScreenHandle>(null)
+  const administrativeUnitsRef = useRef<AdministrativeUnitsScreenHandle>(null)
   const lastRootBackAtRef = useRef(0)
   const exitHintTimerRef = useRef<number | undefined>(undefined)
 
@@ -1036,6 +1037,8 @@ function App() {
         clearExitHint()
       } else if (moreView === 'departments' && departmentSitesRef.current?.goBack()) {
         clearExitHint()
+      } else if (moreView === 'administration' && administrativeUnitsRef.current?.goBack()) {
+        clearExitHint()
       } else if (moreView) {
         clearExitHint()
         setMoreView(null)
@@ -1382,6 +1385,7 @@ function App() {
             {moreView ? (
               <button className="header-icon" type="button" aria-label="返回" onClick={() => {
                 if (moreView === 'departments' && departmentSitesRef.current?.goBack()) return
+                if (moreView === 'administration' && administrativeUnitsRef.current?.goBack()) return
                 setMoreView(null)
               }}>
                 <ChevronLeft size={24} />
@@ -1579,6 +1583,7 @@ function App() {
                 onRefreshIndustry={refreshIndustryNews}
                 industryRefreshing={industryRefreshing}
                 departmentSitesRef={departmentSitesRef}
+                administrativeUnitsRef={administrativeUnitsRef}
               />
             ) : selectedTab === 'timetable' ? (
               <TimetableScreen
@@ -2506,7 +2511,7 @@ function MoreScreen({
     { icon: Handshake, label: '海大產學中心', view: 'industry' },
     { icon: Trophy, label: '校外競賽', view: 'competitions' },
     { icon: CalendarDays, label: '重要日期', view: 'calendar' },
-    { icon: LinkIcon, label: '海大連結', view: 'campus' },
+    { icon: Building2, label: '行政單位', view: 'administration' },
     { icon: MapPinned, label: '交通與地圖', view: 'traffic' },
     { icon: Phone, label: '緊急聯絡', view: 'emergency' },
     { icon: ShieldCheck, label: '帳號與設定', view: 'settings' },
@@ -2564,6 +2569,7 @@ function MoreScreen({
 }
 
 function MoreSubview({
+  administrativeUnitsRef,
   competitionRefreshing,
   data,
   departmentSitesRef,
@@ -2577,6 +2583,7 @@ function MoreSubview({
   view,
 }: {
   data: AppData
+  administrativeUnitsRef: RefObject<AdministrativeUnitsScreenHandle | null>
   competitionRefreshing: boolean
   departmentSitesRef: RefObject<DepartmentSitesScreenHandle | null>
   industryRefreshing: boolean
@@ -2630,7 +2637,7 @@ function MoreSubview({
     )
   }
 
-  if (view === 'campus') return <LinkList items={data.campusLinks} />
+  if (view === 'administration') return <AdministrativeUnitsScreen ref={administrativeUnitsRef} links={data.campusLinks} />
   if (view === 'traffic') return <CampusMapScreen />
 
   if (view === 'announcements') {
@@ -3541,7 +3548,7 @@ function moreViewTitle(view: MoreView) {
     industry: '海大產學中心',
     competitions: '校外競賽',
     calendar: '重要日期',
-    campus: '海大連結',
+    administration: '行政單位',
     traffic: '交通與地圖',
     emergency: '緊急聯絡',
     settings: '帳號與設定',

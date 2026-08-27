@@ -180,7 +180,7 @@ export type MoreView =
   | 'industry'
   | 'competitions'
   | 'calendar'
-  | 'campus'
+  | 'administration'
   | 'traffic'
   | 'emergency'
   | 'settings'

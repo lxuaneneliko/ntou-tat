@@ -10,13 +10,16 @@ export type DepartmentCollege =
   | '人文社會科學院'
   | '海洋法律與政策學院'
 
-export type DepartmentSite = {
+export type PublicContentSite = {
   id: string
   name: string
   shortName: string
-  college: DepartmentCollege
   url: string
   homeUrl?: string
+}
+
+export type DepartmentSite = PublicContentSite & {
+  college: DepartmentCollege
 }
 
 export type DepartmentPost = {
@@ -133,7 +136,7 @@ export const parseDepartmentPosts = (html: string, baseUrl: string, categoryId: 
 
 const ignoredStaticSection = /相關連結|網站連結|常用連結|分眾入口|聯繫我們|失物招領|影音專區|活動剪影|海大資工|運輸最愛|國際交換生心得/i
 
-export const parseDepartmentHomepage = (html: string, site: DepartmentSite): DepartmentOverview => {
+export const parseDepartmentHomepage = (html: string, site: PublicContentSite): DepartmentOverview => {
   const document = new DOMParser().parseFromString(html, 'text/html')
   const baseUrl = site.homeUrl ?? site.url
   const categories: DepartmentCategory[] = []
