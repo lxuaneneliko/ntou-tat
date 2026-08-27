@@ -1,4 +1,4 @@
-import type { IndustryNews } from '../types'
+import type { IndustryNews, IndustryNewsCategory } from '../types'
 
 const SOURCE_URL = 'https://tlo.ntou.edu.tw/'
 const SOURCE_NAME = '海大產學營運總中心'
@@ -40,6 +40,7 @@ const newsFromParts = (
   titleHtml: string,
   href: string,
   publishedAtHtml: string,
+  category: IndustryNewsCategory,
 ): IndustryNews | null => {
   const url = absoluteHttpsUrl(href)
   const title = textFromHtml(titleHtml)
@@ -49,18 +50,22 @@ const newsFromParts = (
     title,
     publishedAt: textFromHtml(publishedAtHtml),
     source: SOURCE_NAME,
+    category,
     url,
   }
 }
 
-export const parseIndustryNews = (html: string): IndustryNews[] => {
+export const parseIndustryNews = (
+  html: string,
+  category: IndustryNewsCategory,
+): IndustryNews[] => {
   if (typeof DOMParser === 'undefined') {
     return [...html.matchAll(/<div\b[^>]*class=["'][^"']*\bmtitle\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi)]
       .map((match) => {
         const href = match[1].match(/<a\b[^>]*href=["']([^"']+)["']/i)?.[1] ?? ''
         const titleHtml = match[1].match(/<a\b[^>]*>[\s\S]*?<\/a>/i)?.[0] ?? ''
         const publishedAtHtml = match[1].match(/<i\b[^>]*class=["'][^"']*\bmdate\b[^"']*["'][^>]*>([\s\S]*?)<\/i>/i)?.[1] ?? ''
-        return newsFromParts(titleHtml, href, publishedAtHtml)
+        return newsFromParts(titleHtml, href, publishedAtHtml, category)
       })
       .filter((item): item is IndustryNews => Boolean(item))
   }
@@ -74,6 +79,7 @@ export const parseIndustryNews = (html: string): IndustryNews[] => {
         link?.textContent ?? '',
         link?.getAttribute('href') ?? '',
         row.querySelector('.mdate')?.textContent ?? '',
+        category,
       )
     })
     .filter((item): item is IndustryNews => Boolean(item))

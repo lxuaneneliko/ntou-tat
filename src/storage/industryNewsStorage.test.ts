@@ -8,6 +8,7 @@ describe('industry news storage', () => {
       title: '產學合作計畫徵件',
       publishedAt: '2026-06-11',
       source: '海大產學營運總中心',
+      category: 'technology-transfer',
       url: 'https://tlo.ntou.edu.tw/p/406-1082-126280,r1249.php?Lang=zh-tw',
     }]))
 
@@ -21,6 +22,7 @@ describe('industry news storage', () => {
       title: '不可信連結',
       publishedAt: '2026-06-11',
       source: '海大產學營運總中心',
+      category: 'all',
       url: 'javascript:alert(1)',
     }]))).toEqual([])
     expect(parseStoredIndustryNews('{broken')).toEqual([])

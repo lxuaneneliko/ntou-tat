@@ -98,11 +98,19 @@ export type ExternalCompetition = {
   url: string
 }
 
+export type IndustryNewsCategory =
+  | 'all'
+  | 'technology-transfer'
+  | 'patent-transfer'
+  | 'incubation'
+  | 'research-commercialization'
+
 export type IndustryNews = {
   id: string
   title: string
   publishedAt: string
   source: string
+  category: IndustryNewsCategory
   url: string
 }
 

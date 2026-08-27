@@ -1,6 +1,13 @@
-import type { IndustryNews } from '../types'
+import type { IndustryNews, IndustryNewsCategory } from '../types'
 
-const STORAGE_KEY = 'ntou_industry_news_v1'
+const STORAGE_KEY = 'ntou_industry_news_v2'
+const INDUSTRY_CATEGORIES = new Set<IndustryNewsCategory>([
+  'all',
+  'technology-transfer',
+  'patent-transfer',
+  'incubation',
+  'research-commercialization',
+])
 
 const isIndustryNews = (value: unknown): value is IndustryNews => {
   if (!value || typeof value !== 'object') return false
@@ -12,6 +19,8 @@ const isIndustryNews = (value: unknown): value is IndustryNews => {
     !item.title.trim() ||
     typeof item.publishedAt !== 'string' ||
     item.source !== '海大產學營運總中心' ||
+    typeof item.category !== 'string' ||
+    !INDUSTRY_CATEGORIES.has(item.category as IndustryNewsCategory) ||
     typeof item.url !== 'string'
   ) return false
 
@@ -27,7 +36,7 @@ export const parseStoredIndustryNews = (value: string | null): IndustryNews[] =>
   try {
     const parsed: unknown = JSON.parse(value)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(isIndustryNews).slice(0, 50)
+    return parsed.filter(isIndustryNews).slice(0, 60)
   } catch {
     return []
   }
@@ -43,7 +52,7 @@ export const readStoredIndustryNews = () => {
 
 export const writeStoredIndustryNews = (items: IndustryNews[]) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.filter(isIndustryNews).slice(0, 50)))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.filter(isIndustryNews).slice(0, 60)))
   } catch {
     // Keep the current in-memory list when storage is unavailable.
   }

@@ -58,7 +58,13 @@ const MENU_URL = new URL('MenuTree.aspx', AIS_BASE_URL).toString()
 const PUBLIC_CALENDAR_URL = 'https://www.ntou.edu.tw/calendar'
 const PUBLIC_ANNOUNCEMENTS_URL = 'https://www.ntou.edu.tw/post/%E5%AD%B8%E6%A0%A1%E5%85%AC%E5%91%8A'
 const EXTERNAL_COMPETITIONS_URL = 'https://cyie.cycu.edu.tw/%E6%A0%A1%E5%A4%96%E6%B4%BB%E5%8B%95/%E6%A0%A1%E5%A4%96%E5%89%B5%E6%A5%AD%E7%AB%B6%E8%B3%BD/'
-const INDUSTRY_NEWS_URL = 'https://tlo.ntou.edu.tw/p/403-1082-1249-1.php?Lang=zh-tw'
+const INDUSTRY_NEWS_FEEDS = [
+  { category: 'all', url: 'https://tlo.ntou.edu.tw/p/403-1082-1237-1.php?Lang=zh-tw' },
+  { category: 'technology-transfer', url: 'https://tlo.ntou.edu.tw/p/403-1082-1247-1.php?Lang=zh-tw' },
+  { category: 'patent-transfer', url: 'https://tlo.ntou.edu.tw/p/403-1082-1241-1.php?Lang=zh-tw' },
+  { category: 'incubation', url: 'https://tlo.ntou.edu.tw/p/403-1082-1234-1.php?Lang=zh-tw' },
+  { category: 'research-commercialization', url: 'https://tlo.ntou.edu.tw/p/403-1082-1236-1.php?Lang=zh-tw' },
+] as const
 
 const formHeaders = {
   'Content-Type': 'application/x-www-form-urlencoded',
@@ -495,13 +501,16 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
     },
 
     async getIndustryNews(): Promise<IndustryNews[]> {
-      const response = await publicPageRequest({
-        url: INDUSTRY_NEWS_URL,
-        method: 'GET',
-        headers: { Accept: 'text/html,application/xhtml+xml' },
-      }, '海大產學營運總中心')
-      assertOk(response, '無法取得海大產學中心消息')
-      const items = parseIndustryNews(response.data)
+      const categoryItems = await Promise.all(INDUSTRY_NEWS_FEEDS.map(async (feed) => {
+        const response = await publicPageRequest({
+          url: feed.url,
+          method: 'GET',
+          headers: { Accept: 'text/html,application/xhtml+xml' },
+        }, '海大產學營運總中心')
+        assertOk(response, '無法取得海大產學中心消息')
+        return parseIndustryNews(response.data, feed.category)
+      }))
+      const items = categoryItems.flat()
       if (!items.length) {
         throw new ApiError('海大產學中心目前沒有回傳消息', 502, 'INDUSTRY_NEWS_EMPTY')
       }

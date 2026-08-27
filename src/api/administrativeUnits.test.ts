@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ADMINISTRATIVE_CONTENT_UNITS,
   ADMINISTRATIVE_UNITS,
+  parseAdministrativeNavigation,
 } from './administrativeUnits'
 import { parseDepartmentHomepage } from './departmentSites'
 
@@ -51,5 +52,38 @@ describe('NTOU administrative units', () => {
 
     expect(overview.categories.map((category) => category.label)).toEqual(['最新消息', '場館公告'])
     expect(overview.categories[0].endpoint).toContain('stu.ntou.edu.tw/app/index.php')
+  })
+
+  it('keeps the complete side menu including nested and external official links', () => {
+    const navigation = parseAdministrativeNavigation(`
+      <ul class="cgmenu list-group dropmenu-right">
+        <li><a href="/p/412-1023-7511.php?Lang=zh-tw">本組首頁</a></li>
+        <li>
+          <a href="javascript:void(0)">就學貸款</a>
+          <ul>
+            <li><a href="/p/403-1023-1111-1.php?Lang=zh-tw">就學貸款最新公告</a></li>
+            <li><a href="https://www.bot.com.tw/student-loan">臺灣銀行就學貸款</a></li>
+          </ul>
+        </li>
+        <li><a href="/p/412-1023-7526.php?Lang=zh-tw">表格下載專區</a></li>
+      </ul>
+      <ul class="nav navbar-nav">
+        <li>
+          <a href="/p/412-1023-7000.php?Lang=zh-tw">相關連結</a>
+          <ul><li><a href="https://www.edu.tw/">教育部</a></li></ul>
+        </li>
+      </ul>
+    `, 'student-life', 'https://stu.ntou.edu.tw/p/412-1023-7511.php?Lang=zh-tw')
+
+    expect(navigation.map((item) => item.label)).toEqual(['本組首頁', '就學貸款', '表格下載專區', '相關連結'])
+    expect(navigation[1].url).toBeUndefined()
+    expect(navigation[1].children).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: '就學貸款最新公告', url: 'https://stu.ntou.edu.tw/p/403-1023-1111-1.php?Lang=zh-tw' }),
+      expect.objectContaining({ label: '臺灣銀行就學貸款', url: 'https://www.bot.com.tw/student-loan' }),
+    ]))
+    expect(navigation[3].children[0]).toEqual(expect.objectContaining({
+      label: '教育部',
+      url: 'https://www.edu.tw/',
+    }))
   })
 })

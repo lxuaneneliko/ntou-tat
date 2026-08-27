@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import {
   AlertCircle,
   Building2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -20,6 +21,7 @@ import {
 import type {
   AdministrativeCategory,
   AdministrativeGroup,
+  AdministrativeNavigationItem,
   AdministrativeOverview,
   AdministrativePost,
   AdministrativeUnit,
@@ -56,6 +58,47 @@ const timeLabel = (value?: string) => {
   }).format(date)
 }
 
+const navigationLinkCount = (items: AdministrativeNavigationItem[]): number =>
+  items.reduce((count, item) => count + (item.url ? 1 : 0) + navigationLinkCount(item.children), 0)
+
+function AdministrativeNavigationList({
+  items,
+  depth = 0,
+}: {
+  items: AdministrativeNavigationItem[]
+  depth?: number
+}) {
+  return (
+    <div className="administrative-navigation-list" data-depth={depth}>
+      {items.map((item) => item.children.length ? (
+        <details key={item.id} className="administrative-navigation-group">
+          <summary>
+            <span className="administrative-navigation-icon"><LinkIcon size={17} /></span>
+            <span><strong>{item.label}</strong><small>{navigationLinkCount(item.children)} 個連結</small></span>
+            <ChevronDown size={18} />
+          </summary>
+          <div>
+            {item.url ? (
+              <a href={item.url} target="_blank" rel="noreferrer">
+                <span className="administrative-navigation-icon"><ExternalLink size={16} /></span>
+                <span><strong>開啟{item.label}</strong><small>官方頁面</small></span>
+                <ExternalLink size={15} />
+              </a>
+            ) : null}
+            <AdministrativeNavigationList items={item.children} depth={depth + 1} />
+          </div>
+        </details>
+      ) : item.url ? (
+        <a href={item.url} target="_blank" rel="noreferrer" key={item.id}>
+          <span className="administrative-navigation-icon"><LinkIcon size={16} /></span>
+          <span><strong>{item.label}</strong><small>官方網站連結</small></span>
+          <ExternalLink size={15} />
+        </a>
+      ) : null)}
+    </div>
+  )
+}
+
 export const AdministrativeUnitsScreen = forwardRef<AdministrativeUnitsScreenHandle, { links: CampusLink[] }>(
   function AdministrativeUnitsScreen({ links }, ref) {
     const [query, setQuery] = useState('')
@@ -64,6 +107,7 @@ export const AdministrativeUnitsScreen = forwardRef<AdministrativeUnitsScreenHan
     const [overview, setOverview] = useState<AdministrativeOverview | null>(null)
     const [activeCategoryId, setActiveCategoryId] = useState('')
     const [posts, setPosts] = useState<AdministrativePost[]>([])
+    const [contentMode, setContentMode] = useState<'news' | 'links'>('news')
     const [loading, setLoading] = useState(false)
     const [refreshing, setRefreshing] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -108,6 +152,7 @@ export const AdministrativeUnitsScreen = forwardRef<AdministrativeUnitsScreenHan
       const serial = ++requestSerial.current
       const cached = cacheRef.current[unit.id]
       setSelectedUnit(unit)
+      setContentMode(cached && !cached.overview.categories.length && cached.overview.navigation.length ? 'links' : 'news')
       setError(null)
       setLoading(!cached)
       setRefreshing(Boolean(cached))
@@ -133,6 +178,7 @@ export const AdministrativeUnitsScreen = forwardRef<AdministrativeUnitsScreenHan
           ?? nextOverview.categories[0]
         setOverview(nextOverview)
         if (!category) {
+          if (nextOverview.navigation.length) setContentMode('links')
           setPosts([])
           return
         }
@@ -167,6 +213,7 @@ export const AdministrativeUnitsScreen = forwardRef<AdministrativeUnitsScreenHan
       setOverview(null)
       setActiveCategoryId('')
       setPosts([])
+      setContentMode('news')
       setError(null)
       setLoading(false)
       setRefreshing(false)
@@ -202,6 +249,7 @@ export const AdministrativeUnitsScreen = forwardRef<AdministrativeUnitsScreenHan
       const activeCategory = overview?.categories.find((category) => category.id === activeCategoryId)
       const cached = cacheRef.current[selectedUnit.id]
       const accent = groupAccents[selectedParent?.group ?? selectedUnit.group]
+      const navigationCount = navigationLinkCount(overview?.navigation ?? [])
 
       return (
         <section className="department-feed administrative-feed" style={{ '--college-accent': accent } as CSSProperties}>
@@ -215,7 +263,31 @@ export const AdministrativeUnitsScreen = forwardRef<AdministrativeUnitsScreenHan
             <a href={selectedUnit.url} target="_blank" rel="noreferrer" aria-label={`開啟${selectedUnit.name}官方網站`}><ExternalLink size={18} /></a>
           </div>
 
-          {overview?.categories.length ? (
+          {overview?.navigation.length ? (
+            <div className="administrative-content-tabs" role="tablist" aria-label={`${selectedUnit.shortName}內容類型`}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={contentMode === 'news'}
+                className={contentMode === 'news' ? 'active' : undefined}
+                disabled={!overview.categories.length}
+                onClick={() => setContentMode('news')}
+              >
+                <FileText size={16} />公告資訊<small>{overview.categories.length}</small>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={contentMode === 'links'}
+                className={contentMode === 'links' ? 'active' : undefined}
+                onClick={() => setContentMode('links')}
+              >
+                <LinkIcon size={16} />網站連結<small>{navigationCount}</small>
+              </button>
+            </div>
+          ) : null}
+
+          {contentMode === 'news' && overview?.categories.length ? (
             <div className="department-category-strip" role="tablist" aria-label={`${selectedUnit.shortName}消息分類`}>
               {overview.categories.map((category) => (
                 <button
@@ -232,17 +304,33 @@ export const AdministrativeUnitsScreen = forwardRef<AdministrativeUnitsScreenHan
             </div>
           ) : null}
 
-          <div className="department-feed-summary">
-            <Building2 size={18} />
-            <span><b>{activeCategory?.label ?? '最新資訊'}</b><small>{cached ? `上次更新 ${timeLabel(cached.savedAt)}` : '正在讀取官方單位網站'}</small></span>
-            <button type="button" aria-label="重新整理行政單位消息" disabled={loading || refreshing} onClick={() => void loadUnit(selectedUnit, activeCategoryId)}>
-              <RefreshCw className={loading || refreshing ? 'spin' : undefined} size={17} />
-            </button>
-          </div>
+          {contentMode === 'news' ? (
+            <div className="department-feed-summary">
+              <Building2 size={18} />
+              <span><b>{activeCategory?.label ?? '最新資訊'}</b><small>{cached ? `上次更新 ${timeLabel(cached.savedAt)}` : '正在讀取官方單位網站'}</small></span>
+              <button type="button" aria-label="重新整理行政單位消息" disabled={loading || refreshing} onClick={() => void loadUnit(selectedUnit, activeCategoryId)}>
+                <RefreshCw className={loading || refreshing ? 'spin' : undefined} size={17} />
+              </button>
+            </div>
+          ) : (
+            <div className="department-feed-summary administrative-navigation-summary">
+              <LinkIcon size={18} />
+              <span><b>官方網站導覽</b><small>依原網站順序保留群組與子連結</small></span>
+              <button type="button" aria-label="重新整理行政單位連結" disabled={loading || refreshing} onClick={() => void loadUnit(selectedUnit, activeCategoryId)}>
+                <RefreshCw className={loading || refreshing ? 'spin' : undefined} size={17} />
+              </button>
+            </div>
+          )}
 
           {error ? <div className="department-feed-warning"><AlertCircle size={17} /><span>{error}</span></div> : null}
 
-          {loading && !posts.length ? (
+          {contentMode === 'links' ? (
+            overview?.navigation.length ? (
+              <AdministrativeNavigationList items={overview.navigation} />
+            ) : !loading ? (
+              <div className="inline-empty"><LinkIcon size={24} /><strong>這個單位網站沒有可讀取的連結區</strong><span>仍可開啟右上角官方網站</span></div>
+            ) : null
+          ) : loading && !posts.length ? (
             <div className="inline-empty"><RefreshCw className="spin" size={24} /><span>正在讀取 {selectedUnit.shortName} 的官方消息</span></div>
           ) : posts.length ? (
             <div className="department-post-list">

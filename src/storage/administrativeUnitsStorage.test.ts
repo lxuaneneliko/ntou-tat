@@ -9,6 +9,12 @@ describe('administrative unit cache', () => {
           siteId: 'student-activities',
           fetchedAt: '2026-08-27T00:00:00.000Z',
           categories: [{ id: 'student-activities-news', label: '最新消息' }],
+          navigation: [
+            { id: 'student-links', label: '常用連結', children: [
+              { id: 'student-form', label: '表格下載', url: 'https://forms.example.com/student', children: [] },
+              { id: 'student-bad', label: '不安全連結', url: 'javascript:alert(1)', children: [] },
+            ] },
+          ],
         },
         postsByCategory: {
           'student-activities-news': [
@@ -22,6 +28,8 @@ describe('administrative unit cache', () => {
 
     expect(store['student-activities'].postsByCategory['student-activities-news']).toHaveLength(1)
     expect(store['student-activities'].postsByCategory['student-activities-news'][0].title).toBe('社團活動公告')
+    expect(store['student-activities'].overview.navigation[0].children).toHaveLength(1)
+    expect(store['student-activities'].overview.navigation[0].children[0].url).toBe('https://forms.example.com/student')
   })
 
   it('drops unknown units and malformed JSON', () => {

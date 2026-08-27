@@ -114,6 +114,7 @@ import type {
   ExternalCompetition,
   Grade,
   IndustryNews,
+  IndustryNewsCategory,
   LoginChallenge,
   MoreView,
   PortalSystemNode,
@@ -2507,11 +2508,11 @@ function MoreScreen({
   const tools: Array<{ icon: typeof Bell; label: string; view: MoreView }> = [
     { icon: Building2, label: '海大校務系統', view: 'portal' },
     { icon: Bell, label: '校務公告', view: 'announcements' },
+    { icon: Building2, label: '行政單位', view: 'administration' },
     { icon: Building2, label: '各系系網', view: 'departments' },
     { icon: Handshake, label: '海大產學中心', view: 'industry' },
     { icon: Trophy, label: '校外競賽', view: 'competitions' },
     { icon: CalendarDays, label: '重要日期', view: 'calendar' },
-    { icon: Building2, label: '行政單位', view: 'administration' },
     { icon: MapPinned, label: '交通與地圖', view: 'traffic' },
     { icon: Phone, label: '緊急聯絡', view: 'emergency' },
     { icon: ShieldCheck, label: '帳號與設定', view: 'settings' },
@@ -2695,6 +2696,18 @@ function MoreSubview({
   )
 }
 
+const INDUSTRY_NEWS_CATEGORIES: Array<{
+  id: IndustryNewsCategory
+  label: string
+  shortLabel: string
+}> = [
+  { id: 'all', label: '所有公告', shortLabel: '全部' },
+  { id: 'technology-transfer', label: '產學技轉', shortLabel: '技轉' },
+  { id: 'patent-transfer', label: '專利讓與', shortLabel: '專利' },
+  { id: 'incubation', label: '創業育成', shortLabel: '育成' },
+  { id: 'research-commercialization', label: '科研產業化平台', shortLabel: '科研' },
+]
+
 function IndustryCenterScreen({
   items,
   onRefresh,
@@ -2705,6 +2718,10 @@ function IndustryCenterScreen({
   refreshing: boolean
 }) {
   const [error, setError] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<IndustryNewsCategory>('all')
+  const selectedCategoryInfo = INDUSTRY_NEWS_CATEGORIES.find(({ id }) => id === selectedCategory)
+    ?? INDUSTRY_NEWS_CATEGORIES[0]
+  const visibleItems = items.filter((item) => item.category === selectedCategory)
 
   const refresh = useCallback(async () => {
     setError(null)
@@ -2745,7 +2762,7 @@ function IndustryCenterScreen({
     <section className="source-list-view">
       <div className="source-list-summary industry">
         <Handshake size={18} />
-        <span>海大產學營運總中心 · 最新 {items.length} 筆</span>
+        <span>{selectedCategoryInfo.label} · 最新 {visibleItems.length} 筆</span>
         <button
           type="button"
           aria-label="重新整理產學中心消息"
@@ -2755,13 +2772,40 @@ function IndustryCenterScreen({
           <RefreshCw className={refreshing ? 'spin' : undefined} size={17} />
         </button>
       </div>
+      <div className="industry-category-tabs" role="tablist" aria-label="產學中心公告分類">
+        {INDUSTRY_NEWS_CATEGORIES.map((category) => {
+          const count = items.filter((item) => item.category === category.id).length
+          const selected = category.id === selectedCategory
+          return (
+            <button
+              key={category.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              className={selected ? 'selected' : undefined}
+              onClick={() => setSelectedCategory(category.id)}
+            >
+              <span className="industry-category-full">{category.label}</span>
+              <span className="industry-category-short">{category.shortLabel}</span>
+              <small>{count}</small>
+            </button>
+          )
+        })}
+      </div>
       {error ? <div className="source-list-warning">更新失敗，暫時顯示上次資料：{error}</div> : null}
-      <LinkList items={items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        subtitle: `${item.source} · ${item.publishedAt}`,
-        url: item.url,
-      }))} />
+      {visibleItems.length ? (
+        <LinkList items={visibleItems.map((item) => ({
+          id: item.id,
+          title: item.title,
+          subtitle: `${selectedCategoryInfo.label} · ${item.publishedAt || '日期未提供'}`,
+          url: item.url,
+        }))} />
+      ) : (
+        <div className="inline-empty industry-category-empty">
+          <Handshake size={24} />
+          <span>{selectedCategoryInfo.label}目前沒有公告</span>
+        </div>
+      )}
     </section>
   )
 }

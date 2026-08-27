@@ -17,6 +17,17 @@ export type AdministrativeUnit = PublicContentSite & {
   children?: AdministrativeUnit[]
 }
 
+export type AdministrativeNavigationItem = {
+  id: string
+  label: string
+  url?: string
+  children: AdministrativeNavigationItem[]
+}
+
+export type AdministrativeOverview = DepartmentOverview & {
+  navigation: AdministrativeNavigationItem[]
+}
+
 const unit = (
   id: string,
   name: string,
@@ -164,9 +175,20 @@ const contentSite = (selected: AdministrativeUnit): PublicContentSite => ({
   homeUrl: selected.feedUrl ?? selected.url,
 })
 
-const mockOverview = (selected: AdministrativeUnit): DepartmentOverview => ({
+const mockOverview = (selected: AdministrativeUnit): AdministrativeOverview => ({
   siteId: selected.id,
   fetchedAt: new Date().toISOString(),
+  navigation: [
+    { id: `${selected.id}-mock-home`, label: '單位首頁', url: selected.url, children: [] },
+    {
+      id: `${selected.id}-mock-services`,
+      label: '業務服務',
+      children: [
+        { id: `${selected.id}-mock-service-1`, label: '申請與表單', url: selected.url, children: [] },
+        { id: `${selected.id}-mock-service-2`, label: '規章與流程', url: selected.url, children: [] },
+      ],
+    },
+  ],
   categories: [{
     id: `${selected.id}-mock-news`,
     label: selected.id === 'student-activities' ? '最新消息' : '單位公告',
@@ -177,7 +199,96 @@ const mockOverview = (selected: AdministrativeUnit): DepartmentOverview => ({
   }],
 })
 
-export const fetchAdministrativeOverview = async (unitId: string): Promise<DepartmentOverview> => {
+const navigationUrl = (value: string, baseUrl: string) => {
+  try {
+    const url = new URL(value, baseUrl)
+    return url.protocol === 'https:' ? url.toString() : undefined
+  } catch {
+    return undefined
+  }
+}
+
+const navigationId = (unitId: string, path: number[], label: string) => {
+  let hash = 2166136261
+  const source = `${path.join('-')}:${label}`
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return `${unitId}-nav-${(hash >>> 0).toString(36)}`
+}
+
+const directChild = (element: Element, tagName: string) =>
+  [...element.children].find((childElement) => childElement.tagName === tagName)
+
+const parseNavigationItem = (
+  element: Element,
+  unitId: string,
+  baseUrl: string,
+  path: number[],
+): AdministrativeNavigationItem | null => {
+  const anchor = directChild(element, 'A') as HTMLAnchorElement | undefined
+  const label = (anchor?.textContent ?? '').replace(/\s+/g, ' ').trim()
+  const childList = directChild(element, 'UL')
+  const children = childList
+    ? [...childList.children]
+      .filter((childElement) => childElement.tagName === 'LI')
+      .map((childElement, index) => parseNavigationItem(childElement, unitId, baseUrl, [...path, index]))
+      .filter((item): item is AdministrativeNavigationItem => Boolean(item))
+    : []
+  const url = navigationUrl(anchor?.getAttribute('href') ?? '', baseUrl)
+  if (!label || (!url && !children.length)) return null
+  return {
+    id: navigationId(unitId, path, label),
+    label,
+    ...(url ? { url } : {}),
+    children,
+  }
+}
+
+export const parseAdministrativeNavigation = (
+  html: string,
+  unitId: string,
+  baseUrl: string,
+): AdministrativeNavigationItem[] => {
+  const document = new DOMParser().parseFromString(html, 'text/html')
+  const menuRoots = [...document.querySelectorAll([
+    'ul.cgmenu',
+    'ul.nav.navbar-nav',
+    'nav.main-navigation > ul.main-menu',
+    '.widget_nav_menu ul.menu',
+    'aside ul.list-group',
+    '.side-menu > ul',
+    '.sidemenu > ul',
+  ].join(', '))]
+  const seen = new Set<string>()
+  const items: AdministrativeNavigationItem[] = []
+
+  menuRoots.forEach((menuRoot) => {
+    [...menuRoot.children]
+      .filter((childElement) => childElement.tagName === 'LI')
+      .forEach((childElement, index) => {
+        const item = parseNavigationItem(childElement, unitId, baseUrl, [items.length, index])
+        if (!item) return
+        const key = `${item.label}\n${item.url ?? ''}`
+        if (seen.has(key)) return
+        seen.add(key)
+        items.push(item)
+      })
+  })
+
+  return items.slice(0, 80)
+}
+
+export const parseAdministrativeHomepage = (
+  html: string,
+  site: PublicContentSite,
+): AdministrativeOverview => ({
+  ...parseDepartmentHomepage(html, site),
+  navigation: parseAdministrativeNavigation(html, site.id, site.homeUrl ?? site.url),
+})
+
+export const fetchAdministrativeOverview = async (unitId: string): Promise<AdministrativeOverview> => {
   const selected = requireUnit(unitId)
   if (mockMode) return mockOverview(selected)
   const site = contentSite(selected)
@@ -188,9 +299,9 @@ export const fetchAdministrativeOverview = async (unitId: string): Promise<Depar
     timeoutMs: 30000,
   }, `${selected.shortName}官網`)
   assertOk(response, `無法取得${selected.shortName}官網`)
-  const overview = parseDepartmentHomepage(response.data, site)
-  if (!overview.categories.length) {
-    throw new ApiError(`${selected.shortName}官網目前沒有可讀取的消息區`, 502, 'ADMINISTRATIVE_CATEGORIES_EMPTY')
+  const overview = parseAdministrativeHomepage(response.data, site)
+  if (!overview.categories.length && !overview.navigation.length) {
+    throw new ApiError(`${selected.shortName}官網目前沒有可讀取的消息或連結`, 502, 'ADMINISTRATIVE_CONTENT_EMPTY')
   }
   return overview
 }
@@ -229,6 +340,5 @@ export const fetchAdministrativeCategory = async (
   return parseDepartmentPosts(response.data, site.url, category.id)
 }
 
-export type AdministrativeOverview = DepartmentOverview
 export type AdministrativeCategory = DepartmentCategory
 export type AdministrativePost = DepartmentPost

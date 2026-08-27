@@ -253,18 +253,44 @@ export const mockExternalCompetitions: ExternalCompetition[] = [
 
 export const mockIndustryNews: IndustryNews[] = [
   {
-    id: 'ntou-industry-mock-training',
-    title: '勞動部產業新尖兵－智慧機械自動化製造',
-    publishedAt: '2026-06-11',
+    id: 'ntou-industry-mock-all',
+    title: '【轉知】雲林縣政府設立「撫錢House青年創業基地」',
+    publishedAt: '2026-07-20',
     source: '海大產學營運總中心',
-    url: 'https://tlo.ntou.edu.tw/p/406-1082-126280,r1249.php?Lang=zh-tw',
+    category: 'all',
+    url: 'https://tlo.ntou.edu.tw/p/406-1082-127227,r1237.php?Lang=zh-tw',
   },
   {
-    id: 'ntou-industry-mock-ai',
-    title: '農業 AI 賦能業界參與計畫公開徵案',
-    publishedAt: '2025-11-11',
+    id: 'ntou-industry-mock-transfer',
+    title: '產學聯合徵案與媒合線上說明會',
+    publishedAt: '2026-06-09',
     source: '海大產學營運總中心',
-    url: 'https://agdigi.atri.org.tw/',
+    category: 'technology-transfer',
+    url: 'https://tlo.ntou.edu.tw/p/406-1082-126198,r1247.php?Lang=zh-tw',
+  },
+  {
+    id: 'ntou-industry-mock-patent',
+    title: '台灣專利「全封閉複合式發電裝置」等6件公告讓與',
+    publishedAt: '2026-05-07',
+    source: '海大產學營運總中心',
+    category: 'patent-transfer',
+    url: 'https://tlo.ntou.edu.tw/p/406-1082-124237,r1241.php?Lang=zh-tw',
+  },
+  {
+    id: 'ntou-industry-mock-incubation',
+    title: '115年度產業新尖兵計畫提案申請說明會',
+    publishedAt: '2026-08-26',
+    source: '海大產學營運總中心',
+    category: 'incubation',
+    url: 'https://tlo.ntou.edu.tw/p/406-1082-128342,r1234.php?Lang=zh-tw',
+  },
+  {
+    id: 'ntou-industry-mock-research',
+    title: '科研產業化價值創造計畫推廣說明會',
+    publishedAt: '2026-04-08',
+    source: '海大產學營運總中心',
+    category: 'research-commercialization',
+    url: 'https://tlo.ntou.edu.tw/p/406-1082-123552,r1236.php?Lang=zh-tw',
   },
 ]
 

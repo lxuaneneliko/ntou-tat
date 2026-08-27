@@ -4,31 +4,32 @@ import { parseIndustryNews } from './industryNewsParser'
 const industryHtml = `
   <div class="d-item d-title col-sm-12">
     <div class="mbox"><div class="d-txt"><div class="mtitle">
-      <a href="https://tlo.ntou.edu.tw/p/406-1082-126280,r1249.php?Lang=zh-tw">勞動部產業新尖兵</a>
-      <i class="mdate after">2026-06-11</i>
+      <a href="https://tlo.ntou.edu.tw/p/406-1082-127227,r1237.php?Lang=zh-tw">【轉知】雲林縣政府設立「撫錢House青年創業基地」</a>
+      <i class="mdate after">2026-07-20</i>
     </div></div></div>
   </div>
   <div class="d-item d-title col-sm-12">
     <div class="mbox"><div class="d-txt"><div class="mtitle">
-      <a href="https://agdigi.atri.org.tw">農業 AI 賦能業界參與計畫</a>
-      <i class="mdate after">2025-11-11</i>
+      <a href="https://tlo.ntou.edu.tw/p/406-1082-127226,r1237.php?Lang=zh-tw">【轉知】115年創新創業線上論壇</a>
+      <i class="mdate after">2026-07-20</i>
     </div></div></div>
   </div>
 `
 
 describe('NTOU industry news parser', () => {
-  it('reads official industry-center news with internal and external HTTPS links', () => {
-    const items = parseIndustryNews(industryHtml)
+  it('reads the official latest-announcement list and tags its category', () => {
+    const items = parseIndustryNews(industryHtml, 'all')
     expect(items).toHaveLength(2)
     expect(items[0]).toMatchObject({
-      title: '勞動部產業新尖兵',
-      publishedAt: '2026-06-11',
+      title: '【轉知】雲林縣政府設立「撫錢House青年創業基地」',
+      publishedAt: '2026-07-20',
       source: '海大產學營運總中心',
-      url: 'https://tlo.ntou.edu.tw/p/406-1082-126280,r1249.php?Lang=zh-tw',
+      category: 'all',
+      url: 'https://tlo.ntou.edu.tw/p/406-1082-127227,r1237.php?Lang=zh-tw',
     })
     expect(items[1]).toMatchObject({
-      title: '農業 AI 賦能業界參與計畫',
-      url: 'https://agdigi.atri.org.tw/',
+      title: '【轉知】115年創新創業線上論壇',
+      category: 'all',
     })
   })
 
@@ -36,6 +37,6 @@ describe('NTOU industry news parser', () => {
     expect(parseIndustryNews(`
       <nav><a href="https://tlo.ntou.edu.tw/">首頁</a></nav>
       <div class="d-item d-title"><div class="mtitle"><a href="javascript:alert(1)">不安全消息</a></div></div>
-    `)).toEqual([])
+    `, 'all')).toEqual([])
   })
 })
