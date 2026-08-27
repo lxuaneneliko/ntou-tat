@@ -1241,6 +1241,12 @@ button:disabled {
   border-bottom-color: #5c4727;
 }
 
+.source-list-summary.industry {
+  color: #7de2c4;
+  background: linear-gradient(90deg, rgb(22 100 82 / 42%), rgb(17 25 42 / 22%));
+  border-bottom-color: #286052;
+}
+
 .source-list-summary > span {
   min-width: 0;
   flex: 1;

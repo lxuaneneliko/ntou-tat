@@ -7,6 +7,7 @@ import type {
   EmergencyContact,
   ExternalCompetition,
   Grade,
+  IndustryNews,
   Semester,
   StudentProfile,
   TimetableResponse,
@@ -247,6 +248,23 @@ export const mockExternalCompetitions: ExternalCompetition[] = [
     publishedAt: '2026-08-04',
     source: '中原大學創新創業發展中心',
     url: 'https://cyie.cycu.edu.tw/校外活動/校外創業競賽/',
+  },
+]
+
+export const mockIndustryNews: IndustryNews[] = [
+  {
+    id: 'ntou-industry-mock-training',
+    title: '勞動部產業新尖兵－智慧機械自動化製造',
+    publishedAt: '2026-06-11',
+    source: '海大產學營運總中心',
+    url: 'https://tlo.ntou.edu.tw/p/406-1082-126280,r1249.php?Lang=zh-tw',
+  },
+  {
+    id: 'ntou-industry-mock-ai',
+    title: '農業 AI 賦能業界參與計畫公開徵案',
+    publishedAt: '2025-11-11',
+    source: '海大產學營運總中心',
+    url: 'https://agdigi.atri.org.tw/',
   },
 ]
 

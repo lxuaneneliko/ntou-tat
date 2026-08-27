@@ -6,6 +6,7 @@ import type {
   CourseFile,
   CreditSummary,
   ExternalCompetition,
+  IndustryNews,
   Semester,
   StudentProfile,
   TrafficInfo,
@@ -126,6 +127,10 @@ export const createHttpApiClient = (
 
     async getExternalCompetitions() {
       return request<ExternalCompetition[]>('competitions/external')
+    },
+
+    async getIndustryNews() {
+      return request<IndustryNews[]>('industry/news')
     },
 
     async getCalendar(from, to) {

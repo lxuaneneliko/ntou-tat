@@ -98,6 +98,14 @@ export type ExternalCompetition = {
   url: string
 }
 
+export type IndustryNews = {
+  id: string
+  title: string
+  publishedAt: string
+  source: string
+  url: string
+}
+
 export type Grade = {
   id: string
   courseId: string
@@ -169,6 +177,7 @@ export type MoreView =
   | 'portal'
   | 'announcements'
   | 'departments'
+  | 'industry'
   | 'competitions'
   | 'calendar'
   | 'campus'

@@ -21,6 +21,7 @@ import {
   ExternalLink,
   FileText,
   GraduationCap,
+  Handshake,
   KeyRound,
   LayoutGrid,
   Link as LinkIcon,
@@ -70,6 +71,10 @@ import {
   writeStoredExternalCompetitions,
 } from './storage/externalCompetitionStorage'
 import {
+  readStoredIndustryNews,
+  writeStoredIndustryNews,
+} from './storage/industryNewsStorage'
+import {
   personalEventsForStudent,
   readPersonalCalendarStore,
   writePersonalCalendarStore,
@@ -108,6 +113,7 @@ import type {
   CreditSummary,
   ExternalCompetition,
   Grade,
+  IndustryNews,
   LoginChallenge,
   MoreView,
   PortalSystemNode,
@@ -127,6 +133,7 @@ type AppData = {
   credits: CreditSummary
   announcements: Announcement[]
   externalCompetitions: ExternalCompetition[]
+  industryNews: IndustryNews[]
   calendar: CalendarEvent[]
   campusLinks: CampusLink[]
   traffic: TrafficInfo[]
@@ -359,6 +366,7 @@ function App() {
   const [semesterPrefetchProgress, setSemesterPrefetchProgress] = useState<SemesterPrefetchProgress | null>(null)
   const [calendarRefreshing, setCalendarRefreshing] = useState(false)
   const [competitionRefreshing, setCompetitionRefreshing] = useState(false)
+  const [industryRefreshing, setIndustryRefreshing] = useState(false)
   const [appError, setAppError] = useState<string | null>(null)
   const [loginError, setLoginError] = useState<string | null>(null)
   const [loginBusy, setLoginBusy] = useState(false)
@@ -491,6 +499,7 @@ function App() {
   const calendarUpdatedAtRef = useRef(0)
   const calendarRefreshPromiseRef = useRef<Promise<void> | null>(null)
   const competitionRefreshPromiseRef = useRef<Promise<void> | null>(null)
+  const industryRefreshPromiseRef = useRef<Promise<void> | null>(null)
 
   const applyData = useCallback((nextData: AppData | null) => {
     dataRef.current = nextData
@@ -534,6 +543,30 @@ function App() {
       await task
     } finally {
       competitionRefreshPromiseRef.current = null
+    }
+  }, [api, applyData])
+
+  const refreshIndustryNews = useCallback(async () => {
+    if (industryRefreshPromiseRef.current) return industryRefreshPromiseRef.current
+
+    const task = (async () => {
+      setIndustryRefreshing(true)
+      try {
+        const items = await api.getIndustryNews()
+        if (!items.length) throw new Error('產學中心目前沒有消息')
+        writeStoredIndustryNews(items)
+        const current = dataRef.current
+        if (current) applyData({ ...current, industryNews: items })
+      } finally {
+        setIndustryRefreshing(false)
+      }
+    })()
+
+    industryRefreshPromiseRef.current = task
+    try {
+      await task
+    } finally {
+      industryRefreshPromiseRef.current = null
     }
   }, [api, applyData])
 
@@ -855,12 +888,16 @@ function App() {
     const cachedExternalCompetitions = existing?.externalCompetitions.length
       ? existing.externalCompetitions
       : readStoredExternalCompetitions()
+    const cachedIndustryNews = existing?.industryNews.length
+      ? existing.industryNews
+      : readStoredIndustryNews()
     applyData({
       profile,
       semesters,
       ...semesterDataFromCache(cached),
       announcements: existing?.announcements ?? [],
       externalCompetitions: cachedExternalCompetitions,
+      industryNews: cachedIndustryNews,
       calendar: existing?.calendar ?? [],
       campusLinks: existing?.campusLinks ?? [],
       traffic: existing?.traffic ?? [],
@@ -1539,6 +1576,8 @@ function App() {
                 onOpenPortalPage={api.openPortalSystemPage}
                 onRefreshCompetitions={refreshExternalCompetitions}
                 competitionRefreshing={competitionRefreshing}
+                onRefreshIndustry={refreshIndustryNews}
+                industryRefreshing={industryRefreshing}
                 departmentSitesRef={departmentSitesRef}
               />
             ) : selectedTab === 'timetable' ? (
@@ -2463,7 +2502,8 @@ function MoreScreen({
   const tools: Array<{ icon: typeof Bell; label: string; view: MoreView }> = [
     { icon: Building2, label: '海大校務系統', view: 'portal' },
     { icon: Bell, label: '校務公告', view: 'announcements' },
-    { icon: Building2, label: '各系校網', view: 'departments' },
+    { icon: Building2, label: '各系系網', view: 'departments' },
+    { icon: Handshake, label: '海大產學中心', view: 'industry' },
     { icon: Trophy, label: '校外競賽', view: 'competitions' },
     { icon: CalendarDays, label: '重要日期', view: 'calendar' },
     { icon: LinkIcon, label: '海大連結', view: 'campus' },
@@ -2527,21 +2567,25 @@ function MoreSubview({
   competitionRefreshing,
   data,
   departmentSitesRef,
+  industryRefreshing,
   loadPortalMenu,
   onLogout,
   onOpenPortalPage,
   onReauthenticate,
   onRefreshCompetitions,
+  onRefreshIndustry,
   view,
 }: {
   data: AppData
   competitionRefreshing: boolean
   departmentSitesRef: RefObject<DepartmentSitesScreenHandle | null>
+  industryRefreshing: boolean
   loadPortalMenu?: (path: string[]) => Promise<PortalSystemNode[]>
   onLogout: () => Promise<void>
   onOpenPortalPage?: (path: string[]) => Promise<void>
   onReauthenticate: () => Promise<void>
   onRefreshCompetitions: () => Promise<void>
+  onRefreshIndustry: () => Promise<void>
   view: MoreView
 }) {
   if (view === 'portal') {
@@ -2610,6 +2654,16 @@ function MoreSubview({
 
   if (view === 'departments') return <DepartmentSitesScreen ref={departmentSitesRef} />
 
+  if (view === 'industry') {
+    return (
+      <IndustryCenterScreen
+        items={data.industryNews}
+        onRefresh={onRefreshIndustry}
+        refreshing={industryRefreshing}
+      />
+    )
+  }
+
   if (view === 'competitions') {
     return (
       <ExternalCompetitionScreen
@@ -2631,6 +2685,77 @@ function MoreSubview({
     </div>
   ) : (
     <div className="inline-empty"><CalendarDays size={24} /><span>尚未取得海大官方行事曆</span></div>
+  )
+}
+
+function IndustryCenterScreen({
+  items,
+  onRefresh,
+  refreshing,
+}: {
+  items: IndustryNews[]
+  onRefresh: () => Promise<void>
+  refreshing: boolean
+}) {
+  const [error, setError] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    setError(null)
+    try {
+      await onRefresh()
+    } catch (refreshError) {
+      setError(messageFromError(refreshError))
+    }
+  }, [onRefresh])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  if (!items.length && refreshing) {
+    return (
+      <div className="inline-empty">
+        <RefreshCw className="spin" size={24} />
+        <span>正在取得最新產學消息</span>
+      </div>
+    )
+  }
+
+  if (!items.length) {
+    return (
+      <div className="inline-empty">
+        <Handshake size={24} />
+        <strong>目前沒有取得產學中心消息</strong>
+        {error ? <span>{error}</span> : null}
+        <button className="inline-retry" type="button" onClick={() => void refresh()}>
+          <RefreshCw size={17} />重新整理
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <section className="source-list-view">
+      <div className="source-list-summary industry">
+        <Handshake size={18} />
+        <span>海大產學營運總中心 · 最新 {items.length} 筆</span>
+        <button
+          type="button"
+          aria-label="重新整理產學中心消息"
+          disabled={refreshing}
+          onClick={() => void refresh()}
+        >
+          <RefreshCw className={refreshing ? 'spin' : undefined} size={17} />
+        </button>
+      </div>
+      {error ? <div className="source-list-warning">更新失敗，暫時顯示上次資料：{error}</div> : null}
+      <LinkList items={items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        subtitle: `${item.source} · ${item.publishedAt}`,
+        url: item.url,
+      }))} />
+    </section>
   )
 }
 
@@ -3412,7 +3537,8 @@ function moreViewTitle(view: MoreView) {
   const titles: Record<MoreView, string> = {
     portal: '海大校務系統',
     announcements: '校務公告',
-    departments: '各系校網',
+    departments: '各系系網',
+    industry: '海大產學中心',
     competitions: '校外競賽',
     calendar: '重要日期',
     campus: '海大連結',
