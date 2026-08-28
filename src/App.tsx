@@ -158,6 +158,8 @@ const weekdays = [
   { value: 3, short: '三' },
   { value: 4, short: '四' },
   { value: 5, short: '五' },
+  { value: 6, short: '六' },
+  { value: 7, short: '日' },
 ]
 
 const periods = [
@@ -238,6 +240,23 @@ const periodsForSlot = (slot: TimetableSlot) => {
 
 const coursePalette = ['#acd6f4', '#eef0b3', '#b9dfc4', '#f1bcc8', '#cdbfee', '#b9dedc']
 const TIMETABLE_VIEW_STORAGE_KEY = 'ntou-timetable-view-v2'
+const TIMETABLE_WEEKEND_STORAGE_KEY = 'ntou-timetable-show-weekend-v1'
+
+const readWeekendPreference = () => {
+  try {
+    return localStorage.getItem(TIMETABLE_WEEKEND_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+const writeWeekendPreference = (showWeekend: boolean) => {
+  try {
+    localStorage.setItem(TIMETABLE_WEEKEND_STORAGE_KEY, String(showWeekend))
+  } catch {
+    // Keep the in-memory preference when local storage is unavailable.
+  }
+}
 
 const courseColor = (slot: TimetableSlot) => {
   const key = slot.courseId || slot.courseTitle
@@ -356,6 +375,7 @@ function App() {
       return 'grid'
     }
   })
+  const [showWeekend, setShowWeekend] = useState(readWeekendPreference)
   const [selectedSemester, setSelectedSemester] = useState('')
   const [moreView, setMoreView] = useState<MoreView | null>(null)
   const [customAvatar, setCustomAvatar] = useState(readStoredAvatar)
@@ -466,6 +486,10 @@ function App() {
     setDeletedCourses(newDeleted)
     localStorage.setItem('ntou_deleted_courses_v9', JSON.stringify(newDeleted))
   }
+  const updateWeekendPreference = useCallback((nextShowWeekend: boolean) => {
+    setShowWeekend(nextShowWeekend)
+    writeWeekendPreference(nextShowWeekend)
+  }, [])
   const saveCustomGrades = (newGrades: Record<string, Grade[]>) => {
     setCustomGrades(newGrades)
     localStorage.setItem('ntou_custom_grades_v9', JSON.stringify(newGrades))
@@ -1432,6 +1456,22 @@ function App() {
                         <span>新增自訂課程</span>
                       </button>
                     ) : null}
+                    {selectedTab === 'timetable' ? (
+                      <button
+                        className="header-menu-toggle"
+                        type="button"
+                        role="menuitemcheckbox"
+                        aria-checked={showWeekend}
+                        onClick={() => {
+                          updateWeekendPreference(!showWeekend)
+                          setHeaderMenuOpen(false)
+                        }}
+                      >
+                        <CalendarDays size={17} />
+                        <span>顯示週六、週日</span>
+                        <i className={showWeekend ? 'active' : ''} aria-hidden="true"><b /></i>
+                      </button>
+                    ) : null}
                     {selectedTab === 'timetable' && !selectedSharedTimetable ? (
                       <button
                         type="button"
@@ -1590,6 +1630,7 @@ function App() {
               <TimetableScreen
                 slots={displayedTimetableSlots}
                 viewMode={timetableViewMode}
+                showWeekend={showWeekend}
                 onOpenCourse={(slot) => {
                   const course = coursesFromTimetable([slot])[0]
                   if (selectedSharedTimetable) {
@@ -1699,6 +1740,7 @@ function App() {
 
         {isAddCourseOpen ? (
           <AddCourseModal
+            showWeekend={showWeekend}
             onClose={() => setIsAddCourseOpen(false)}
             onSave={(name, code, teacher, room, day, period) => {
               const newSlot: TimetableSlot = {
@@ -1785,6 +1827,9 @@ function App() {
                 ...sharedTimetables.filter((item) => item.id !== imported.id),
                 imported,
               ])
+              if (preview.slots.some((slot) => slot.day === 6 || slot.day === 7)) {
+                updateWeekendPreference(true)
+              }
               setSelectedTimetableSource(imported.id)
               setTimetableDialog(null)
               return true
@@ -1971,26 +2016,39 @@ function TimetableScreen({
   onOpenCourse,
   slots,
   viewMode,
+  showWeekend,
 }: {
   onOpenCourse: (slot: TimetableSlot) => void
   slots: TimetableSlot[]
   viewMode: 'grid' | 'list'
+  showWeekend: boolean
 }) {
   const today = new Date().getDay()
-  const [listDay, setListDay] = useState(() => (today >= 1 && today <= 5 ? today : 1))
+  const visibleWeekdays = showWeekend ? weekdays : weekdays.slice(0, 5)
+  const lastVisibleDay = showWeekend ? 7 : 5
+  const [listDay, setListDay] = useState(() => (
+    today >= 1 && today <= (showWeekend ? 7 : 5) ? today : 1
+  ))
+  useEffect(() => {
+    if (listDay > lastVisibleDay) setListDay(1)
+  }, [lastVisibleDay, listDay])
   const blocks = useMemo(() => timetableBlocks(slots), [slots])
-  const visiblePeriods = useMemo(() => visibleTimetablePeriods(blocks), [blocks])
+  const visibleBlocks = useMemo(
+    () => blocks.filter((block) => block.slot.day >= 1 && block.slot.day <= lastVisibleDay),
+    [blocks, lastVisibleDay],
+  )
+  const visiblePeriods = useMemo(() => visibleTimetablePeriods(visibleBlocks), [visibleBlocks])
   const periodRows = new Map(visiblePeriods.map((period, index) => [period.value, index + 2]))
   const cells = useMemo(() => {
     const expanded = new Map<string, { slot: TimetableSlot; period: number }>()
     slots.forEach((slot) => {
       periodsForSlot(slot).forEach((period) => {
-        if (slot.day < 1 || slot.day > 5) return
+        if (slot.day < 1 || slot.day > lastVisibleDay) return
         expanded.set(`${slot.day}-${period}-${slot.courseId}`, { slot, period })
       })
     })
     return [...expanded.values()]
-  }, [slots])
+  }, [lastVisibleDay, slots])
   const listGroups = useMemo(() => {
     const grouped = new Map<number, TimetableBlock[]>()
     blocks
@@ -2014,13 +2072,16 @@ function TimetableScreen({
     <section className="timetable-screen">
       {viewMode === 'grid' ? (
         <div
-          className="timetable-grid"
+          className={`timetable-grid ${showWeekend ? 'weekend-visible' : ''}`}
           role="grid"
           aria-label="每週課表"
-          style={{ '--period-count': visiblePeriods.length } as CSSProperties}
+          style={{
+            '--day-count': visibleWeekdays.length,
+            '--period-count': visiblePeriods.length,
+          } as CSSProperties}
         >
           <div className="grid-corner" role="columnheader" aria-label="節次" />
-          {weekdays.map((day, dayIndex) => (
+          {visibleWeekdays.map((day, dayIndex) => (
             <div
               className={`day-header ${today === day.value ? 'today' : ''}`}
               key={day.value}
@@ -2071,8 +2132,13 @@ function TimetableScreen({
         </div>
       ) : (
         <div className="timetable-list" aria-label="條列課表">
-          <div className="day-picker" role="tablist" aria-label="選擇星期">
-            {weekdays.map((day) => (
+          <div
+            className={`day-picker ${showWeekend ? 'weekend-visible' : ''}`}
+            role="tablist"
+            aria-label="選擇星期"
+            style={{ '--day-count': visibleWeekdays.length } as CSSProperties}
+          >
+            {visibleWeekdays.map((day) => (
               <button
                 className={listDay === day.value ? 'active' : ''}
                 key={day.value}
@@ -3268,6 +3334,11 @@ function TimetableShareSheet({
         </div>
 
         {error ? <div className="timetable-share-error"><AlertCircle size={17} />{error}</div> : null}
+        {slots.some((slot) => slot.day === 6 || slot.day === 7) ? (
+          <p className="timetable-qr-compat-note">
+            <AlertCircle size={16} />這份課表包含週末課程；對方需更新至最新版才能顯示週六、週日。
+          </p>
+        ) : null}
         <p className="timetable-privacy-note">
           <ShieldCheck size={16} />QR Code 只包含這學期的課表內容與上方名稱，不含學號、帳密或 Mail 資料。
         </p>
@@ -3373,6 +3444,9 @@ function TimetableScanSheet({
               <dl>
                 <div><dt>學期</dt><dd>{preview.semesterId}</dd></div>
                 <div><dt>課程</dt><dd>{coursesFromTimetable(preview.slots).length} 門</dd></div>
+                {preview.slots.some((slot) => slot.day === 6 || slot.day === 7) ? (
+                  <div><dt>週末</dt><dd>含六日課程，匯入後自動顯示</dd></div>
+                ) : null}
                 <div><dt>快照時間</dt><dd>{new Date(preview.generatedAt).toLocaleString('zh-TW', { hour12: false })}</dd></div>
               </dl>
             </div>
@@ -3732,9 +3806,11 @@ function AddCalendarEventModal({
 function AddCourseModal({
   onClose,
   onSave,
+  showWeekend,
 }: {
   onClose: () => void
   onSave: (name: string, code: string, teacher: string, room: string, day: number, period: number) => void
+  showWeekend: boolean
 }) {
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
@@ -3815,6 +3891,8 @@ function AddCourseModal({
                 <option value={3}>週三</option>
                 <option value={4}>週四</option>
                 <option value={5}>週五</option>
+                {showWeekend ? <option value={6}>週六</option> : null}
+                {showWeekend ? <option value={7}>週日</option> : null}
               </select>
             </label>
             <label style={{ display: 'grid', gap: '4px' }}>

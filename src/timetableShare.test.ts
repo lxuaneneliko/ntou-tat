@@ -61,6 +61,20 @@ describe('timetable QR sharing', () => {
     expect(() => decodeTimetableShare('https://example.com')).toThrow('不是海大 TAT')
   })
 
+  it('preserves Saturday and Sunday courses in a QR timetable snapshot', () => {
+    const encoded = encodeTimetableShare({
+      ownerName: '週末課表',
+      semesterId: '115-1',
+      sourceId: 'weekend-device',
+      slots: [
+        { ...slot, id: 'saturday', day: 6 },
+        { ...slot, id: 'sunday', courseId: 'course-2', day: 7 },
+      ],
+    })
+
+    expect(decodeTimetableShare(encoded).slots.map((item) => item.day)).toEqual([6, 7])
+  })
+
   it('stores imported timetables locally', () => {
     const preview = decodeTimetableShare(encodeTimetableShare({
       ownerName: 'A 同學',
