@@ -398,7 +398,7 @@ public class NtouMailPlugin extends Plugin {
                 setOutgoingContent(message, body, attachments);
                 message.saveChanges();
                 transport = session.getTransport("smtps");
-                transport.connect(HOST, SMTP_PORT, credentials.account, credentials.password);
+                transport.connect(HOST, SMTP_PORT, credentials.loginName(), credentials.password);
                 transport.sendMessage(message, message.getAllRecipients());
                 appendSentCopy(credentials, message);
                 call.resolve();
@@ -497,7 +497,7 @@ public class NtouMailPlugin extends Plugin {
 
     private Store connect(Credentials credentials) throws MessagingException {
         Store store = createSession().getStore("imaps");
-        store.connect(HOST, IMAP_PORT, credentials.account, credentials.password);
+        store.connect(HOST, IMAP_PORT, credentials.loginName(), credentials.password);
         return store;
     }
 
@@ -1136,6 +1136,9 @@ public class NtouMailPlugin extends Plugin {
         Credentials(String account, String password) {
             this.account = account;
             this.password = password;
+        }
+        String loginName() {
+            return account + "@mail.ntou.edu.tw";
         }
     }
 

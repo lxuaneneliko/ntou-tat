@@ -3552,6 +3552,10 @@ function LoginScreen({
           </div>
           <div><h1>海大 TAT</h1><p>National Taiwan Ocean University</p></div>
         </div>
+        <div className="login-credential-help" aria-label="登入資料說明">
+          <div><span>帳號</span><strong>學號</strong></div>
+          <div><span>密碼</span><strong>教學務系統密碼</strong></div>
+        </div>
         <form
           onSubmit={(event) => {
             event.preventDefault()
@@ -3642,8 +3646,8 @@ function LoginScreen({
         <div className="privacy-note">
           <ShieldCheck size={17} />
           {rememberMe
-            ? '帳密與 Cookie 將加密儲存於本機安全區'
-            : '帳密不儲存，Cookie 於本機加密保存'}
+            ? '密碼僅用於登入海大教學務系統，並加密儲存在手機內，不會上傳至任何其他伺服器'
+            : '密碼僅用於登入海大教學務系統；未勾選記住帳密時不會儲存密碼'}
         </div>
       </section>
     </div>

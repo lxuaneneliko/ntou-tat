@@ -75,7 +75,7 @@ public class MailNotificationWorker extends Worker {
         Folder folder = null;
         try {
             store = createSession().getStore("imaps");
-            store.connect(HOST, IMAP_PORT, credentials.account, credentials.password);
+            store.connect(HOST, IMAP_PORT, credentials.loginName(), credentials.password);
             folder = store.getFolder("INBOX");
             if (!folder.exists()) throw new MessagingException("Inbox does not exist");
             folder.open(Folder.READ_ONLY);
@@ -330,6 +330,9 @@ public class MailNotificationWorker extends Worker {
         Credentials(String account, String password) {
             this.account = account;
             this.password = password;
+        }
+        String loginName() {
+            return account + "@mail.ntou.edu.tw";
         }
     }
 

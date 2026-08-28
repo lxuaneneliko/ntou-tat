@@ -4349,6 +4349,33 @@ button:disabled {
   line-height: 1.35;
 }
 
+.login-credential-help {
+  margin: -10px 0 20px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  background: #0c1523;
+  border: 1px solid #293a52;
+  border-radius: 6px;
+}
+
+.login-credential-help > div {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.login-credential-help span {
+  color: #8fa0b7;
+}
+
+.login-credential-help strong {
+  color: #e8edf5;
+  font-weight: 700;
+}
+
 .login-panel form {
   display: grid;
   gap: 17px;
@@ -4448,13 +4475,19 @@ button:disabled {
   margin-top: 19px;
   padding-top: 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 7px;
   color: #8fd9c4;
   border-top: 1px solid var(--line);
   font-size: 11px;
+  line-height: 1.55;
   text-align: center;
+}
+
+.privacy-note svg {
+  margin-top: 1px;
+  flex: 0 0 auto;
 }
 
 .spinner {
