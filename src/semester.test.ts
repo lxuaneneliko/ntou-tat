@@ -3,6 +3,7 @@ import {
   admissionYearFromStudentId,
   currentSemesters,
   isGraduateStudentId,
+  semesterDisplayLabel,
   semestersForStudent,
 } from './semester'
 
@@ -16,14 +17,21 @@ describe('student semester range', () => {
   it('builds the current semester list for local data', () => {
     const ids = currentSemesters(new Date(2026, 7, 23)).map(({ id }) => id)
 
-    expect(ids.slice(0, 4)).toEqual([
+    expect(ids.slice(0, 5)).toEqual([
       '115-1',
+      '114-4',
+      '114-3',
       '114-2',
       '114-1',
-      '113-2',
     ])
-    expect(ids).toHaveLength(12)
+    expect(ids).toHaveLength(24)
     expect(ids.at(-1)).toBe('109-2')
+  })
+
+  it('labels both official summer terms without changing their AIS ids', () => {
+    expect(semesterDisplayLabel('114-3')).toBe('114-暑一')
+    expect(semesterDisplayLabel('114-4')).toBe('114-暑二')
+    expect(semesterDisplayLabel('114-2')).toBe('114-2')
   })
 
   it('reads a 114 admission year from an NTOU student id', () => {
@@ -72,12 +80,20 @@ describe('student semester range', () => {
 
     expect(semestersForStudent(extendedSemesters, '11557001').map(({ id }) => id)).toEqual([
       '115-1',
+      '114-4',
+      '114-3',
       '114-2',
       '114-1',
+      '113-4',
+      '113-3',
       '113-2',
       '113-1',
+      '112-4',
+      '112-3',
       '112-2',
       '112-1',
+      '111-4',
+      '111-3',
       '111-2',
       '111-1',
     ])

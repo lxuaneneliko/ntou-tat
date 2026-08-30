@@ -3,6 +3,21 @@ import type { Semester } from './types'
 const SEMESTER_HISTORY_COUNT = 12
 const PRIOR_DEGREE_YEARS = 4
 
+export const isSummerSemesterId = (semesterId: string) => /-(?:3|4)$/u.test(semesterId)
+
+export const semesterDisplayLabel = (semesterId: string) => {
+  const match = semesterId.match(/^(\d{2,3})-([1-4])$/u)
+  if (!match) return semesterId
+  if (match[2] === '3') return `${match[1]}-暑一`
+  if (match[2] === '4') return `${match[1]}-暑二`
+  return semesterId
+}
+
+const semesterRank = (semesterId: string) => {
+  const match = semesterId.match(/^(\d{2,3})-([1-4])$/u)
+  return match ? Number(match[1]) * 4 + Number(match[2]) - 1 : 0
+}
+
 export const currentSemesters = (now = new Date()): Semester[] => {
   const rocYear = now.getFullYear() - 1911
   const month = now.getMonth()
@@ -26,7 +41,21 @@ export const currentSemesters = (now = new Date()): Semester[] => {
     }
   }
 
-  return semesters
+  const newestAcademicYear = Number(semesters[0]?.id.split('-')[0])
+  const completedAcademicYears = new Set(
+    semesters
+      .map(({ id }) => Number(id.split('-')[0]))
+      .filter((year) => Number.isFinite(year) && year < newestAcademicYear),
+  )
+
+  completedAcademicYears.forEach((academicYear) => {
+    semesters.push(
+      { id: `${academicYear}-3`, title: `${academicYear} 學年度暑修第一期`, current: false },
+      { id: `${academicYear}-4`, title: `${academicYear} 學年度暑修第二期`, current: false },
+    )
+  })
+
+  return semesters.sort((left, right) => semesterRank(right.id) - semesterRank(left.id))
 }
 
 export const admissionYearFromStudentId = (studentId: string) => {

@@ -1,0 +1,4234 @@
+{
+  "metadata": {
+    "schemaVersion": 1,
+    "fetchedAt": "2026-08-30T12:41:33.788Z",
+    "sourceUrl": "https://www.ntou.edu.tw/threshold",
+    "queryUrl": "https://ais.ntou.edu.tw/Application/ENR/ENRA0/ENRA120_01.aspx",
+    "departmentCount": 22,
+    "requestedYears": [
+      115,
+      114,
+      113,
+      112,
+      111,
+      110,
+      109,
+      108,
+      107,
+      106,
+      105
+    ],
+    "requestedCombinationCount": 242,
+    "storedCombinationCount": 234,
+    "curriculumRecordCount": 246,
+    "historicalVariantCombinationCount": 13,
+    "missingCombinationCount": 8,
+    "manualReviewCombinationCount": 190
+  },
+  "records": [
+    {
+      "key": "mmd:115",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "331509160cc7f74a09800d12afedc2a26881df7c236fdc7844df332e1de235f3"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:114",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "bc76be7c9be493bbced700c37d764eaa147cd5303926ac1c37ca3920767a303c"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:113",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3632a578e4e1f616fa7f5883f6a408938204c8084b88c155b1159c0d39288a28"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:112",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "533fe447033ee3d72cf4b6a8929449792f02604f786eb17762383ddb77a9f4b3"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:111",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "5a087f68e8fa01aa0bc25ab9f2b67947664fa3c2db4e8fd9a32f83867e310850"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:110",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "7acbc3bfdcbf8ff52e2a4b4ba03d22fb0f57c4aaadc03be5ab8a53573665a093"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:109",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1441746eb4c7acb2cdf833909ef5854c73978277d9b831500aabf1f7ab4b2106"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:108",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "021a7b51d6ca29f0cbcd6384311de1f7e7430000a82f15ec6d693e9f410cdccd"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:107",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "40bd77e93684b558df0b3263f83796c286a1efae760e76e8c859660bd4178fc0"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:106",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "447d77ca3e981be7ce11cfd92fa0c58f1e9b52c885048df7b87bfbe26f186b89"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "mmd:105",
+      "departmentId": "mmd",
+      "departmentName": "商船學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "9fdd2c2c9ea2fa4a0d5915a13564e3708efebfbc201f68ee71b394a5c457fd76"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dstm:115",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "081dce9e769cfb54eaa76f1e9c81328423c07a2e51e980d27855275af809eacf"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:114",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "cac6d5ed9314d47bbc8564bed72339c513e5a520f70a3109b512cd30ca25be00"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:113",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f59aa3476e407ed48cc83d7403a22dceb9c5eec6d5c32e142b4f5fdc8159e118"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:112",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1d65dc1f7a7cb7f1bed45603fa6d97e7ee09436a352b6c4da4f7c40d117e9175"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:111",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "8aff3b82323cad793f6b2d2ef5bf9898c6335abf7c5054916c492c448dc606a0"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:110",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "876a7945024bb4d57cfe63ad3d7750e6b7079f3f825df04e894220609f4d2df0"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:109",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "85814212d46a7db20e29970d8d9866fb4a5d4379f82b8cc67ed18aa98f425035"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:108",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2b0fe5ad7b181b8b7e86f648862a5377ab35f783a3c1228c0eca0a7e7250df32"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:107",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "4bfd83fb8d1c6989750ab452113831a3115da7ebfca525d59cebaf4b906766dc"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:106",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b08e21760d47b459a0924269aa1ce45c6d565e0672db35431e1e9f9408884870"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dstm:105",
+      "departmentId": "dstm",
+      "departmentName": "航運管理學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 142,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1fca9aa898f09e49de8a1eecff554329d6dfe1ef8f45efbe97fc8562e9e68528"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:115",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "ee8297f0d59be647a55d10fdbe4d1a6988edab85564d9abbf2d314180f9c3fb5"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:114",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b8be218c217cb3e8d3d770b9f5605b00fc610adce98c7aaac5e239e0d8582e56"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:113",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "85f47934b39652b193e1fd0be5fc3fa2c4211f4c829929d6fe8239540fcb6a55"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:112",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2bb61812522e0a08f06c31ec57ff383a2e5f029b0851ba80edb111131494b298"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:111",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "8b23271ac2c1274f9da412e3a76c355de3cbfb79dff8d0ab207cd972bb39025d"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:110",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "7831c86c05420bfb11608612c2980f746d05df516600322a067e9fcb630cee1f"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:109",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a4a8e24092eeb275641094695aaac075df5a0bf76c900b7d6b83aee01d8abcec"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:108",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "42b18d444b31be6418eaae8ad28661c82ebbacbd19b2de45d94270175453a4f5"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:107",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b36e8faedb97774c8a4e2e21ed777bcccc0f0eab3689ed9020fa73178f52f151"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:106",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d641b15591aa9a13adb042c26907eaedabb45a54ca45929be50054dbeee9ee67"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "tsweb:105",
+      "departmentId": "tsweb",
+      "departmentName": "運輸科學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "793885dd000d2311f2ea8bcb44cfc9fd6bd89e8a513834d577a9a5f62b1cf8a1"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:115",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "6d9bf4eed1c6ae6b09a99e4925413a5511e46614944ed525ecc281d210fc45e5"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:114",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2fbf01f7eb33dbd21a4303a685de71d3bdb2fe34130363794bf48e6fdadabec1"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:113",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a894c32c16ef7f9b11a01e49f5b85ac1bdd9034a680296b72178f03b60147144"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:112",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "e37eafe5edc5241d38084e35d7b91684f9d15edbd66ae33ba55fac68cb9b6b3e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:111",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "7333f05fcbc9e1356a8c78921ca2bd2b9e2f948bc9ee71fa6f65ff4238f79a0b"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:110",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 110,
+      "status": "stored-variant",
+      "sourceYear": 110,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 138,
+      "variants": [
+        {
+          "code": "060A",
+          "name": "能源應用組",
+          "requirementCount": 40,
+          "graduationMinimumCredits": 138
+        },
+        {
+          "code": "060D",
+          "name": "動力工程組",
+          "requirementCount": 40,
+          "graduationMinimumCredits": 138
+        }
+      ],
+      "sourceHtmlSha256": [
+        "8d7201faa9873086b88a748d8fa132af920357f471ccbf3acaaf0b8eb79ddadb",
+        "d26107cc51cfca55574c07de33ef9f5550657640da5378ab84599f0fa1e439bf",
+        "4002d9e059fef079f7d5012f09135c897b2a4eebeacfb71e4913fb83e91ee1bd",
+        "0d4840b8b5811128f34b05c31cbee45a2b48a0eebec35638d4c9fae235d9ff39"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:109",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 109,
+      "status": "stored-variant",
+      "sourceYear": 109,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 138,
+      "variants": [
+        {
+          "code": "060A",
+          "name": "能源應用組",
+          "requirementCount": 39,
+          "graduationMinimumCredits": 138
+        },
+        {
+          "code": "060D",
+          "name": "動力工程組",
+          "requirementCount": 39,
+          "graduationMinimumCredits": 138
+        }
+      ],
+      "sourceHtmlSha256": [
+        "b3f0fe42b25c1a2762c569a67db9e17be3a2f780e270ea2e67adb33785778b83",
+        "51e468b2828a15d554a09420199b721c9ed45dd6d3eb660ea487a6721fe42f6c",
+        "5d9b661fde31df4d312a9c1a3419168657e9b728cd59972d8f38a6c30f0cf90a",
+        "40f7ccfef0a553aa59b705bd5749cbab03edcaddf8adc65f04a9f94c37c430c6"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:108",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 108,
+      "status": "stored-variant",
+      "sourceYear": 108,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 138,
+      "variants": [
+        {
+          "code": "060A",
+          "name": "能源應用組",
+          "requirementCount": 39,
+          "graduationMinimumCredits": 138
+        },
+        {
+          "code": "060D",
+          "name": "動力工程組",
+          "requirementCount": 39,
+          "graduationMinimumCredits": 138
+        }
+      ],
+      "sourceHtmlSha256": [
+        "7378d98bbe6d4bea939196ad0df5e6d7498739e6638d7e83c2c2e84feed9f187",
+        "3e569178a710271b556bff9c6c6067bb68da1c9721eb8e24f975d586a9091628",
+        "f74fc5db4197b11edee4a28d90ffd5214696503e77b8534f0a84c4fa3a813010",
+        "967f3d86f9d0fe2754a123326ddf8d236f1577616d3f7446ca59ff4cf2c02529"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:107",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 107,
+      "status": "stored-variant",
+      "sourceYear": 107,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 138,
+      "variants": [
+        {
+          "code": "060A",
+          "name": "能源應用組",
+          "requirementCount": 39,
+          "graduationMinimumCredits": 138
+        },
+        {
+          "code": "060D",
+          "name": "動力工程組",
+          "requirementCount": 39,
+          "graduationMinimumCredits": 138
+        }
+      ],
+      "sourceHtmlSha256": [
+        "e3461e5bd70d71d267236abc56323892a5094576bf56bb12227eb95df197b67b",
+        "7455db9d4ffa667983dfd4ca070053fc81272d18e4b82c3e008e2a857bc6eba8",
+        "2ab50a8c9b35099af647d59cc8af5ca6fc331cad4318570f271c559950ebedaa",
+        "36bb76a707b1da224a8f1d3ded7186826e0799ba21c049e59885df23454d62a6"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:106",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 106,
+      "status": "stored-variant",
+      "sourceYear": 106,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 138,
+      "variants": [
+        {
+          "code": "060A",
+          "name": "能源應用組",
+          "requirementCount": 39,
+          "graduationMinimumCredits": 138
+        },
+        {
+          "code": "060D",
+          "name": "動力工程組",
+          "requirementCount": 39,
+          "graduationMinimumCredits": 138
+        }
+      ],
+      "sourceHtmlSha256": [
+        "3dc3f624e3cf78733e5f548724a1d75c2314f7bd2e799e2cfb558216b6db96d9",
+        "97c61a5495188fac146eca08881a3b91c6ca7254fdddded4eb8b3bba4353fbbe",
+        "f7ebbd58c59004fcd6ff44af79b892feec557ba8692a47dc9a85873e1eeaa506",
+        "6a4976fe45e1d5ab63790df66a2fc05192dccfe89237dc285d650e3082a59892"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dme:105",
+      "departmentId": "dme",
+      "departmentName": "輪機工程學系",
+      "requestedYear": 105,
+      "status": "stored-variant",
+      "sourceYear": 105,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 138,
+      "variants": [
+        {
+          "code": "060A",
+          "name": "能源應用組",
+          "requirementCount": 38,
+          "graduationMinimumCredits": 138
+        },
+        {
+          "code": "060D",
+          "name": "動力工程組",
+          "requirementCount": 38,
+          "graduationMinimumCredits": 138
+        },
+        {
+          "code": "0606",
+          "name": "四年制",
+          "requirementCount": 33,
+          "graduationMinimumCredits": 74
+        }
+      ],
+      "sourceHtmlSha256": [
+        "60e769d318592e041b1d78548c2044fed9ea87a4d0a249758257c6a87f57736b",
+        "846e29ecf9e97bb6e79bcdd9b451d2bdb9bff2f8c3fd974d09403bfa309972b4",
+        "724bb67d6986424d02bd28a4b959b1fbccd94b2b044472146ed2996abe523397",
+        "7a98d99c5bd87784f13caae20dd19a03c54815b86d545f96e4d58832a472691e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:115",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 115,
+      "status": "missing",
+      "sourceYear": null,
+      "requirementCount": 0,
+      "graduationMinimumCredits": 0,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b4deb2f532a6f93d4c2fe4d83c2e61c0bab8407f6e722c1dc7687baf8d417965"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dotm:114",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 27,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "4f5d1a8eb747f81f9c0c52a356310e7794a65dcee3a5c7959675c50dfa9b3c25"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:113",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 26,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "9a295b72de2dc0a90e9a86844a04036292c4d76e058c810a8449dce4f1ebe101"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:112",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "132a8cbf8283f2bcc6105639167eb0c8e2c99844892c6cfc6eb8145f5d107e7a"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:111",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d055f7ac49e38f29b73ae4999ff608f2216247ac8e7b227828bf14a30292dc92"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:110",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "0440df76d97d45b901b9719e882e2398dea025181dd1334c5c302c009b54e58d"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:109",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1e3c7ce0a641d2ba297c72d44fa32d960ea56b2fde20ce6635d37fbb3860e37d"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:108",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2145bc10fae625346d7d32504759a1ee324f71915cd532844b26f46131e05737"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:107",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f560b48cf2d7bf4305426bb922bf54d398e5347f1f8d66b7f463eff52e4e52c9"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:106",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 25,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "0ec78d295fedb04b23101c471c95f9bbbe48b0dfe8071f70bf2ca86da962ff65"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dotm:105",
+      "departmentId": "dotm",
+      "departmentName": "海洋觀光管理學士學位學程",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 24,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d6cd0617d6723e963cb1e365b8492df2b07e87d3fabcd9f4def0f20fa762c01f"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:115",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c6827d995a585b9203a3de3ecadfe2fba9b82fbc375ea432596253fc61d646f4"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:114",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2feafa6bd214904d14aab5a84bfea4ef1c9a4bc6418e1d3d73255b602ddb3bd3"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:113",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "76e2dfbc524599d390d979a4c6b4be1d2f0ba25bd14f84667b1dc0d77e5d0da4"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:112",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "30f902465b2cd638759beafa9d9f0f6329d13074f4a3e332ac7aa91a1140b251"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:111",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3b21d52b9388ead0fc1b640932ca2489d4e7cd85969b1191dc6260fbe7f4ba9e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:110",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c5242f54f0de76703c1712c8e50c14f22095a6f85c4107766dec22536e9fae4d"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:109",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "e2ac7017fab2ccf75280bf19dd8af79d79eb9bbb98862cd752b07d8d29823510"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:108",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3359b504712c5b676ac06cc04a955e2b196d137fac9098024377dd1be14508a8"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:107",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "ab0e4fc2ab07d505683fc297362ce02ecbd0d6bb8f1b5a496f10519f68758374"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:106",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "98e6e44783bdc45487f0d931768ec3403bfda0845f84dcd555c6537d410c789a"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oom:105",
+      "departmentId": "oom",
+      "departmentName": "海洋經營管理學士學位學程",
+      "requestedYear": 105,
+      "status": "missing",
+      "sourceYear": null,
+      "requirementCount": 0,
+      "graduationMinimumCredits": 0,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f1fe9ed667f91c3fa053486cadd152463d89e363260ef9b8bd01f6748b82c754"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "fs:115",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "9d7fcf55131d06ad74d17c9922aac1e9319bc967d1ae97a2ca30b404d56d591e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:114",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 44,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c682d2dc7d992ffa4caa57ec172228a2074a9114a392637d0466087cfbcd5e2d"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:113",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 44,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "0ab33435b9766be62f9b2bdf32af0df35243254c7717084debf55b198482b980"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:112",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 46,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f775b4c4bf3285800a4da6784daaaa21d6c408c7f8ff5a542c0c254b36d83561"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:111",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 46,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c302a3a02fc65b838215b0e1e8ee3ac68232f486001ce34a18fabedbd699a1a2"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:110",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 44,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1e72e30dab4d07ff5739de78b07fb51044666ae7309343df1db7a10cff7cf2f9"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:109",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 109,
+      "status": "stored-variant",
+      "sourceYear": 109,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [
+        {
+          "code": "030A",
+          "name": "生物科技組",
+          "requirementCount": 41,
+          "graduationMinimumCredits": 128
+        },
+        {
+          "code": "0309",
+          "name": "食品科學組",
+          "requirementCount": 42,
+          "graduationMinimumCredits": 128
+        }
+      ],
+      "sourceHtmlSha256": [
+        "c6100a699dfeaf322c99af703f244b2de26015598fc6c5dd276fc4afa1dd2c63",
+        "ccd0418773f974d900bb38f9c54656136051587c5de26db9c6f527029f801e78",
+        "e1431c544d1b2c9b17e6776e3ced2517c35c789fe11feb7558171bb3352309c2"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:108",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 108,
+      "status": "stored-variant",
+      "sourceYear": 108,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [
+        {
+          "code": "030A",
+          "name": "生物科技組",
+          "requirementCount": 41,
+          "graduationMinimumCredits": 128
+        },
+        {
+          "code": "0309",
+          "name": "食品科學組",
+          "requirementCount": 42,
+          "graduationMinimumCredits": 128
+        }
+      ],
+      "sourceHtmlSha256": [
+        "b75f4b7d5112ed037531af6502b1bf45b33b34d1ed02c899cdff62c5fc3e76b3",
+        "34c5a20c8ba64a4df8d5c7e5b3883867560ed002db40bc22bd0d587fb22c7139",
+        "e6b263a02733cd1b2f62bf5a9f2b3a6347c968f4c41f52d94fd2586d564e466d"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:107",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 107,
+      "status": "stored-variant",
+      "sourceYear": 107,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 128,
+      "variants": [
+        {
+          "code": "030A",
+          "name": "生物科技組",
+          "requirementCount": 43,
+          "graduationMinimumCredits": 128
+        },
+        {
+          "code": "0309",
+          "name": "食品科學組",
+          "requirementCount": 45,
+          "graduationMinimumCredits": 128
+        }
+      ],
+      "sourceHtmlSha256": [
+        "a10fc626ea265fe937c8565185c946464566974688e53096f7a9939b6afd57dc",
+        "457e5840a83f8e89d99b0da06b3cefe79873f2b3f74c90e6565816603943e322",
+        "f84a7041ffab7ea021a105069754b54ad11b3dd986c401fd5ccfbc5b4cd88b1c"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:106",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 106,
+      "status": "stored-variant",
+      "sourceYear": 106,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [
+        {
+          "code": "030A",
+          "name": "生物科技組",
+          "requirementCount": 41,
+          "graduationMinimumCredits": 128
+        },
+        {
+          "code": "0309",
+          "name": "食品科學組",
+          "requirementCount": 41,
+          "graduationMinimumCredits": 128
+        }
+      ],
+      "sourceHtmlSha256": [
+        "61632bdee20870d2a885d7ef7f08f43ba67988a3c703e283211514209a52f300",
+        "0b63680a66f102168fd22a47669562d3333150e88ab30584320c805f51140301",
+        "e4343991cba8d61de2a769c6ba80b4eb0f1a43d9252fa2556aba5491f8505f22"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fs:105",
+      "departmentId": "fs",
+      "departmentName": "食品科學系",
+      "requestedYear": 105,
+      "status": "stored-variant",
+      "sourceYear": 105,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [
+        {
+          "code": "030A",
+          "name": "生物科技組",
+          "requirementCount": 40,
+          "graduationMinimumCredits": 128
+        },
+        {
+          "code": "0309",
+          "name": "食品科學組",
+          "requirementCount": 40,
+          "graduationMinimumCredits": 128
+        }
+      ],
+      "sourceHtmlSha256": [
+        "42a45b5b16a99dbab40b5c01ac923f85e15c2649a407b140c46e16f4e93594a2",
+        "3f6d9e16891d54d9755391a62d91a9175d8cfdd8a047de4c41e1afbcd6478efc",
+        "c212311967cf1ddc9975dce40f1eaccfbf3930407b626fbb87190bb970ff06ae"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:115",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "4a5a0b046b46ed19e7b2388442097462c83d7843bf0b849a1c0084f74185ce4b"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:114",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a8d59255defd17aba6cafc706e21f213c26e16e5f6f0004e9e8e598449cd71f3"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:113",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "abc832c13764e9f1d4dc2196ae216627a8e766482a25cab42b8d30e635f325e7"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:112",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "fc67499c882eb52c2d2a20a2fc09913c551950048dd3b4d06ac5ede01023dbbc"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:111",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "af1b6a62398d110d2d90bd3ce6dfe7d82d6d35cdb85637ced6ca71ff0fa493e4"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:110",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "5ac41118e1bada13d2b4c25fcf7168539536e41c0cfd9ab6e5377579a8c3f909"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:109",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a9a899b68095eaad1c4dd431cc610b73143ff417f16ec6cc27aed04d30086476"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:108",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "cf83fa5cc428d50aa975b67b5eaf40e942e3ffb1b762d1694df284b061ebabe7"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:107",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "77da9efae195785e7add709d38b0000af347e2a0d0d1701f60aa508b8eff0d4a"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:106",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "22dd4f915f638086517d101faf3e4c6c5eb26cdf816aec434b5f020c8e84e016"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "aqua:105",
+      "departmentId": "aqua",
+      "departmentName": "水產養殖學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a56f6385b1714ef10054d904bba21499b9f624f052c448463a33ceda85e239fc"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:115",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "af414752bd30308d761736fb41ea5cae337b4fbb351eb53625dbb6b3ba24fd95"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:114",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "073f088f0e2d3fd0dc9258e4340eddbc9f4eb3c46a445d005221f8e7f4245d3d"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:113",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 35,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3e55ef49534d69e711db344e4343994ba94a045e288d7358ed6c19bb3eeb6308"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:112",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a6e4ce374abd9592d454c2c33241d9cf5f0f61000ed000f84f164f7188f6894c"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:111",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "50097a332f825044a047ec9e92bf086abbfb8ac40fb6940ccfd1accbe74d2c04"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:110",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "385abb713b13e2003b93c94f94723a7229babf73f87734f10be398ad2b2cae1a"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:109",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "e5b9a7ede49f84c04a01539934b5cefe48009c6577795f1a3ba16b106b1ed7e3"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:108",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a45760c3149bf77ef720fa16a313ca274ba503c484da6ffa131d4145c6633381"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:107",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "6990f53fd689e3ad7019d3d7242cdd15eaa5dbf3f31204e09fa7e461addad85e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:106",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "9ceabf0e089aefd4eaff6818b4d775afeab958c0594d446da692af3620d62256"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dbb:105",
+      "departmentId": "dbb",
+      "departmentName": "生命科學暨生物科技學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "fd1e6367fedf78c996a2e8b2f190c0a1a721b2d1b210099a79229f480c3bb966"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:115",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 115,
+      "status": "missing",
+      "sourceYear": null,
+      "requirementCount": 0,
+      "graduationMinimumCredits": 0,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "67707a7d28b24ecfdf5dad302e03fe770249cab861aeaca5273e9a73467187b7"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "bmb:114",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "5a9f857e5ea34c5fd6831c90bb5f5d3e8b4ddd93ebfa7995e6c01688604cd202"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:113",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "357f6991c5c58d9bdbf747a10a455aa0c87267278c9b2fdac950a00625128753"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:112",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "9757ebb16f2460fc7b2c47a1235d36b6c51922665718970b3bd169898f11cb4c"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:111",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "30b13cf645cd6d1468a0618d9b64a6b17e603c7d1e9b77112ea01dbe45d6578c"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:110",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "0a099db12617b576d8a086eea06e455184c5ca0fb6fe4e3f8013d88e712feb1b"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:109",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c752b0672eee7c7ff453e3dcecb78e7917385a962d1ab0414edec7a3ed201333"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:108",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "7977655db7693d004848cdeaad6a043d0078417aa073f89fa51abbdf5dbad3a6"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:107",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "df90e2af87c3e89d24609cd39c90561d8d68cb5a9da0cb786a896bb4716c5c18"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:106",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 40,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3dfdf884ee1f06a467ce336e654fde0e6b7d7ef91e6e462d26ccc40e561b2d64"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "bmb:105",
+      "departmentId": "bmb",
+      "departmentName": "海洋生物科技學士學位學程",
+      "requestedYear": 105,
+      "status": "missing",
+      "sourceYear": null,
+      "requirementCount": 0,
+      "graduationMinimumCredits": 0,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "afa8d36e5f2b06a6a7c4a63d4be21c16f92a69210ada084da801d2a6a1c0c446"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "fd:115",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "4d4820030e7bd5f90da44db0aad4507f867b7ae3eb7eaba99aba2ea97c03a952"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:114",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "61969461980a26c0f1261a5b774bba3830acc98133bf53ca83af3df916e3001f"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:113",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "8c969e3cf9c1eca5a5b82d4a64fadbef51dd5c4f98da36a8150fb8956c3150fb"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:112",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 35,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "93b37ac017910a72a0adb25c3a87111b5172445cec69a0fa9db7610c372575cf"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:111",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 35,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "271ddebeb7d2ff9c75a265edeb7d8ef1494c034a2330dddd9879a04ac80e3ed9"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:110",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 35,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d32c672bd43f8ad5d63f9a26e79fd176362afd37d7e168098280342c2dcc4396"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:109",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1b16a72b88b0840cf2f7e13108f30a65461a3d8a6fab48cbe861c44ad2255ce1"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:108",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2bc7505f5c6a3a8a9bb5f9e8088811a02e8c9f3e8b8980256e0b867692e8c75b"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:107",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "e6a6faed2efeb2f0244bd85952615736c519184d3481797969e32fe7b1b6fe95"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:106",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b18a7ce4252dd12ad93c7d8fef00082551cda448077c28866fc434d6bba3b7c3"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "fd:105",
+      "departmentId": "fd",
+      "departmentName": "環境生物與漁業科學學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b8b4230cfccde8d49c0eda8f7ad0ceef875ca4011596b928d1381eb1de7b0096"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:115",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "6a913022bc17b814e8718af96a276201a099c77b3d91cc4457dddb9b4c11d0d7"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:114",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "e1cc4281d3a7b9abeb18e91f895041e475bda315080005943624cfba1ae676e1"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:113",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "5677beab34fb31f711e12611085f2d2bec3783c2476e232060f9ba3f45cd9377"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:112",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "95203f83f06c96bc7ae49db2df914d11c382d26d586c89ae0e0ed5a2b78c90c8"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:111",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "ee4efcee5bcc7d7451900304418127d8071b47cdfe261ebd73ea829169a7f6dc"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:110",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "512fdc9bacc5ccad9e32083c8a1c99027632e90e87888a044e92ff76915d7a36"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:109",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2d98517da01073f0dce851bf6ccfe2debf138a500852df0583e5f2176ee7964e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:108",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "4e3525cd8a1b1a74930f719006990c100c759483e5b33dbf0c4e535df4e0cd9f"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:107",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "51effac70e51d98369354ce692d750616f5d8ed1cf4e4973f165da90e165a492"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:106",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "947c6805b93655a4c9c7e8f1080c46fc8a5d393607ebfbc45ec46b0cd5cc1222"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "mei:105",
+      "departmentId": "mei",
+      "departmentName": "海洋環境資訊系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "98e6039368a9779150d45408a06a4780dbb3b046481696acba49eb2514c7d644"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "me:115",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "73b0da18c40bac84f7febf3ca086003de35edacbf0a2283ecb3cbff22472b08a"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:114",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "0f38721eaa5a2bfb3c375e609ad34091f488489b36e99c22c3073e962fd35445"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:113",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 41,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "408c34bc8bde054ad08ff2cd0134507d70b8470680f5a60f3a5e263127b8c46f"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:112",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "e6c68a2853c0942f79860f1e8b62d360aa4863e73c729b934525b67c1e6f3d61"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:111",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 44,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "95b9780db1d5916e8ded09c663c1168144ea1d84d48f15f415eba942188b37c7"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:110",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 43,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "808afbd8ac7cbe56a7cbd661639cccdd79215efa630775985c6abe2c4244ae82"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:109",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f439721d9f97e73159c1bad38e437fd90ce4d21e654e2904fb0bafc68a26cfdf"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:108",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f665a0f1491939e9f0cadbf5b80feb9a4e38d4b7d724720cd932098ede463abd"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:107",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b670c511f7da920ded6f388fbe5f29b83e968f1928706a268f30949fd6affa84"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:106",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f9a4d8e33f56f1d1ed6b88b231761883f7ec2602d6f1d0cbe25dd302077dd36d"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "me:105",
+      "departmentId": "me",
+      "departmentName": "機械與機電工程學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 42,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c488a47b36e33028207c7a08a6ae293f53a2d29ad907122e9e73d9dc57332b97"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "se:115",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 115,
+      "status": "missing",
+      "sourceYear": null,
+      "requirementCount": 0,
+      "graduationMinimumCredits": 0,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b80de3cb961c1be2523638a9f09f51bb037d57fee15eff27e60cf2432c8d4eee"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "se:114",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f2719d2fcfcc5f674b9f5f078c95534bf5bcce35e9eb92d87747872d0437bacf"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:113",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1fd487c9b82c701915710f46d9e6281734a39d5bec9b1aa748fac88521986b47"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:112",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 36,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c33e2aa4cb5d34caf90b7da5dc49728bdbf32a16540fdefb6a895839544a4aab"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:111",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "019d2e7d7c8c62b4add9361cdce5d115d8e5d5faf87836bd2297a1cdf8a3029f"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:110",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1e89361af6d29d405806b4d7d0c25c08c9d02c12ad4f4592779da7168236bda4"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:109",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 36,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "ad32f21e684230ed7bdb632a09949ad8794fe4fc2c4878bb43dbdfc5fe30cfa1"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:108",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a3ab612c12a8b38b18bf8a4524602e9d99b4388c3f20d4a5ec960eadafb2f01a"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:107",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "dd7aba22dfc28409d90c9f5f24aa9780278cb5e1d7d5ec628f5f35bc360d7497"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:106",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "06bf417151b5a8abd12e78c9f6395bb2d8567e0f56218840884213e1d04b6096"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "se:105",
+      "departmentId": "se",
+      "departmentName": "系統工程暨造船學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3f0500e2801da72d2426fa4e7f965ce9e79c8bdd2a9ab796fa0d19fb5a670da0"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:115",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1af4e0e6d2c53c56ed98b5de42426d0044187650f4ea4ae65ead66571fd18115"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:114",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "abec6f92de66b20cf91edea7cbec467dcee8bf0d8208d17b8544ca28d1cbc0c1"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:113",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "7cc228b1440bb2b09c6ef3811e0e133dd8786b4c25c24189a9c59c6a4a720fb1"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:112",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "656e92307f8f4f6337d88facb2ec27c574b66510ef472b0675afac44d1592269"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:111",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "9b77d5cfd0eea56abe318b0d86681a5e96647ab4a2957fd128a9b292a9567719"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:110",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d899c1599683239f63db1b53af4ea7084705d7ae3ed9b849c0d9d9a82aab84ee"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:109",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1b79af6a5918ee49af474d57d00cc125cc0b2b8180417e724ed3d7d9fb07b90f"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:108",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "61377f76d1dfd7433144d00e786120ba207b661f8c9262abcb2f4aaf864d7101"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:107",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c9882a97f57f5d8385bbf4095d1887b2a82271db49a6acc6f2e3430bc0a7399c"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:106",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a63330767f13f011213c71c966a6f0468f5fbcf7cf08dad675f9d7d76a6de837"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "hreweb:105",
+      "departmentId": "hreweb",
+      "departmentName": "河海工程學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "30fafe557b597411576cf81f15a6031009097457088a55f0686c83ef83523558"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:115",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 115,
+      "status": "missing",
+      "sourceYear": null,
+      "requirementCount": 0,
+      "graduationMinimumCredits": 0,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1b0638a318df2024d36a6b30ee3412c580ba5ae61efc01788f20bb350acf7de6"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "oet:114",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 36,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3db9e17824127db9ee43758ea0d494b64b1f612562e3fc320a66890f4d3f1ca3"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:113",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 36,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "8fd2b6b77ccdcf7f5b42f394cf8f63a1b5450a7c7548beb403605be71cb4fb0d"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:112",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 36,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "857573d059430ee6f62f0adad29362cd87455496263fe05f4f7193885ba05457"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:111",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "58e886cf6a50d20f3a87733071a6a557ba283ee073168987dbfd725d18efc95e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:110",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 36,
+      "graduationMinimumCredits": 131,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "80572278ed6b19a93cd4627a2e6ef4f6e8651c5145d770d474a9ee5bf0c81a55"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:109",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "a82a58d72f568132dff079509c89164ea88404a08d3eb8ce48a222a7b382b283"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:108",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "480ec633c245d8473b112bf59ee7dfaaba1428db0f6843c563d0bd62d657a784"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:107",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 132,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "bad9edefa3c2f4ac8cc8f3b961578bcba4ba44aa7c004f4ffab5165e57bab92a"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:106",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "70d9c7a9b49382adc70b68d8d4a393159d2f3c034f9c4d5fca2982a24d64609e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "oet:105",
+      "departmentId": "oet",
+      "departmentName": "海洋工程科技學士學位學程",
+      "requestedYear": 105,
+      "status": "missing",
+      "sourceYear": null,
+      "requirementCount": 0,
+      "graduationMinimumCredits": 0,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3ec8e3119602ec6eaf80c0e1c8b3f8ba99a644387d5636fdeed134252c05dff6"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "ee:115",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "bfc217d31ef467c81f8d28edfe41355c4a710edc6e8425ebd3f7a0aa013fd0ee"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:114",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 136,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "da9e45d1d24eb63cc90c61bb13eca6d9fa7cf2d87304a84089266330aeecde85"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:113",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 30,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2708fca87ed7332124ae9f9ef618d45b54ad3aca68c86e71adc84f01f337f5ec"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:112",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "7f66d28c1244d83962df3d7880984ad78542db9c0a4046bd7b05314b6e0b7ac9"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:111",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "add0f051c1a53781a0ac4d249153afba6af6eff0c56be24368b1e8ea540ebe47"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:110",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 137,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "4205639b393917d97bea0efb3d2e48cc922181804854a73ab01d80aa8e3b77b4"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:109",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 27,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d5fec56c6d85d066e50f53eb772e086f2e1cdfd8a9db283624f61db9594e32db"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:108",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 27,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1db67e6337cf16bc948082a44b9bd952ff4a5c8e8d44729d4f4cbb72d84b6d4c"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:107",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 27,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f9872699631f755e0cd87ba3c9cd0ff52a087e65d5fe198be6b494f209e889e8"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:106",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 27,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "afd4f3ee84a7ced8e1b93c37d67ecb4b77e6e10bb5e54eb9f6855638900a08dc"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ee:105",
+      "departmentId": "ee",
+      "departmentName": "電機工程學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 27,
+      "graduationMinimumCredits": 138,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "003ef24a5eef0423a0ff5f8367ce8a669547e96c58d1170824e25611137bbe60"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:115",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 26,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d8d86f253ca005bf3a96186e91529228a10276c08efb1953b082f49b1ae195d1"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:114",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 26,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "5f4a2b00c07cba039571a3c79221333a4d77727ecae7523d6275a08ba1ee9af3"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:113",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 26,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "78e2bbf3969863c4635e5f68e5ec9cbf9c70128be8759b40b5fbc63b106e1499"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:112",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "50ca3638d1108e7299f2a6bf66c355f7100219b9e924915623985fd68f9fa46e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:111",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "7b6c388dac21e8a8ef33662ed7fd4cc9128759e958aad55f9746eb439456e4eb"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:110",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 29,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1c8dbf8c0137060f24dd2d160e94eb3298c3ca2643a4d075955ab4be5cd6a43c"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:109",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1d68f2a3b5fccecc9a0e0f22b44c5742034cadb1f9033530f3109bdf94364a7e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:108",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "8f6aa26f2e6ab81991ceafdd7e3cf281722687fc9bc5dd4b418f45b771314fb6"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:107",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1f1647e5ea3e80113dcdbe332eb7dafe4d77703caf9ccf9a4932c44f3314e6aa"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:106",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "37ccf14e68afdd96f1118ae103abf642ed2901ba800696570cb0f6ee9a414569"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cse:105",
+      "departmentId": "cse",
+      "departmentName": "資訊工程學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 28,
+      "graduationMinimumCredits": 135,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "042e3f411cd147b6846874c8c8d7d33c08caccae551d24135bdc80751076a6cf"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "cnce:115",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "ec0273c5654db60058da7f2f6ab8e578a272f84e8f9c49cc226c93f23d051602"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:114",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b37056be921bbb6a3715f8022974d280cb0a46a922354ac631f855d221b2d9bc"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:113",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "5f815b6be5524c27784a94cecccec702a58c1fb6333000fda275442d6fe4441c"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:112",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 35,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "41f3f863ddc356b7ced4202098947b59984d59e71f22c56086bf258e61f3dd1b"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:111",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 35,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "61197181195c374a56e2ec455b7d3317dce7e4e9a3bd21ca0d95db0066ef50b6"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:110",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 35,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "33120267bfca4cc2c332c5e1c89f7885371772c306c84bc3d63d78c5ab0dc095"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:109",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "19c18b27e9ff2a2a42d0f5ed20862f0d918f46c90dbff6eb31ce96bf5677ac88"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:108",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "897989945c512a8d853e27be92e63cf26383e85ccb5be27377f9e09eab16bd3b"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:107",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3d2555b113f2944ce23e07635b47adb0c4f960311596003c975a44ba7f3916f3"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:106",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d5a37742bb01e1e77b1862787b32167e480b7834d1b00e1e32d8f39c7dce4ba0"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "cnce:105",
+      "departmentId": "cnce",
+      "departmentName": "通訊與導航工程學系",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c7b150a328ed0573fc7cc4c014a7f933dbc96246e3f1acdbba7a43e6b4cb2b6d"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "omt:115",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 115,
+      "status": "missing",
+      "sourceYear": null,
+      "requirementCount": 0,
+      "graduationMinimumCredits": 0,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "07e53d4bf4d6d4fe8034dd44b5f219072bbb38c3da599bece6b63df28de34be5",
+        "d69082cf2407fc007307899c9425dd6d4775283985aae4d807a26ded8b7314d7"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "omt:114",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "cfe2e3f1268c6cf7a57333b6622fec567bb737a85bd449ad1617a2ea97c4b956"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:113",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 31,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "9b96be919a94b6a1001b30a1a0095ba99505da78d59c2c0f3fa07d28543655aa"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:112",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "fc8f91d03709faae1bf4e76484ebace33b7b35dc421e12108b2bdc6b4f8e63d9"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:111",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3434b15033f808134e1d5fddfed1feb9c5981af465275230e07f6ebe8e7c8f60"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:110",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "c0fcc6e2482054e01dee3f5bce9f0468200230682a0ae36751e055f03006c9b3"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:109",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "3f8c803885ad6a1bb5465d712b0bebacc5f2bc963e9aac7768e3c4f872650183"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:108",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "bfa77f3930f5147f50750411a597032c63831ce3d5d29d55957e1ef1578a1c98"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:107",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 134,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2673e014533faecce70bf8dcf2e3afd6000a63c571fb8771bfac7e08f9d8a568"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:106",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 106,
+      "status": "stored-variant",
+      "sourceYear": 106,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 134,
+      "variants": [
+        {
+          "code": "0808",
+          "name": "光電與材料科技學士學位學程",
+          "requirementCount": 38,
+          "graduationMinimumCredits": 134
+        }
+      ],
+      "sourceHtmlSha256": [
+        "669f52638329247c2fdf72e223f1f9b33bd5a8cd6cf6b5b7f7b5456ebb0bc334",
+        "6bcc765aedcdf847ff3d28745f5162bf0dcff49ab9f88d158d969e6d7b32af0f"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "omt:105",
+      "departmentId": "omt",
+      "departmentName": "光電與材料科技學系",
+      "requestedYear": 105,
+      "status": "stored-variant",
+      "sourceYear": 105,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 134,
+      "variants": [
+        {
+          "code": "0808",
+          "name": "光電與材料科技學士學位學程",
+          "requirementCount": 38,
+          "graduationMinimumCredits": 134
+        }
+      ],
+      "sourceHtmlSha256": [
+        "83e4011eb0493db37f63ae6dd504bd363148df0a12ea20aeba70248ad3dc7677",
+        "37e11e8c465428b43deef85e11562153031e5b5550647fcd1ac0af265bb1f289"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:115",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2ba5637dca7a713f072d9d1c86fb530186ab01c997a2e7e07f2e89c1a10fcdc3"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:114",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "13489c1c43183c7ef379477ca3e8ffbe9236f0364f25b8833e7c529147d624d0"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:113",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d5d6e83354ab0ed3c8243fb586c499b0dc33873a1b070256878bebc9eaf1199f"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:112",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "91d0cd01c6fadee53a9270b7ad54e985a9e7b5bb1cc687522fbbda2d4f687309"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:111",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "8824493891934d787537bb2ea4099602aa8e0016c20cc3c6f37477ec460eb64b"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:110",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "d01ed05301fcbeed7dc034086231d54684ee44117dde593858e8dd570befe929"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:109",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "40eab3a8ecb76c0cd4dddb1c6a015cc662c8a525404c6af11977d24bd6a998de"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:108",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "80a857c722c3b0d9f60e8f71ec4dd57d069f80d20d60ec1ed481b80a3dbe0c82"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:107",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 39,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "36a768a982b017ed837f8be7a4739549332960d1838b82a3375b1d56e1849e99"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:106",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 38,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2239391f1df92cab155cd2a6d7b730aea2a49c11b0b399183b79171889396b41"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "ccdi:105",
+      "departmentId": "ccdi",
+      "departmentName": "海洋文創設計產業學士學位學程",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 37,
+      "graduationMinimumCredits": 128,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "8ee093ff222feb1969c0e5217bac02408c93474160caabfc343a95d19bd6b12e"
+      ],
+      "warnings": [
+        "elective structure needs manual confirmation"
+      ]
+    },
+    {
+      "key": "dolp:115",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 115,
+      "status": "stored",
+      "sourceYear": 115,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 130,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "ce46c563497a92619cae4ea90bca460a78dec5b6105a2157c5fd634e17fb5d5b"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:114",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 114,
+      "status": "stored",
+      "sourceYear": 114,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 130,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "33d43a7f4b18d80420395dee6a7ae0cb484ed836eff4f1c117b46467d14bcde5"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:113",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 113,
+      "status": "stored",
+      "sourceYear": 113,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 130,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "2f42b4192efc3f29dfe78f82f4d39b7e8c69be34b47ff222a28e4b3b930f7bf8"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:112",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 112,
+      "status": "stored",
+      "sourceYear": 112,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 130,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "b5188b16a4a6bfaa7c9ac9fb15c57c6a5a66f395dd2b4fcd102e68132aa5fee4"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:111",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 111,
+      "status": "stored",
+      "sourceYear": 111,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 130,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "cbcf3d91e7100bffcb646a000623d2be256e6c80fe2c0d1807873262037a402f"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:110",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 110,
+      "status": "stored",
+      "sourceYear": 110,
+      "requirementCount": 34,
+      "graduationMinimumCredits": 130,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "1d0d0ba9b5e7c436139d8e72d39afb6bf98d1a9e762713ba35e06721a27a9092"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:109",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 109,
+      "status": "stored",
+      "sourceYear": 109,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 130,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "980ff0355da949428a72659838ccfe7924456c660140c80311b52d8d8e18a7c9"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:108",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 108,
+      "status": "stored",
+      "sourceYear": 108,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "4ce48e4e59865bc100f6c3332b9baa66a922df4ddb0deb06fe8ac617aa8ff123"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:107",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 107,
+      "status": "stored",
+      "sourceYear": 107,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "f59084e6198fc8e419c9c7b8b249eb1e70eec17dcb98b61f84f1647c3171bf5d"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:106",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 106,
+      "status": "stored",
+      "sourceYear": 106,
+      "requirementCount": 33,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "0980ded18c6424ce30707134ec4216eb1b0c64a548075e4f0000baa19c90c4b7"
+      ],
+      "warnings": []
+    },
+    {
+      "key": "dolp:105",
+      "departmentId": "dolp",
+      "departmentName": "海洋法政學士學位學程",
+      "requestedYear": 105,
+      "status": "stored",
+      "sourceYear": 105,
+      "requirementCount": 32,
+      "graduationMinimumCredits": 133,
+      "variants": [],
+      "sourceHtmlSha256": [
+        "fde06bab23c3bbe52f3e76603e7dd090c8a26cc7d1acfbb2b7615b5003bb9945"
+      ],
+      "warnings": []
+    }
+  ]
+}

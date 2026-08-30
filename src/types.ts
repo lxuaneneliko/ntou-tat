@@ -191,4 +191,5 @@ export type MoreView =
   | 'administration'
   | 'traffic'
   | 'emergency'
+  | 'school-song'
   | 'settings'

@@ -18,13 +18,28 @@ const headerIndex = (headers: string[], patterns: RegExp[]) =>
 
 const semesterFromText = (value: string) => {
   const compact = normalizeText(value).replace(/\s+/g, '')
-  const compactMatch = compact.match(/^(\d{2,3})([12])$/)
+  const compactMatch = compact.match(/^(\d{2,3})([1-4])$/)
   if (compactMatch) return `${Number(compactMatch[1])}-${compactMatch[2]}`
 
-  const labelledMatch = compact.match(/(\d{2,3})(?:學年度|[-/年])?.*?第?([12一二])(?:學期)?/)
+  const labelledMatch = compact.match(/(\d{2,3})(?:學年度|[-/年])?.*?第?([1-4一二三四])(?:學期)?/)
   if (!labelledMatch) return ''
-  const semester = labelledMatch[2] === '一' ? '1' : labelledMatch[2] === '二' ? '2' : labelledMatch[2]
+  const semester = ({ 一: '1', 二: '2', 三: '3', 四: '4' } as Record<string, string>)[labelledMatch[2]] ?? labelledMatch[2]
   return `${Number(labelledMatch[1])}-${semester}`
+}
+
+const rowBelongsToSemester = (
+  rowSemester: string,
+  selectedSemester: string,
+  isSummerCourse: boolean,
+) => {
+  const [selectedYear, selectedTerm] = selectedSemester.split('-')
+  if (!['3', '4'].includes(selectedTerm)) {
+    return !isSummerCourse && (!rowSemester || rowSemester === selectedSemester)
+  }
+
+  if (!rowSemester || rowSemester === selectedSemester) return true
+  const transcriptTerm = selectedTerm === '3' ? '1' : '2'
+  return isSummerCourse && rowSemester === `${selectedYear}-${transcriptTerm}`
 }
 
 const gradesFromRows = (rows: string[][], semesterId: string): Grade[] => {
@@ -52,7 +67,6 @@ const gradesFromRows = (rows: string[][], semesterId: string): Grade[] => {
 
   return rows.slice(headerRowIndex + 1).flatMap((cells, index) => {
     const rowSemester = semesterFromText(cells[semesterIndex] ?? '')
-    if (rowSemester && rowSemester !== semesterId) return []
     const code = normalizeText(cells[codeIndex] ?? '')
     const courseTitle = normalizeText(cells[titleIndex] ?? '')
     const rawScore = normalizeText(cells[scoreIndex] ?? '')
@@ -63,11 +77,13 @@ const gradesFromRows = (rows: string[][], semesterId: string): Grade[] => {
     ) return []
     const score = scoreValue(rawScore)
     const category = normalizeText(cells[categoryIndex] ?? '')
+    const isSummerCourse = /暑修|暑/u.test(`${category}${cells.join(' ')}`)
+    if (!rowBelongsToSemester(rowSemester, semesterId, isSummerCourse)) return []
     return [{
       id: `${semesterId}-${code || courseTitle}-${index}`,
       courseId: code || courseTitle,
       courseTitle,
-      semester: rowSemester || semesterId,
+      semester: semesterId,
       credits: Number.parseFloat(normalizeText(cells[creditIndex] ?? '')) || 0,
       score,
       letter: score === null ? rawScore || undefined : undefined,

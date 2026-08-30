@@ -117,6 +117,38 @@ describe('AIS grade parser', () => {
     expect(parseAisGrades(html, '115-1')).toEqual([])
   })
 
+  it('separates summer grades stored by AIS under first and second semester rows', () => {
+    const html = `
+      <table id="DataGrid">
+        <tr><th>學年期</th><th>課號</th><th>課程名稱</th><th>學分數</th><th>選別</th><th>學期總成績</th></tr>
+        <tr><td>1141</td><td>A001</td><td>正常上學期課程</td><td>2</td><td>必修</td><td>82</td></tr>
+        <tr><td>1141</td><td>S001</td><td>暑修第一期課程</td><td>3</td><td>暑</td><td>91</td></tr>
+        <tr><td>1142</td><td>S002</td><td>暑修第二期課程</td><td>2</td><td>暑修</td><td>88</td></tr>
+      </table>
+    `
+
+    expect(parseAisGrades(html, '114-1').map(({ courseId }) => courseId)).toEqual(['A001'])
+    expect(parseAisGrades(html, '114-3')).toEqual([
+      expect.objectContaining({ courseId: 'S001', semester: '114-3', score: 91 }),
+    ])
+    expect(parseAisGrades(html, '114-4')).toEqual([
+      expect.objectContaining({ courseId: 'S002', semester: '114-4', score: 88 }),
+    ])
+  })
+
+  it('reads explicit third and fourth semester labels from newer AIS tables', () => {
+    const html = `
+      <table>
+        <tr><th>學年期</th><th>課程名稱</th><th>學分數</th><th>選別</th><th>成績</th></tr>
+        <tr><td>114學年度第3學期</td><td>暑期專題</td><td>1</td><td>暑</td><td>通過</td></tr>
+      </table>
+    `
+
+    expect(parseAisGrades(html, '114-3')).toEqual([
+      expect.objectContaining({ courseTitle: '暑期專題', semester: '114-3', letter: '通過' }),
+    ])
+  })
+
   it('does not treat enrolled courses with blank marks as released grades', () => {
     const html = `
       <table id="DataGrid">

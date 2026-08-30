@@ -11,6 +11,7 @@ import QRCode from 'qrcode'
 import {
   AlertCircle,
   Bell,
+  BookOpenCheck,
   Building2,
   Camera,
   CalendarDays,
@@ -31,7 +32,9 @@ import {
   Menu,
   MoreVertical,
   PackageOpen,
+  Pause,
   Phone,
+  Play,
   Plus,
   QrCode,
   RefreshCw,
@@ -41,6 +44,7 @@ import {
   ShieldCheck,
   Trash2,
   Trophy,
+  Music2,
   Users,
   X,
   ZoomIn,
@@ -53,9 +57,12 @@ import { emergencyContacts, emptyCredits } from './api/publicData'
 import { clearPortalSession } from './api/portal'
 import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
+import { GeneralEducationProgressSheet } from './GeneralEducationProgressSheet'
+import { GraduationAuditSheet } from './GraduationAuditSheet'
 import { MailScreen, type MailScreenHandle } from './MailScreen'
 import { DepartmentSitesScreen, type DepartmentSitesScreenHandle } from './DepartmentSitesScreen'
 import { AdministrativeUnitsScreen, type AdministrativeUnitsScreenHandle } from './AdministrativeUnitsScreen'
+import { SchoolSongScreen, type SchoolSongScreenHandle } from './SchoolSongScreen'
 import { authStore } from './storage/authStorage'
 import {
   decodeTimetableShare,
@@ -81,7 +88,12 @@ import {
   type PersonalCalendarStore,
 } from './storage/calendarStorage'
 import { isHolidayCalendarEvent, shouldMarkCalendarDate } from './api/publicCalendar'
-import { semestersForStudent } from './semester'
+import {
+  admissionYearFromStudentId,
+  isSummerSemesterId,
+  semesterDisplayLabel,
+  semestersForStudent,
+} from './semester'
 import {
   fetchLatestAppUpdate,
   millisecondsUntilNextUpdateCheck,
@@ -146,6 +158,20 @@ type SemesterPrefetchProgress = {
   semesterId: string
   percent: number
 }
+
+type GeneralEducationHistory = {
+  grades: Grade[]
+  loadedSemesters: number
+  totalSemesters: number
+  loading: boolean
+}
+
+const emptyGeneralEducationHistory = (): GeneralEducationHistory => ({
+  grades: [],
+  loadedSemesters: 0,
+  totalSemesters: 0,
+  loading: false,
+})
 
 type CalendarEventDraft = Pick<
   CalendarEvent,
@@ -241,6 +267,7 @@ const periodsForSlot = (slot: TimetableSlot) => {
 const coursePalette = ['#acd6f4', '#eef0b3', '#b9dfc4', '#f1bcc8', '#cdbfee', '#b9dedc']
 const TIMETABLE_VIEW_STORAGE_KEY = 'ntou-timetable-view-v2'
 const TIMETABLE_WEEKEND_STORAGE_KEY = 'ntou-timetable-show-weekend-v1'
+const SUMMER_SEMESTER_STORAGE_KEY = 'ntou-grades-summer-prefetch-v1'
 
 const readWeekendPreference = () => {
   try {
@@ -253,6 +280,22 @@ const readWeekendPreference = () => {
 const writeWeekendPreference = (showWeekend: boolean) => {
   try {
     localStorage.setItem(TIMETABLE_WEEKEND_STORAGE_KEY, String(showWeekend))
+  } catch {
+    // Keep the in-memory preference when local storage is unavailable.
+  }
+}
+
+const readSummerSemesterPreference = () => {
+  try {
+    return localStorage.getItem(SUMMER_SEMESTER_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+const writeSummerSemesterPreference = (enabled: boolean) => {
+  try {
+    localStorage.setItem(SUMMER_SEMESTER_STORAGE_KEY, String(enabled))
   } catch {
     // Keep the in-memory preference when local storage is unavailable.
   }
@@ -376,8 +419,10 @@ function App() {
     }
   })
   const [showWeekend, setShowWeekend] = useState(readWeekendPreference)
+  const [includeSummerSemesters, setIncludeSummerSemesters] = useState(readSummerSemesterPreference)
   const [selectedSemester, setSelectedSemester] = useState('')
   const [moreView, setMoreView] = useState<MoreView | null>(null)
+  const [schoolSongPlaying, setSchoolSongPlaying] = useState(false)
   const [customAvatar, setCustomAvatar] = useState(readStoredAvatar)
   const [activeCourse, setActiveCourse] = useState<CourseSummary | null>(null)
   const [courseFiles, setCourseFiles] = useState<Record<string, CourseFile[]>>({})
@@ -410,6 +455,11 @@ function App() {
   })
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false)
   const [isAddGradeOpen, setIsAddGradeOpen] = useState(false)
+  const [isGeneralEducationOpen, setIsGeneralEducationOpen] = useState(false)
+  const [isGraduationAuditOpen, setIsGraduationAuditOpen] = useState(false)
+  const [generalEducationHistory, setGeneralEducationHistory] = useState<GeneralEducationHistory>(
+    emptyGeneralEducationHistory,
+  )
   const [isAddCalendarEventOpen, setIsAddCalendarEventOpen] = useState(false)
   const [calendarEventDate, setCalendarEventDate] = useState(() => isoDate(new Date()))
   const [personalCalendarStore, setPersonalCalendarStore] = useState<PersonalCalendarStore>(
@@ -428,6 +478,9 @@ function App() {
   const mailScreenRef = useRef<MailScreenHandle>(null)
   const departmentSitesRef = useRef<DepartmentSitesScreenHandle>(null)
   const administrativeUnitsRef = useRef<AdministrativeUnitsScreenHandle>(null)
+  const schoolSongRef = useRef<SchoolSongScreenHandle>(null)
+  const includeSummerSemestersRef = useRef(includeSummerSemesters)
+  const semesterPrefetchWasRunningRef = useRef(false)
   const lastRootBackAtRef = useRef(0)
   const exitHintTimerRef = useRef<number | undefined>(undefined)
 
@@ -544,6 +597,9 @@ function App() {
     setSelectedTab('timetable')
     setMoreView(null)
     setActiveCourse(null)
+    setIsGeneralEducationOpen(false)
+    setIsGraduationAuditOpen(false)
+    setGeneralEducationHistory(emptyGeneralEducationHistory())
   }, [applyData])
 
   const api = useMemo(() => createNtouApi(handleUnauthorized), [handleUnauthorized])
@@ -678,6 +734,90 @@ function App() {
       // Keep the successfully loaded data in memory when encrypted storage is unavailable.
     }
   }, [publishSemesterEntry])
+
+  const loadGeneralEducationHistory = useCallback(async (refreshFromAis = false) => {
+    const current = dataRef.current
+    if (!current) return
+
+    const studentId = current.profile.id
+    const semesters = current.semesters.filter(
+      (semester) => includeSummerSemestersRef.current || !isSummerSemesterId(semester.id),
+    )
+    setGeneralEducationHistory((history) => ({
+      ...history,
+      totalSemesters: semesters.length,
+      loading: true,
+    }))
+
+    const collectedGrades: Grade[] = []
+    let loadedSemesters = 0
+    let failedSemesters = 0
+
+    for (const semester of semesters) {
+      let entry = await readCachedSemesterEntry(studentId, semester.id)
+      if (refreshFromAis) {
+        try {
+          // Graduation-progress refresh is grade-only; timetable data must not drive this feature.
+          const grades = await api.getGrades(semester.id)
+          entry = withCachedGrades(entry, grades, creditSummaryFromGrades(grades))
+          await persistSemesterEntry(studentId, semester.id, entry)
+        } catch (error) {
+          if (error instanceof UnauthorizedError) break
+          failedSemesters += 1
+        }
+      }
+
+      if (!entry.gradesCached) continue
+      loadedSemesters += 1
+      collectedGrades.push(...entry.grades)
+    }
+
+    const latest = dataRef.current
+    if (!latest || latest.profile.id.trim().toUpperCase() !== studentId.trim().toUpperCase()) return
+
+    const uniqueGrades = [...new Map(
+      collectedGrades.map((grade) => [`${grade.semester}::${grade.id}`, grade]),
+    ).values()]
+    setGeneralEducationHistory({
+      grades: uniqueGrades,
+      loadedSemesters,
+      totalSemesters: semesters.length,
+      loading: false,
+    })
+    if (failedSemesters) {
+      setAppError(`有 ${failedSemesters} 學期的歷年成績更新失敗，先顯示已取得的資料。`)
+    }
+  }, [api, persistSemesterEntry, readCachedSemesterEntry])
+
+  const openGeneralEducationProgress = useCallback(() => {
+    setGeneralEducationHistory(emptyGeneralEducationHistory())
+    setIsGraduationAuditOpen(false)
+    setIsGeneralEducationOpen(true)
+    void loadGeneralEducationHistory(false)
+  }, [loadGeneralEducationHistory])
+
+  const openGraduationAudit = useCallback(() => {
+    setGeneralEducationHistory(emptyGeneralEducationHistory())
+    setIsGeneralEducationOpen(false)
+    setIsGraduationAuditOpen(true)
+    void loadGeneralEducationHistory(false)
+  }, [loadGeneralEducationHistory])
+
+  useEffect(() => {
+    if (semesterPrefetchProgress !== null) {
+      semesterPrefetchWasRunningRef.current = true
+      return
+    }
+    if (!semesterPrefetchWasRunningRef.current) return
+    semesterPrefetchWasRunningRef.current = false
+    if (!isGeneralEducationOpen && !isGraduationAuditOpen) return
+    void loadGeneralEducationHistory(false)
+  }, [
+    isGeneralEducationOpen,
+    isGraduationAuditOpen,
+    loadGeneralEducationHistory,
+    semesterPrefetchProgress,
+  ])
 
   const loadSemesterIntoCache = useCallback(async (
     studentId: string,
@@ -870,13 +1010,19 @@ function App() {
 
   runSemesterPrefetchRef.current = runSemesterPrefetchQueue
 
-  const enqueueSemesterPrefetch = useCallback((semesters: Semester[], prioritySemesterId: string) => {
+  const enqueueSemesterPrefetch = useCallback((
+    semesters: Semester[],
+    prioritySemesterId: string,
+    includeSummer = false,
+  ) => {
     if (!semesterPrefetchRunningRef.current && !semesterPrefetchQueueRef.current.length) {
       setSemesterPrefetchProgress(null)
     }
     const ordered = [
       prioritySemesterId,
-      ...semesters.map((semester) => semester.id).filter((id) => id !== prioritySemesterId),
+      ...semesters
+        .map((semester) => semester.id)
+        .filter((id) => id !== prioritySemesterId && (includeSummer || !isSummerSemesterId(id))),
     ]
 
     ordered.forEach((semesterId) => {
@@ -959,7 +1105,7 @@ function App() {
       return
     }
 
-    enqueueSemesterPrefetch(semesters, semesterId)
+    enqueueSemesterPrefetch(semesters, semesterId, includeSummerSemestersRef.current)
   }, [
     api,
     applyData,
@@ -1055,6 +1201,12 @@ function App() {
       } else if (isAddGradeOpen) {
         clearExitHint()
         setIsAddGradeOpen(false)
+      } else if (isGeneralEducationOpen) {
+        clearExitHint()
+        setIsGeneralEducationOpen(false)
+      } else if (isGraduationAuditOpen) {
+        clearExitHint()
+        setIsGraduationAuditOpen(false)
       } else if (activeCourse) {
         clearExitHint()
         setActiveCourse(null)
@@ -1082,6 +1234,8 @@ function App() {
     isAddCalendarEventOpen,
     isAddCourseOpen,
     isAddGradeOpen,
+    isGeneralEducationOpen,
+    isGraduationAuditOpen,
     moreView,
     remindAboutUpdateLater,
     requestAppExit,
@@ -1200,7 +1354,13 @@ function App() {
       await semesterPrefetchTaskRef.current
       await loadAppData(selectedSemester, true)
       const current = dataRef.current
-      if (current) enqueueSemesterPrefetch(current.semesters, selectedSemester)
+      if (current) {
+        enqueueSemesterPrefetch(
+          current.semesters,
+          selectedSemester,
+          includeSummerSemestersRef.current,
+        )
+      }
     } catch (error) {
       if (error instanceof UnauthorizedError) {
         if (error.message === 'CAPTCHA_FAILED') {
@@ -1232,6 +1392,39 @@ function App() {
         }
       } else {
         setAppError(messageFromError(error))
+      }
+    }
+  }
+
+  const updateSummerSemesterPreference = (enabled: boolean) => {
+    includeSummerSemestersRef.current = enabled
+    setIncludeSummerSemesters(enabled)
+    writeSummerSemesterPreference(enabled)
+    setGeneralEducationHistory(emptyGeneralEducationHistory())
+
+    const current = dataRef.current
+    if (!current) return
+
+    if (enabled) {
+      enqueueSemesterPrefetch(current.semesters, selectedSemester, true)
+      return
+    }
+
+    semesterPrefetchQueueRef.current = semesterPrefetchQueueRef.current.filter(
+      (semesterId) => !isSummerSemesterId(semesterId),
+    )
+    current.semesters
+      .filter((semester) => isSummerSemesterId(semester.id))
+      .forEach((semester) => semesterPrefetchQueuedRef.current.delete(semester.id))
+
+    if (isSummerSemesterId(selectedSemester)) {
+      const nextSemester = current.semesters.find(
+        (semester) => semester.current && !isSummerSemesterId(semester.id),
+      ) ?? current.semesters.find((semester) => !isSummerSemesterId(semester.id))
+      if (nextSemester) {
+        selectedSemesterRef.current = nextSemester.id
+        setSelectedSemester(nextSemester.id)
+        void loadAppData(nextSemester.id)
       }
     }
   }
@@ -1269,6 +1462,9 @@ function App() {
     setSelectedTab('timetable')
     setMoreView(null)
     setActiveCourse(null)
+    setIsGeneralEducationOpen(false)
+    setIsGraduationAuditOpen(false)
+    setGeneralEducationHistory(emptyGeneralEducationHistory())
     await loadLoginChallenge()
   }
 
@@ -1282,6 +1478,9 @@ function App() {
     await clearPortalSession()
     setSession(null)
     setMoreView(null)
+    setIsGeneralEducationOpen(false)
+    setIsGraduationAuditOpen(false)
+    setGeneralEducationHistory(emptyGeneralEducationHistory())
     setLoginError(null)
     await loadLoginChallenge('海大 AIS 登入已過期，請重新登入')
   }
@@ -1419,7 +1618,18 @@ function App() {
             <h1>{title}</h1>
           </div>
           <div className="header-actions">
-            {selectedTab !== 'mail' || moreView ? (
+            {moreView === 'school-song' ? (
+              <button
+                className={`header-icon school-song-header-play ${schoolSongPlaying ? 'active' : ''}`}
+                type="button"
+                aria-label={schoolSongPlaying ? '暫停校歌' : '播放校歌'}
+                onClick={() => schoolSongRef.current?.togglePlayback()}
+              >
+                {schoolSongPlaying
+                  ? <Pause size={22} fill="currentColor" />
+                  : <Play size={22} fill="currentColor" />}
+              </button>
+            ) : selectedTab !== 'mail' || moreView ? (
               <button
                 className="header-icon"
                 type="button"
@@ -1470,6 +1680,22 @@ function App() {
                         <CalendarDays size={17} />
                         <span>顯示週六、週日</span>
                         <i className={showWeekend ? 'active' : ''} aria-hidden="true"><b /></i>
+                      </button>
+                    ) : null}
+                    {selectedTab === 'timetable' ? (
+                      <button
+                        className="header-menu-toggle"
+                        type="button"
+                        role="menuitemcheckbox"
+                        aria-checked={includeSummerSemesters}
+                        onClick={() => {
+                          updateSummerSemesterPreference(!includeSummerSemesters)
+                          setHeaderMenuOpen(false)
+                        }}
+                      >
+                        <CalendarDays size={17} />
+                        <span>顯示並自動讀取暑修</span>
+                        <i className={includeSummerSemesters ? 'active' : ''} aria-hidden="true"><b /></i>
                       </button>
                     ) : null}
                     {selectedTab === 'timetable' && !selectedSharedTimetable ? (
@@ -1528,17 +1754,55 @@ function App() {
                       </>
                     ) : null}
                     {selectedTab === 'grades' ? (
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          setHeaderMenuOpen(false)
-                          setIsAddGradeOpen(true)
-                        }}
-                      >
-                        <Plus size={17} />
-                        <span>新增模擬成績</span>
-                      </button>
+                      <>
+                        <button
+                          className="header-menu-toggle"
+                          type="button"
+                          role="menuitemcheckbox"
+                          aria-checked={includeSummerSemesters}
+                          onClick={() => {
+                            updateSummerSemesterPreference(!includeSummerSemesters)
+                            setHeaderMenuOpen(false)
+                          }}
+                        >
+                          <CalendarDays size={17} />
+                          <span>顯示並自動讀取暑修</span>
+                          <i className={includeSummerSemesters ? 'active' : ''} aria-hidden="true"><b /></i>
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setHeaderMenuOpen(false)
+                            openGeneralEducationProgress()
+                          }}
+                        >
+                          <BookOpenCheck size={17} />
+                          <span>通識分析</span>
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setHeaderMenuOpen(false)
+                            openGraduationAudit()
+                          }}
+                        >
+                          <GraduationCap size={17} />
+                          <span>畢業門檻分析</span>
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setHeaderMenuOpen(false)
+                            setIsAddGradeOpen(true)
+                          }}
+                        >
+                          <Plus size={17} />
+                          <span>新增模擬成績</span>
+                        </button>
+                      </>
                     ) : null}
                     <button
                       type="button"
@@ -1561,7 +1825,9 @@ function App() {
         {(selectedTab === 'timetable' || selectedTab === 'grades') && !moreView ? (
           <StudentStrip
             profile={data.profile}
-            semesters={data.semesters}
+            semesters={data.semesters.filter(
+              (semester) => includeSummerSemesters || !isSummerSemesterId(semester.id),
+            )}
             selectedSemester={selectedSemester}
             onSemesterChange={changeSemester}
             selectedTimetableSource={selectedTab === 'timetable' ? selectedTimetableSource : undefined}
@@ -1587,11 +1853,11 @@ function App() {
         <main className="main-content">
           {semesterPrefetchProgress ? (
             <div className="semester-prefetch-banner" role="status">
-              <b>{semesterPrefetchProgress.semesterId}</b>
+              <b>{semesterDisplayLabel(semesterPrefetchProgress.semesterId)}</b>
               <div
                 className="semester-prefetch-track"
                 role="progressbar"
-                aria-label={`${semesterPrefetchProgress.semesterId} 課表與成績快取進度`}
+                aria-label={`${semesterDisplayLabel(semesterPrefetchProgress.semesterId)} 課表與成績快取進度`}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={semesterPrefetchProgress.percent}
@@ -1625,6 +1891,8 @@ function App() {
                 industryRefreshing={industryRefreshing}
                 departmentSitesRef={departmentSitesRef}
                 administrativeUnitsRef={administrativeUnitsRef}
+                schoolSongRef={schoolSongRef}
+                onSchoolSongPlayingChange={setSchoolSongPlaying}
               />
             ) : selectedTab === 'timetable' ? (
               <TimetableScreen
@@ -1802,6 +2070,35 @@ function App() {
               })
               setIsAddCalendarEventOpen(false)
             }}
+          />
+        ) : null}
+
+        {isGeneralEducationOpen ? (
+          <GeneralEducationProgressSheet
+            key={data.profile.id}
+            grades={generalEducationHistory.grades}
+            studentId={data.profile.id}
+            initialCohortYear={admissionYearFromStudentId(data.profile.id)}
+            loadedSemesters={generalEducationHistory.loadedSemesters}
+            totalSemesters={generalEducationHistory.totalSemesters}
+            loading={generalEducationHistory.loading}
+            onReload={() => void loadGeneralEducationHistory(true)}
+            onClose={() => setIsGeneralEducationOpen(false)}
+          />
+        ) : null}
+
+        {isGraduationAuditOpen ? (
+          <GraduationAuditSheet
+            key={data.profile.id}
+            grades={generalEducationHistory.grades}
+            studentId={data.profile.id}
+            profileDepartment={data.profile.department}
+            initialCohortYear={admissionYearFromStudentId(data.profile.id)}
+            loadedSemesters={generalEducationHistory.loadedSemesters}
+            totalSemesters={generalEducationHistory.totalSemesters}
+            gradesLoading={generalEducationHistory.loading}
+            onReloadGrades={() => void loadGeneralEducationHistory(true)}
+            onClose={() => setIsGraduationAuditOpen(false)}
           />
         ) : null}
 
@@ -1984,7 +2281,7 @@ function StudentStrip({
             ) : (
               semesters.map((semester) => (
                 <option key={semester.id} value={semester.id}>
-                  {semester.id}
+                  {semesterDisplayLabel(semester.id)}
                 </option>
               ))
             )}
@@ -2578,6 +2875,7 @@ function MoreScreen({
     { icon: Building2, label: '各系系網', view: 'departments' },
     { icon: Handshake, label: '海大產學中心', view: 'industry' },
     { icon: Trophy, label: '校外競賽', view: 'competitions' },
+    { icon: Music2, label: '海大校歌', view: 'school-song' },
     { icon: CalendarDays, label: '重要日期', view: 'calendar' },
     { icon: MapPinned, label: '交通與地圖', view: 'traffic' },
     { icon: Phone, label: '緊急聯絡', view: 'emergency' },
@@ -2647,6 +2945,8 @@ function MoreSubview({
   onReauthenticate,
   onRefreshCompetitions,
   onRefreshIndustry,
+  onSchoolSongPlayingChange,
+  schoolSongRef,
   view,
 }: {
   data: AppData
@@ -2660,6 +2960,8 @@ function MoreSubview({
   onReauthenticate: () => Promise<void>
   onRefreshCompetitions: () => Promise<void>
   onRefreshIndustry: () => Promise<void>
+  onSchoolSongPlayingChange: (playing: boolean) => void
+  schoolSongRef: RefObject<SchoolSongScreenHandle | null>
   view: MoreView
 }) {
   if (view === 'portal') {
@@ -2706,6 +3008,9 @@ function MoreSubview({
 
   if (view === 'administration') return <AdministrativeUnitsScreen ref={administrativeUnitsRef} links={data.campusLinks} />
   if (view === 'traffic') return <CampusMapScreen />
+  if (view === 'school-song') {
+    return <SchoolSongScreen ref={schoolSongRef} onPlayingChange={onSchoolSongPlayingChange} />
+  }
 
   if (view === 'announcements') {
     return data.announcements.length ? (
@@ -3673,6 +3978,7 @@ function moreViewTitle(view: MoreView) {
     administration: '行政單位',
     traffic: '交通與地圖',
     emergency: '緊急聯絡',
+    'school-song': '海大校歌',
     settings: '帳號與設定',
   }
   return titles[view]
