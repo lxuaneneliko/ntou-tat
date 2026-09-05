@@ -43,6 +43,16 @@ const undergraduateTimetableHtml = `
   </table>
 `
 
+const eveningTimetableHtml = `
+  <table id="table2">
+    <tr><th>節次</th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th></tr>
+    <tr><td>A: 18:30 - 19:20</td><td><a>海洋資料分析<br>CODE1001<br>海洋系<br>3<br>INS101</a></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>B: 19:20 - 20:10</td><td></td><td><a>海洋資料分析<br>CODE1001<br>海洋系<br>3<br>INS102</a></td><td></td><td></td><td></td></tr>
+    <tr><td>C: 20:20 - 21:10</td><td></td><td></td><td><a>海洋資料分析<br>CODE1001<br>海洋系<br>3<br>INS103</a></td><td></td><td></td></tr>
+    <tr><td>D: 21:10 - 22:00</td><td></td><td></td><td></td><td><a>海洋資料分析<br>CODE1001<br>海洋系<br>3<br>INS104</a></td><td></td></tr>
+  </table>
+`
+
 describe('AIS personal timetable parser', () => {
   it('builds the selected semester query without changing private form state', () => {
     const body = new URLSearchParams(buildAisCourseQueryBody(queryHtml, '114-2', 'timetable'))
@@ -90,6 +100,18 @@ describe('AIS personal timetable parser', () => {
       endsAt: '09:10',
     })
     expect(slots[1].section).toBe('2')
+  })
+
+  it('recognizes official A-D evening periods and their exact times', () => {
+    const slots = parseAisPersonalTimetable(eveningTimetableHtml, courseListHtml)
+
+    expect(slots).toHaveLength(4)
+    expect(slots.map(({ section, startsAt, endsAt }) => ({ section, startsAt, endsAt }))).toEqual([
+      { section: '11', startsAt: '18:30', endsAt: '19:20' },
+      { section: '12', startsAt: '19:20', endsAt: '20:10' },
+      { section: '13', startsAt: '20:20', endsAt: '21:10' },
+      { section: '14', startsAt: '21:10', endsAt: '22:00' },
+    ])
   })
 
   it('returns an empty result when AIS has no timetable table', () => {

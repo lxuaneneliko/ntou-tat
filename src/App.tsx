@@ -201,9 +201,9 @@ const periods = [
   { value: 9, time: '16:05' },
   { value: 10, time: '17:30' },
   { value: 11, time: '18:30' },
-  { value: 12, time: '19:25' },
+  { value: 12, time: '19:20' },
   { value: 13, time: '20:20' },
-  { value: 14, time: '21:15' },
+  { value: 14, time: '21:10' },
 ]
 
 const getPeriodLabel = (val: number) => {
@@ -211,7 +211,7 @@ const getPeriodLabel = (val: number) => {
   if (val >= 1 && val <= 4) return String(val)
   if (val === 5) return '中午'
   if (val >= 6 && val <= 10) return String(val - 1) // 6->5, 7->6, 8->7, 9->8, 10->9
-  if (val >= 11 && val <= 15) return String(val - 1)
+  if (val >= 11 && val <= 14) return ['A', 'B', 'C', 'D'][val - 11]
   return String(val)
 }
 
@@ -253,7 +253,13 @@ const coursesFromTimetable = (slots: TimetableSlot[]): CourseSummary[] => {
 }
 
 const periodsForSlot = (slot: TimetableSlot) => {
-  const parsed = slot.section.match(/\d+/g)?.map(Number).filter((value) => value >= 0 && value <= 14)
+  const numericPeriods = slot.section
+    .match(/\d+/g)
+    ?.map(Number)
+    .filter((value) => value >= 0 && value <= 14) ?? []
+  const eveningPeriods = [...slot.section.toUpperCase().matchAll(/[A-D]/g)]
+    .map((match) => 11 + match[0].charCodeAt(0) - 'A'.charCodeAt(0))
+  const parsed = [...new Set([...numericPeriods, ...eveningPeriods])]
   if (parsed?.length) {
     const first = Math.min(...parsed)
     const last = Math.max(...parsed)
@@ -344,11 +350,11 @@ const timetableBlocks = (slots: TimetableSlot[]): TimetableBlock[] => {
 const visibleTimetablePeriods = (blocks: TimetableBlock[]) => {
   if (!blocks.length) {
     return periods.filter((period) =>
-      period.value >= 1 && period.value <= 10 && period.value !== 5,
+      period.value >= 1 && period.value <= 14 && period.value !== 5,
     )
   }
   const first = Math.min(1, ...blocks.map((block) => block.startPeriod))
-  const last = Math.max(10, ...blocks.map((block) => block.endPeriod))
+  const last = Math.max(14, ...blocks.map((block) => block.endPeriod))
   return periods.filter((period) =>
     period.value >= first && period.value <= last && period.value !== 5,
   )
@@ -2426,6 +2432,14 @@ function TimetableScreen({
               </button>
             )
           })}
+          <div
+            className="timetable-day-end"
+            role="note"
+            style={{ gridColumn: '1 / -1', gridRow: visiblePeriods.length + 2 }}
+          >
+            <span>22:00</span>
+            <i aria-hidden="true" />
+          </div>
         </div>
       ) : (
         <div className="timetable-list" aria-label="條列課表">

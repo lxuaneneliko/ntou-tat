@@ -78,9 +78,9 @@ const periodTimes: Record<number, { startsAt: string; endsAt: string }> = {
   9: { startsAt: '16:05', endsAt: '16:55' },
   10: { startsAt: '17:30', endsAt: '18:20' },
   11: { startsAt: '18:30', endsAt: '19:20' },
-  12: { startsAt: '19:25', endsAt: '20:15' },
+  12: { startsAt: '19:20', endsAt: '20:10' },
   13: { startsAt: '20:20', endsAt: '21:10' },
-  14: { startsAt: '21:15', endsAt: '22:05' },
+  14: { startsAt: '21:10', endsAt: '22:00' },
 }
 
 const parseCredits = (value: string) => {
@@ -171,6 +171,8 @@ const chinesePeriods: Record<string, number> = {
 
 const periodFromLabel = (value: string, fallback: number) => {
   const label = normalizeText(value)
+  const evening = label.match(/^(?:第\s*)?([A-D])(?:\s*節)?(?=\s*(?:[:：\-–~]|\d|$))/i)
+  if (evening) return 11 + evening[1].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0)
   const numeric = label.match(/第?\s*(\d{1,2})\s*節/)
   if (numeric) return Number(numeric[1])
   const chinese = label.match(/第?\s*(零|十[一二三四]?|[一二三四五六七八九])\s*節/)

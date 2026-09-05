@@ -452,7 +452,7 @@ button:disabled {
 .timetable-grid {
   display: grid;
   grid-template-columns: 32px repeat(var(--day-count, 5), minmax(0, 1fr));
-  grid-template-rows: 34px repeat(var(--period-count), 69px);
+  grid-template-rows: 34px repeat(var(--period-count), 69px) 18px;
   background: #17191c;
   isolation: isolate;
 }
@@ -524,6 +524,32 @@ button:disabled {
   font-size: 7px;
   line-height: 1;
   white-space: nowrap;
+}
+
+.timetable-day-end {
+  z-index: 2;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  color: #9299a2;
+  background: #17191c;
+}
+
+.timetable-day-end span {
+  width: 32px;
+  flex: 0 0 auto;
+  font-size: 7px;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  transform: translateY(-3px);
+}
+
+.timetable-day-end i {
+  height: 1px;
+  margin-right: 3px;
+  flex: 1;
+  background: #30343a;
 }
 
 .course-cell {
@@ -6647,7 +6673,11 @@ button:disabled {
 
   .timetable-grid {
     grid-template-columns: 30px repeat(var(--day-count, 5), minmax(0, 1fr));
-    grid-template-rows: 34px repeat(var(--period-count), 67px);
+    grid-template-rows: 34px repeat(var(--period-count), 67px) 18px;
+  }
+
+  .timetable-day-end span {
+    width: 30px;
   }
 
   .course-cell {
