@@ -5,6 +5,7 @@ import type {
   CalendarEvent,
   CampusLink,
   CourseFile,
+  CourseSyllabus,
   CreditSummary,
   ExternalCompetition,
   Grade,
@@ -51,6 +52,7 @@ import { currentSemesters } from '../semester'
 import { parseNtouAnnouncements } from './announcementParser'
 import { parseExternalCompetitions } from './competitionParser'
 import { parseIndustryNews } from './industryNewsParser'
+import { loadOfficialCourseSyllabus } from './courseSyllabus'
 
 const AIS_BASE_URL = 'https://ais.ntou.edu.tw/'
 const MAINFRAME_URL = new URL('mainframe.aspx', AIS_BASE_URL).toString()
@@ -470,6 +472,10 @@ export const createPortalApiClient = (store: AuthStore): NtouApi => {
 
     async getCourseFiles(): Promise<CourseFile[]> {
       return []
+    },
+
+    async getCourseSyllabus(semesterId, course): Promise<CourseSyllabus> {
+      return loadOfficialCourseSyllabus(semesterId, course)
     },
 
     async getAnnouncements(): Promise<Announcement[]> {

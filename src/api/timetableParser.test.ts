@@ -74,6 +74,8 @@ describe('AIS personal timetable parser', () => {
       courseCode: 'CODE1001',
       courseTitle: '海洋資料分析',
       instructor: '林老師',
+      department: '海洋系',
+      className: '一A',
       classroom: 'INS101',
       credits: 3,
       day: 2,
@@ -100,6 +102,22 @@ describe('AIS personal timetable parser', () => {
       endsAt: '09:10',
     })
     expect(slots[1].section).toBe('2')
+  })
+
+  it('prefers the explicit course code when two rows share a title', () => {
+    const duplicatedTitleList = courseListHtml.replace(
+      '</table>',
+      '<tr><td>2</td><td>1142</td><td>CODE2002</td><td>海洋資料分析</td><td>另一系</td><td>二B</td><td>陳老師</td><td>另一系</td><td>2</td></tr></table>',
+    )
+    const [parsed] = parseAisPersonalTimetable(timetableHtml, duplicatedTitleList)
+
+    expect(parsed).toMatchObject({
+      courseCode: 'CODE1001',
+      instructor: '林老師',
+      department: '海洋系',
+      className: '一A',
+      credits: 3,
+    })
   })
 
   it('recognizes official A-D evening periods and their exact times', () => {

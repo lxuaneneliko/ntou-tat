@@ -417,6 +417,83 @@ button:disabled {
   background: #17191c;
 }
 
+.today-course-notes {
+  padding: 12px 12px 11px;
+  color: #eef3f7;
+  background: #111820;
+  border-bottom: 1px solid #303841;
+}
+
+.today-course-notes-heading {
+  margin: 0 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #f2b84b;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.today-course-note-list {
+  display: grid;
+  gap: 6px;
+}
+
+.today-course-note-list button {
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 10px 10px 12px;
+  display: grid;
+  grid-template-columns: minmax(84px, auto) minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  color: #eef3f7;
+  background: #1b2229;
+  border: 1px solid #353e47;
+  border-left: 3px solid #dba640;
+  border-radius: 7px;
+  text-align: left;
+}
+
+.today-course-note-list button:active {
+  background: #232c34;
+}
+
+.today-course-note-list button > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.today-course-note-list button strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-course-note-list button small {
+  color: #929da7;
+  font-size: 10px;
+}
+
+.today-course-note-list button p {
+  margin: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: #d8dee4;
+  display: -webkit-box;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.today-course-note-list button > svg {
+  color: #788591;
+}
+
 .timetable-view-switch {
   width: 80px;
   height: 36px;
@@ -4702,6 +4779,276 @@ button:disabled {
 }
 .custom-course-save button:disabled { opacity: 0.45; }
 .course-sheet .course-schedule-lines { display: grid; gap: 6px; padding: 12px 0; }
+
+.course-note-editor {
+  margin: 18px 0 20px;
+  padding: 14px;
+  background: #111925;
+  border: 1px solid #344151;
+  border-radius: 8px;
+}
+
+.course-note-title-row {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.course-note-title-row > div {
+  display: grid;
+  gap: 3px;
+}
+
+.course-note-title-row .section-label {
+  margin: 0;
+  color: #f2f5f7;
+  font-size: 13px;
+}
+
+.course-note-title-row small,
+.course-note-title-row > span {
+  color: #8e9aa6;
+  font-size: 10px;
+}
+
+.course-note-editor textarea {
+  width: 100%;
+  min-height: 92px;
+  padding: 11px 12px;
+  resize: vertical;
+  color: #edf2f6;
+  background: #0d141e;
+  border: 1px solid #3b4858;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.course-note-editor textarea:focus {
+  outline: 2px solid rgba(79, 172, 226, 0.35);
+  border-color: #4f9fca;
+}
+
+.course-note-editor textarea::placeholder {
+  color: #687583;
+}
+
+.course-note-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.course-note-actions button {
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.course-note-clear {
+  color: #ff9da8;
+  background: transparent;
+  border: 1px solid #60313a;
+}
+
+.course-note-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #fff;
+  background: #176db9;
+}
+
+.course-note-save:disabled {
+  opacity: 0.42;
+}
+
+.course-syllabus {
+  margin: 20px 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.course-syllabus-heading {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.course-syllabus-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #72bde8;
+}
+
+.course-syllabus-heading .section-label {
+  margin: 0;
+  color: #edf3f7;
+  font-size: 13px;
+}
+
+.course-syllabus-heading > small {
+  padding: 3px 6px;
+  color: #8eb2c8;
+  background: #172735;
+  border: 1px solid #2d485a;
+  border-radius: 4px;
+  font-size: 9px;
+}
+
+.course-syllabus-loading,
+.course-syllabus-error {
+  min-height: 58px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #aeb9c4;
+  background: #111925;
+  border: 1px solid #303e4c;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.course-syllabus-loading svg {
+  color: #64b7e6;
+}
+
+.course-syllabus-error {
+  align-items: flex-start;
+  color: #e2b7ba;
+  border-color: #56343a;
+}
+
+.course-syllabus-error svg {
+  flex: 0 0 auto;
+  color: #ef7d88;
+}
+
+.course-syllabus-error p {
+  min-width: 0;
+  margin: 0;
+  flex: 1;
+  line-height: 1.5;
+}
+
+.course-syllabus-error button {
+  min-height: 30px;
+  padding: 0 9px;
+  flex: 0 0 auto;
+  color: #ffd4d7;
+  background: #3b2026;
+  border: 1px solid #67404a;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.course-syllabus-english-title {
+  margin: 0 0 10px;
+  color: #9dabb7;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.course-syllabus-sections {
+  overflow: hidden;
+  background: #111925;
+  border: 1px solid #303e4c;
+  border-radius: 7px;
+}
+
+.course-syllabus-sections details + details {
+  border-top: 1px solid #2b3743;
+}
+
+.course-syllabus-sections summary {
+  min-height: 45px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #e7edf1;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.course-syllabus-sections summary::-webkit-details-marker {
+  display: none;
+}
+
+.course-syllabus-sections summary::after {
+  content: '+';
+  color: #75b9df;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.course-syllabus-sections details[open] summary::after {
+  content: '−';
+}
+
+.course-syllabus-sections details > div {
+  padding: 0 12px 13px;
+}
+
+.course-syllabus-sections p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #cbd4db;
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.course-syllabus-english {
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px dashed #33414e;
+}
+
+.course-syllabus-english small {
+  display: block;
+  margin-bottom: 5px;
+  color: #7fa6bd;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.course-syllabus-english p {
+  color: #aebbc5;
+}
+
+.course-syllabus-link {
+  min-height: 40px;
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #83caef;
+  background: #122433;
+  border: 1px solid #2c4b60;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
 
 .file-row {
   min-height: 47px;

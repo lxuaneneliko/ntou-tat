@@ -41,6 +41,7 @@ import {
   ScanLine,
   Loader2,
   Pencil,
+  Save,
   ShieldCheck,
   Trash2,
   Trophy,
@@ -70,7 +71,18 @@ import { MailScreen, type MailScreenHandle } from './MailScreen'
 import { DepartmentSitesScreen, type DepartmentSitesScreenHandle } from './DepartmentSitesScreen'
 import { AdministrativeUnitsScreen, type AdministrativeUnitsScreenHandle } from './AdministrativeUnitsScreen'
 import { SchoolSongScreen, type SchoolSongScreenHandle } from './SchoolSongScreen'
+import { formatClassroom } from './classroom'
 import { authStore } from './storage/authStorage'
+import {
+  COURSE_NOTE_MAX_LENGTH,
+  courseNoteKey,
+  notesForDay,
+  readCourseNotes,
+  timetableDay,
+  writeCourseNote,
+  type CourseNoteStore,
+  type TodayCourseNote,
+} from './storage/courseNoteStorage'
 import {
   decodeTimetableShare,
   encodeTimetableShare,
@@ -128,6 +140,7 @@ import type {
   CalendarEvent,
   CampusLink,
   CourseFile,
+  CourseSyllabus,
   CourseSummary,
   CreditSummary,
   ExternalCompetition,
@@ -144,6 +157,12 @@ import type {
   TimetableSlot,
   TrafficInfo,
 } from './types'
+import {
+  courseSyllabusCacheKey,
+  readCourseSyllabusCache,
+  writeCourseSyllabusCache,
+  type CourseSyllabusCache,
+} from './storage/courseSyllabusStorage'
 
 type AppData = {
   profile: StudentProfile
@@ -403,6 +422,22 @@ const officialCalendarRange = (now = new Date()) => ({
   to: isoDate(new Date(now.getFullYear() + 1, 11, 31)),
 })
 
+const useTimetableDay = () => {
+  const [day, setDay] = useState(() => timetableDay(new Date()))
+
+  useEffect(() => {
+    const updateDay = () => setDay(timetableDay(new Date()))
+    const timer = window.setInterval(updateDay, 60 * 1000)
+    document.addEventListener('visibilitychange', updateDay)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', updateDay)
+    }
+  }, [])
+
+  return day
+}
+
 function App() {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [data, setData] = useState<AppData | null>(null)
@@ -423,6 +458,9 @@ function App() {
   const [activeCourse, setActiveCourse] = useState<CourseSummary | null>(null)
   const [courseFiles, setCourseFiles] = useState<Record<string, CourseFile[]>>({})
   const [fileLoadingId, setFileLoadingId] = useState<string | null>(null)
+  const [courseSyllabusCache, setCourseSyllabusCache] = useState<CourseSyllabusCache>(readCourseSyllabusCache)
+  const [syllabusLoadingId, setSyllabusLoadingId] = useState<string | null>(null)
+  const [syllabusErrors, setSyllabusErrors] = useState<Record<string, string>>({})
   const [isBooting, setIsBooting] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [semesterPrefetchProgress, setSemesterPrefetchProgress] = useState<SemesterPrefetchProgress | null>(null)
@@ -467,6 +505,7 @@ function App() {
   const [timetableDialog, setTimetableDialog] = useState<'share' | 'scan' | 'rename' | null>(null)
   const [activeCourseSlot, setActiveCourseSlot] = useState<TimetableSlot | null>(null)
   const [activeCourseIsShared, setActiveCourseIsShared] = useState(false)
+  const [courseNotes, setCourseNotes] = useState<CourseNoteStore>(readCourseNotes)
   const [availableUpdate, setAvailableUpdate] = useState<AppUpdate | null>(null)
   const [installedVersion, setInstalledVersion] = useState('')
   const [exitHintVisible, setExitHintVisible] = useState(false)
@@ -555,6 +594,9 @@ function App() {
     setSharedTimetables(items)
     writeSharedTimetables(items)
   }
+  const saveCourseNote = (key: string, note: string) => {
+    setCourseNotes((current) => writeCourseNote(current, key, note))
+  }
   const saveCustomAvatar = (dataUrl: string) => {
     storeAvatar(dataUrl)
     setCustomAvatar(dataUrl)
@@ -575,6 +617,7 @@ function App() {
   const calendarRefreshPromiseRef = useRef<Promise<void> | null>(null)
   const competitionRefreshPromiseRef = useRef<Promise<void> | null>(null)
   const industryRefreshPromiseRef = useRef<Promise<void> | null>(null)
+  const syllabusRequestsRef = useRef(new Set<string>())
 
   const applyData = useCallback((nextData: AppData | null) => {
     dataRef.current = nextData
@@ -1424,11 +1467,36 @@ function App() {
     }
   }
 
+  const loadCourseSyllabus = async (semesterId: string, slot: TimetableSlot, force = false) => {
+    if (!api.getCourseSyllabus || slot.courseCode === 'CUSTOM') return
+    const key = courseSyllabusCacheKey(semesterId, slot)
+    if (!force && courseSyllabusCache[key]) return
+    if (syllabusRequestsRef.current.has(key)) return
+    syllabusRequestsRef.current.add(key)
+    setSyllabusLoadingId(key)
+    setSyllabusErrors((current) => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+    try {
+      const syllabus = await api.getCourseSyllabus(semesterId, slot)
+      setCourseSyllabusCache((current) => writeCourseSyllabusCache(current, key, syllabus))
+    } catch (error) {
+      setSyllabusErrors((current) => ({ ...current, [key]: messageFromError(error) }))
+    } finally {
+      syllabusRequestsRef.current.delete(key)
+      setSyllabusLoadingId((current) => current === key ? null : current)
+    }
+  }
+
   const openCourse = async (course: CourseSummary, slot?: TimetableSlot) => {
     setActiveCourseSlot(slot ?? null)
     setActiveCourseIsShared(false)
     setActiveCourse(course)
-    if ((customCourses[selectedSemester] ?? []).some((item) => item.courseId === course.id)) return
+    const isCustom = (customCourses[selectedSemester] ?? []).some((item) => item.courseId === course.id)
+    if (isCustom) return
+    if (slot) void loadCourseSyllabus(selectedSemester, slot)
     if (courseFiles[course.id]) return
     setFileLoadingId(course.id)
     try {
@@ -1494,6 +1562,20 @@ function App() {
     [selectedTimetableSource, sharedTimetables],
   )
   const displayedTimetableSlots = selectedSharedTimetable?.slots ?? mergedSlots
+  const localTimetableDay = useTimetableDay()
+  const todayCourseNotes = useMemo<TodayCourseNote[]>(() => {
+    const isCurrentSemester = data?.semesters.some(
+      (semester) => semester.id === selectedSemester && semester.current,
+    )
+    if (!data || selectedSharedTimetable || !isCurrentSemester) return []
+    return notesForDay(
+      mergedSlots,
+      courseNotes,
+      data.profile.id,
+      selectedSemester,
+      localTimetableDay,
+    )
+  }, [courseNotes, data, localTimetableDay, mergedSlots, selectedSemester, selectedSharedTimetable])
 
   useEffect(() => {
     if (selectedTimetableSource === 'mine') return
@@ -1891,6 +1973,7 @@ function App() {
                 slots={displayedTimetableSlots}
                 viewMode={timetableViewMode}
                 showWeekend={showWeekend}
+                todayNotes={todayCourseNotes}
                 onOpenCourse={(slot) => {
                   const course = coursesFromTimetable([slot])[0]
                   if (selectedSharedTimetable) {
@@ -1975,14 +2058,43 @@ function App() {
         ) : null}
 
         {activeCourse ? (
-          <CourseSheet
+          (() => {
+            const syllabusKey = activeCourseSlot
+              ? courseSyllabusCacheKey(selectedSemester, activeCourseSlot)
+              : ''
+            return <CourseSheet
             course={activeCourse}
             files={courseFiles[activeCourse.id] ?? []}
             loading={fileLoadingId === activeCourse.id}
+            syllabus={syllabusKey ? courseSyllabusCache[syllabusKey]?.syllabus ?? null : null}
+            syllabusLoading={Boolean(syllabusKey && syllabusLoadingId === syllabusKey)}
+            syllabusError={syllabusKey ? syllabusErrors[syllabusKey] ?? '' : ''}
+            showSyllabus={Boolean(
+              !activeCourseIsShared
+              && activeCourseSlot
+              && activeCourseSlot.courseCode !== 'CUSTOM'
+              && api.getCourseSyllabus
+            )}
+            onRetrySyllabus={activeCourseSlot
+              ? () => void loadCourseSyllabus(selectedSemester, activeCourseSlot, true)
+              : undefined}
             onClose={() => setActiveCourse(null)}
             slot={activeCourseSlot}
             courseSlots={displayedTimetableSlots.filter((slot) => slot.courseId === activeCourse.id)}
             isSharedSnapshot={activeCourseIsShared}
+            note={
+              !activeCourseIsShared && activeCourseSlot
+                ? courseNotes[courseNoteKey(data.profile.id, selectedSemester, activeCourseSlot)] ?? ''
+                : ''
+            }
+            onSaveNote={
+              !activeCourseIsShared && activeCourseSlot
+                ? (note) => saveCourseNote(
+                    courseNoteKey(data.profile.id, selectedSemester, activeCourseSlot),
+                    note,
+                  )
+                : undefined
+            }
             onDeleteCourse={activeCourseIsShared ? undefined : (courseTitle) => {
               if (!confirm(`確定要從課表中刪除「${courseTitle}」嗎？`)) return
               const currentCustom = customCourses[selectedSemester] || []
@@ -2005,6 +2117,7 @@ function App() {
               setActiveCourse(null)
             }}
           />
+          })()
         ) : null}
 
         {isAddCourseOpen ? (
@@ -2301,15 +2414,17 @@ function StudentStrip({
 function TimetableScreen({
   onOpenCourse,
   slots,
+  todayNotes,
   viewMode,
   showWeekend,
 }: {
   onOpenCourse: (slot: TimetableSlot) => void
   slots: TimetableSlot[]
+  todayNotes: TodayCourseNote[]
   viewMode: 'grid' | 'list'
   showWeekend: boolean
 }) {
-  const today = new Date().getDay()
+  const today = timetableDay(new Date())
   const visibleWeekdays = showWeekend ? weekdays : weekdays.slice(0, 5)
   const lastVisibleDay = showWeekend ? 7 : 5
   const [listDay, setListDay] = useState(() => (
@@ -2356,6 +2471,33 @@ function TimetableScreen({
 
   return (
     <section className="timetable-screen">
+      {todayNotes.length ? (
+        <aside className="today-course-notes" aria-label="今日課程備註">
+          <div className="today-course-notes-heading">
+            <Bell size={16} aria-hidden="true" />
+            <strong>今日課程備註</strong>
+          </div>
+          <div className="today-course-note-list">
+            {todayNotes.map((item) => {
+              const targetSlot = slots.find((slot) => slot.courseId === item.courseId && slot.day === today)
+              return (
+                <button
+                  key={item.courseId}
+                  type="button"
+                  onClick={() => targetSlot && onOpenCourse(targetSlot)}
+                >
+                  <span>
+                    <strong>{item.courseTitle}</strong>
+                    {item.startsAt ? <small>{item.startsAt}</small> : null}
+                  </span>
+                  <p>{item.note}</p>
+                  <ChevronRight size={16} aria-hidden="true" />
+                </button>
+              )
+            })}
+          </div>
+        </aside>
+      ) : null}
       {viewMode === 'grid' ? (
         <div
           className={`timetable-grid ${showWeekend ? 'weekend-visible' : ''}`}
@@ -2411,7 +2553,7 @@ function TimetableScreen({
                 onClick={() => onOpenCourse(slot)}
               >
                 <strong>{slot.courseTitle}</strong>
-                {slot.classroom ? <span>{slot.classroom}</span> : null}
+                {slot.classroom ? <span>{formatClassroom(slot.classroom)}</span> : null}
               </button>
             )
           })}
@@ -2460,7 +2602,7 @@ function TimetableScreen({
                   const timeLabel = [block.slot.startsAt, block.slot.endsAt]
                     .filter(Boolean)
                     .join(' - ')
-                  const locationLabel = [block.slot.instructor, block.slot.classroom]
+                  const locationLabel = [block.slot.instructor, formatClassroom(block.slot.classroom)]
                     .filter(Boolean)
                     .join(' · ')
 
@@ -3483,19 +3625,46 @@ function CourseSheet({
   files,
   isSharedSnapshot,
   loading,
+  note,
   onClose,
   onDeleteCourse,
+  onRetrySyllabus,
+  onSaveNote,
+  showSyllabus,
   slot,
+  syllabus,
+  syllabusError,
+  syllabusLoading,
 }: {
   course: CourseSummary
   courseSlots?: TimetableSlot[]
   files: CourseFile[]
   isSharedSnapshot?: boolean
   loading: boolean
+  note: string
   onClose: () => void
   onDeleteCourse?: (title: string) => void
+  onRetrySyllabus?: () => void
+  onSaveNote?: (note: string) => void
+  showSyllabus: boolean
   slot?: TimetableSlot | null
+  syllabus: CourseSyllabus | null
+  syllabusError: string
+  syllabusLoading: boolean
 }) {
+  const [noteDraft, setNoteDraft] = useState(note)
+  useEffect(() => setNoteDraft(note), [course.id, note])
+  const normalizedDraft = noteDraft.trim().slice(0, COURSE_NOTE_MAX_LENGTH)
+  const noteChanged = normalizedDraft !== note
+  const syllabusSections = syllabus ? [
+    { id: 'objective', label: '教學目標', zh: syllabus.objectiveZh, en: syllabus.objectiveEn },
+    { id: 'prerequisites', label: '先修科目', zh: syllabus.prerequisitesZh, en: syllabus.prerequisitesEn },
+    { id: 'content', label: '教材內容', zh: syllabus.contentZh, en: syllabus.contentEn },
+    { id: 'method', label: '教學方式', zh: syllabus.teachingMethodZh, en: syllabus.teachingMethodEn },
+    { id: 'references', label: '參考書目', zh: syllabus.referencesZh, en: syllabus.referencesEn },
+    { id: 'schedule', label: '教學進度', zh: syllabus.scheduleZh, en: syllabus.scheduleEn },
+    { id: 'evaluation', label: '評量方式', zh: syllabus.evaluationZh, en: syllabus.evaluationEn },
+  ].filter((section) => section.zh || section.en) : []
   const weekday = slot ? weekdays.find((item) => item.value === slot.day)?.short : undefined
   const scheduleText = slot
     ? `週${weekday ?? slot.day} ${slot.startsAt || `第 ${slot.section} 節`}${slot.endsAt ? `–${slot.endsAt}` : ''}`
@@ -3520,12 +3689,53 @@ function CourseSheet({
         <div className="course-code">{course.code || '課程資料'}</div>
         <dl>
           <div><dt>授課教師</dt><dd>{course.instructor || '—'}</dd></div>
-          <div><dt>上課地點</dt><dd>{course.classroom || '—'}</dd></div>
+          <div><dt>上課地點</dt><dd>{formatClassroom(course.classroom) || '—'}</dd></div>
           {scheduleLines.length ? (
             <div><dt>上課時間</dt><dd className="course-schedule-lines">{scheduleLines.map((line, index) => <span key={`${line}-${index}`}>{line}</span>)}</dd></div>
           ) : scheduleText ? <div><dt>上課時間</dt><dd>{scheduleText}</dd></div> : null}
           <div><dt>學分</dt><dd>{course.credits || '—'}</dd></div>
         </dl>
+
+        {onSaveNote ? (
+          <section className="course-note-editor" aria-labelledby="course-note-title">
+            <div className="course-note-title-row">
+              <div>
+                <span className="section-label" id="course-note-title">課程備註</span>
+                <small>僅儲存在這支手機</small>
+              </div>
+              <span>{noteDraft.length}/{COURSE_NOTE_MAX_LENGTH}</span>
+            </div>
+            <textarea
+              maxLength={COURSE_NOTE_MAX_LENGTH}
+              placeholder="例如：記得帶課本"
+              value={noteDraft}
+              onChange={(event) => setNoteDraft(event.target.value)}
+            />
+            <div className="course-note-actions">
+              {note ? (
+                <button
+                  className="course-note-clear"
+                  type="button"
+                  onClick={() => {
+                    setNoteDraft('')
+                    onSaveNote('')
+                  }}
+                >
+                  清除
+                </button>
+              ) : <span />}
+              <button
+                className="course-note-save"
+                type="button"
+                disabled={!noteChanged}
+                onClick={() => onSaveNote(normalizedDraft)}
+              >
+                <Save size={16} aria-hidden="true" />
+                儲存備註
+              </button>
+            </div>
+          </section>
+        ) : null}
 
         {onDeleteCourse ? (
           <button
@@ -3550,6 +3760,60 @@ function CourseSheet({
             <Trash2 size={17} />
             刪除此課程
           </button>
+        ) : null}
+
+        {showSyllabus ? (
+          <section className="course-syllabus" aria-labelledby="course-syllabus-title">
+            <div className="course-syllabus-heading">
+              <div>
+                <BookOpenCheck size={18} aria-hidden="true" />
+                <span className="section-label" id="course-syllabus-title">課程大綱</span>
+              </div>
+              <small>AIS 官方資料</small>
+            </div>
+            {syllabusLoading ? (
+              <div className="course-syllabus-loading" role="status">
+                <Loader2 size={18} className="spin" aria-hidden="true" />
+                <span>正在取得課程大綱…</span>
+              </div>
+            ) : syllabusError ? (
+              <div className="course-syllabus-error">
+                <AlertCircle size={18} aria-hidden="true" />
+                <p>{syllabusError}</p>
+                {onRetrySyllabus ? <button type="button" onClick={onRetrySyllabus}>重試</button> : null}
+              </div>
+            ) : syllabus ? (
+              <>
+                {syllabus.englishTitle ? <p className="course-syllabus-english-title">{syllabus.englishTitle}</p> : null}
+                {syllabusSections.length ? (
+                  <div className="course-syllabus-sections">
+                    {syllabusSections.map((section, index) => (
+                      <details key={section.id} open={index === 0}>
+                        <summary>{section.label}</summary>
+                        <div>
+                          {section.zh ? <p>{section.zh}</p> : null}
+                          {section.en ? (
+                            <div className="course-syllabus-english">
+                              <small>English</small>
+                              <p lang="en">{section.en}</p>
+                            </div>
+                          ) : null}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                ) : <div className="muted-row">這門課尚未填寫課程大綱內容</div>}
+                {/^https?:\/\//i.test(syllabus.referenceUrl) ? (
+                  <a className="course-syllabus-link" href={syllabus.referenceUrl} rel="noreferrer" target="_blank">
+                    <ExternalLink size={15} aria-hidden="true" />
+                    開啟參考網址
+                  </a>
+                ) : null}
+              </>
+            ) : (
+              <div className="muted-row">課程大綱會在開啟課程後載入</div>
+            )}
+          </section>
         ) : null}
 
         <div className="section-label">{isSharedSnapshot ? '課表來源' : '課程檔案'}</div>
