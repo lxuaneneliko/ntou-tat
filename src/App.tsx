@@ -56,6 +56,13 @@ import { UnauthorizedError } from './api/errors'
 import { emergencyContacts, emptyCredits } from './api/publicData'
 import { clearPortalSession } from './api/portal'
 import { cropAvatarFile, readStoredAvatar, storeAvatar } from './avatar'
+import {
+  createCustomCourseSlots,
+  customCoursePeriods as periods,
+  mergeTimetableSlots,
+  removeCustomCourse,
+  type CustomCourseSchedule,
+} from './customTimetable'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
 import { GeneralEducationProgressSheet } from './GeneralEducationProgressSheet'
 import { GraduationAuditSheet } from './GraduationAuditSheet'
@@ -186,24 +193,6 @@ const weekdays = [
   { value: 5, short: '五' },
   { value: 6, short: '六' },
   { value: 7, short: '日' },
-]
-
-const periods = [
-  { value: 0, time: '06:20' },
-  { value: 1, time: '08:20' },
-  { value: 2, time: '09:20' },
-  { value: 3, time: '10:20' },
-  { value: 4, time: '11:15' },
-  { value: 5, time: '12:10' },
-  { value: 6, time: '13:10' },
-  { value: 7, time: '14:10' },
-  { value: 8, time: '15:10' },
-  { value: 9, time: '16:05' },
-  { value: 10, time: '17:30' },
-  { value: 11, time: '18:30' },
-  { value: 12, time: '19:20' },
-  { value: 13, time: '20:20' },
-  { value: 14, time: '21:10' },
 ]
 
 const getPeriodLabel = (val: number) => {
@@ -340,6 +329,7 @@ const timetableBlocks = (slots: TimetableSlot[]): TimetableBlock[] => {
         previous.endPeriod + 1 === period
       ) {
         previous.endPeriod = period
+        previous.slot = { ...previous.slot, endsAt: slot.endsAt }
         return
       }
       blocks.push({ slot, startPeriod: period, endPeriod: period })
@@ -609,7 +599,6 @@ function App() {
   }, [applyData])
 
   const api = useMemo(() => createNtouApi(handleUnauthorized), [handleUnauthorized])
-
   const refreshExternalCompetitions = useCallback(async () => {
     if (competitionRefreshPromiseRef.current) return competitionRefreshPromiseRef.current
 
@@ -1439,6 +1428,7 @@ function App() {
     setActiveCourseSlot(slot ?? null)
     setActiveCourseIsShared(false)
     setActiveCourse(course)
+    if ((customCourses[selectedSemester] ?? []).some((item) => item.courseId === course.id)) return
     if (courseFiles[course.id]) return
     setFileLoadingId(course.id)
     try {
@@ -1495,12 +1485,8 @@ function App() {
     if (!data?.timetable) return []
     const presets = data.timetable.slots || []
     const customs = customCourses[selectedSemester] || []
-    const fullList = [...presets, ...customs]
     const deletedForSem = deletedCourses[selectedSemester] || []
-    return fullList.filter((c) => {
-      const key = `${c.day}_${c.section}_${c.courseTitle}`
-      return !deletedForSem.includes(key)
-    })
+    return mergeTimetableSlots(presets, customs, deletedForSem)
   }, [data?.timetable, customCourses, deletedCourses, selectedSemester])
 
   const selectedSharedTimetable = useMemo(
@@ -1995,17 +1981,26 @@ function App() {
             loading={fileLoadingId === activeCourse.id}
             onClose={() => setActiveCourse(null)}
             slot={activeCourseSlot}
+            courseSlots={displayedTimetableSlots.filter((slot) => slot.courseId === activeCourse.id)}
             isSharedSnapshot={activeCourseIsShared}
             onDeleteCourse={activeCourseIsShared ? undefined : (courseTitle) => {
               if (!confirm(`確定要從課表中刪除「${courseTitle}」嗎？`)) return
+              const currentCustom = customCourses[selectedSemester] || []
+              const isCustomCourse = activeCourseSlot
+                ? currentCustom.some((slot) => slot.id === activeCourseSlot.id || slot.courseId === activeCourseSlot.courseId)
+                : false
+              if (isCustomCourse && activeCourseSlot) {
+                const nextCustom = removeCustomCourse(currentCustom, activeCourseSlot.courseId)
+                saveCustomCourses({ ...customCourses, [selectedSemester]: nextCustom })
+                setActiveCourse(null)
+                return
+              }
               const currentDeleted = deletedCourses[selectedSemester] || []
-              const targetSlot = mergedSlots.find((s) => s.courseTitle === courseTitle)
+              const targetSlot = activeCourseSlot ?? mergedSlots.find((slot) => slot.courseId === activeCourse.id)
               if (targetSlot) {
                 const key = `${targetSlot.day}_${targetSlot.section}_${courseTitle}`
                 const nextDeleted = [...currentDeleted, key]
                 saveDeletedCourses({ ...deletedCourses, [selectedSemester]: nextDeleted })
-                const nextCustom = (customCourses[selectedSemester] || []).filter((s) => s.courseTitle !== courseTitle)
-                saveCustomCourses({ ...customCourses, [selectedSemester]: nextCustom })
               }
               setActiveCourse(null)
             }}
@@ -2016,23 +2011,11 @@ function App() {
           <AddCourseModal
             showWeekend={showWeekend}
             onClose={() => setIsAddCourseOpen(false)}
-            onSave={(name, code, teacher, room, day, period) => {
-              const newSlot: TimetableSlot = {
-                id: `custom-${Date.now()}`,
-                courseId: `custom-${Date.now()}`,
-                courseCode: code || 'CUSTOM',
-                courseTitle: name,
-                instructor: teacher,
-                classroom: room,
-                day,
-                startsAt: periods[period]?.time || '08:20',
-                endsAt: '',
-                section: String(period),
-                credits: 2,
-                color: ['#176db9', '#0a8f68', '#7c3aed', '#c45616', '#d81b4e'][Math.floor(Math.random() * 5)],
-              }
+            onSave={(name, code, teacher, room, schedules) => {
+              const courseId = `custom-${crypto.randomUUID()}`
+              const newSlots = createCustomCourseSlots({ name, code, teacher, room }, schedules, courseId)
               const currentCustom = customCourses[selectedSemester] || []
-              saveCustomCourses({ ...customCourses, [selectedSemester]: [...currentCustom, newSlot] })
+              saveCustomCourses({ ...customCourses, [selectedSemester]: [...currentCustom, ...newSlots] })
               setIsAddCourseOpen(false)
             }}
           />
@@ -3496,6 +3479,7 @@ function LinkList({
 
 function CourseSheet({
   course,
+  courseSlots,
   files,
   isSharedSnapshot,
   loading,
@@ -3504,6 +3488,7 @@ function CourseSheet({
   slot,
 }: {
   course: CourseSummary
+  courseSlots?: TimetableSlot[]
   files: CourseFile[]
   isSharedSnapshot?: boolean
   loading: boolean
@@ -3515,6 +3500,14 @@ function CourseSheet({
   const scheduleText = slot
     ? `週${weekday ?? slot.day} ${slot.startsAt || `第 ${slot.section} 節`}${slot.endsAt ? `–${slot.endsAt}` : ''}`
     : ''
+  const scheduleLines = timetableBlocks(courseSlots ?? []).map((block) => {
+    const day = weekdays.find((item) => item.value === block.slot.day)?.short ?? block.slot.day
+    const first = getPeriodLabel(block.startPeriod)
+    const last = getPeriodLabel(block.endPeriod)
+    const label = block.startPeriod === block.endPeriod ? first : `${first}–${last}`
+    const time = [block.slot.startsAt, block.slot.endsAt].filter(Boolean).join('–')
+    return `週${day} 第 ${label} 節${time ? `（${time}）` : ''}`
+  })
   return (
     <div className="sheet-backdrop" role="presentation" onClick={onClose}>
       <section className="course-sheet" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
@@ -3528,7 +3521,9 @@ function CourseSheet({
         <dl>
           <div><dt>授課教師</dt><dd>{course.instructor || '—'}</dd></div>
           <div><dt>上課地點</dt><dd>{course.classroom || '—'}</dd></div>
-          {scheduleText ? <div><dt>上課時間</dt><dd>{scheduleText}</dd></div> : null}
+          {scheduleLines.length ? (
+            <div><dt>上課時間</dt><dd className="course-schedule-lines">{scheduleLines.map((line, index) => <span key={`${line}-${index}`}>{line}</span>)}</dd></div>
+          ) : scheduleText ? <div><dt>上課時間</dt><dd>{scheduleText}</dd></div> : null}
           <div><dt>學分</dt><dd>{course.credits || '—'}</dd></div>
         </dl>
 
@@ -4133,15 +4128,20 @@ function AddCourseModal({
   showWeekend,
 }: {
   onClose: () => void
-  onSave: (name: string, code: string, teacher: string, room: string, day: number, period: number) => void
+  onSave: (name: string, code: string, teacher: string, room: string, schedules: CustomCourseSchedule[]) => void
   showWeekend: boolean
 }) {
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [teacher, setTeacher] = useState('')
   const [room, setRoom] = useState('')
-  const [day, setDay] = useState(1)
-  const [period, setPeriod] = useState(1)
+  const nextScheduleId = useRef(2)
+  const [schedules, setSchedules] = useState<Array<CustomCourseSchedule & { id: number }>>([
+    { id: 1, day: 1, periods: [1] },
+  ])
+  const availableDays = showWeekend ? weekdays : weekdays.slice(0, 5)
+  const hasEmptySchedule = schedules.some((schedule) => !schedule.periods.length)
+  const totalPeriods = new Set(schedules.flatMap((schedule) => schedule.periods.map((period) => `${schedule.day}-${period}`))).size
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -4149,12 +4149,13 @@ function AddCourseModal({
       alert('請輸入課程名稱！')
       return
     }
-    onSave(name.trim(), code.trim(), teacher.trim(), room.trim(), day, period)
+    if (hasEmptySchedule) return
+    onSave(name.trim(), code.trim(), teacher.trim(), room.trim(), schedules)
   }
 
   return (
     <div className="sheet-backdrop" role="presentation" onClick={onClose}>
-      <section className="course-sheet" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+      <section className="course-sheet add-course-sheet" role="dialog" aria-modal="true" aria-label="新增自訂課程" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-handle" />
         <button className="sheet-close" type="button" aria-label="關閉" onClick={onClose}>
           <X size={21} />
@@ -4202,52 +4203,70 @@ function AddCourseModal({
             />
           </label>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <label style={{ display: 'grid', gap: '4px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--muted)', fontWeight: 700 }}>星期</span>
-              <select
-                value={day}
-                onChange={(e) => setDay(Number(e.target.value))}
-                style={{ padding: '8px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
-              >
-                <option value={1}>週一</option>
-                <option value={2}>週二</option>
-                <option value={3}>週三</option>
-                <option value={4}>週四</option>
-                <option value={5}>週五</option>
-                {showWeekend ? <option value={6}>週六</option> : null}
-                {showWeekend ? <option value={7}>週日</option> : null}
-              </select>
-            </label>
-            <label style={{ display: 'grid', gap: '4px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--muted)', fontWeight: 700 }}>節數</span>
-              <select
-                value={period}
-                onChange={(e) => setPeriod(Number(e.target.value))}
-                style={{ padding: '8px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
-              >
-                {periods.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    第 {getPeriodLabel(p.value)} 節 ({p.time})
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
+          <p className="custom-period-hint">同一門課可新增不同星期的上課時段。</p>
+          {schedules.map((schedule, index) => (
+            <fieldset className="custom-period-fieldset" key={schedule.id}>
+              <legend>上課時段 {index + 1}</legend>
+              <div className="custom-schedule-toolbar">
+                <label>
+                  <span className="sr-only">時段 {index + 1} 星期</span>
+                  <select
+                    value={schedule.day}
+                    onChange={(event) => {
+                      const day = Number(event.target.value)
+                      setSchedules((current) => current.map((item) => item.id === schedule.id ? { ...item, day } : item))
+                    }}
+                  >
+                    {availableDays.map((day) => <option key={day.value} value={day.value}>週{day.short}</option>)}
+                  </select>
+                </label>
+                <span>{schedule.periods.length} 節</span>
+                {schedules.length > 1 ? (
+                  <button
+                    className="custom-schedule-remove"
+                    type="button"
+                    aria-label={`移除上課時段 ${index + 1}`}
+                    onClick={() => setSchedules((current) => current.filter((item) => item.id !== schedule.id))}
+                  ><X size={17} /><span>移除</span></button>
+                ) : null}
+              </div>
+              <div className="custom-period-grid">
+                {periods.filter((period) => period.value !== 5).map((period) => {
+                  const checked = schedule.periods.includes(period.value)
+                  return (
+                    <label className={`custom-period-option ${checked ? 'selected' : ''}`} key={period.value}>
+                      <input
+                        type="checkbox"
+                        aria-label={`時段 ${index + 1} 第 ${getPeriodLabel(period.value)} 節 ${period.time}`}
+                        checked={checked}
+                        onChange={() => setSchedules((current) => current.map((item) => item.id !== schedule.id ? item : {
+                          ...item,
+                          periods: checked
+                            ? item.periods.filter((value) => value !== period.value)
+                            : [...item.periods, period.value].sort((left, right) => left - right),
+                        }))}
+                      />
+                      <span><strong>{getPeriodLabel(period.value)}</strong><small>{period.time}</small></span>
+                    </label>
+                  )
+                })}
+              </div>
+              {!schedule.periods.length ? <p className="custom-period-hint">請至少選擇一個節次</p> : null}
+            </fieldset>
+          ))}
           <button
-            type="submit"
-            style={{
-              padding: '10px 20px',
-              background: 'var(--brand)',
-              color: '#fff',
-              fontWeight: 800,
-              borderRadius: '6px',
-              marginTop: '8px',
+            className="custom-schedule-add"
+            type="button"
+            onClick={() => {
+              const id = nextScheduleId.current++
+              const day = availableDays.find((candidate) => !schedules.some((item) => item.day === candidate.value))?.value ?? 1
+              setSchedules((current) => [...current, { id, day, periods: [] }])
             }}
-          >
-            儲存自訂課程
-          </button>
+          ><Plus size={18} />新增上課時段</button>
+          <div className="custom-course-save">
+            <span aria-live="polite">共 {new Set(schedules.filter((item) => item.periods.length).map((item) => item.day)).size} 天 · {totalPeriods} 節</span>
+            <button type="submit" disabled={hasEmptySchedule}>儲存自訂課程</button>
+          </div>
         </form>
       </section>
     </div>

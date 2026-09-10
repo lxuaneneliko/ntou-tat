@@ -26,6 +26,8 @@ type CompactTimetablePayload = {
   s: string
   g: number
   c: CompactSlot[]
+  // Keep compact slots at ten fields so existing TT1 readers remain compatible.
+  k?: number[]
 }
 
 export type SharedTimetable = {
@@ -99,12 +101,20 @@ export const encodeTimetableShare = ({
   if (!slots.length) throw new Error('這個學期目前沒有可分享的課程')
   if (slots.length > MAX_SLOTS) throw new Error('課程資料太多，暫時無法產生 QR Code')
 
+  const courseGroups = new Map<string, number>()
+  const groupIndices = slots.map((slot, index) => {
+    const identity = cleanText(slot.courseId, 160) || cleanText(slot.courseCode, 40) || `slot-${index}`
+    if (!courseGroups.has(identity)) courseGroups.set(identity, courseGroups.size)
+    return courseGroups.get(identity)!
+  })
+
   const payload: CompactTimetablePayload = {
     v: 1,
     i: cleanText(sourceId, 80) || makeId(),
     n: safeOwnerName,
     s: safeSemesterId,
     g: Date.now(),
+    k: groupIndices,
     c: slots.map((slot) => [
       cleanText(slot.courseCode, 40),
       cleanText(slot.courseTitle, 100),
@@ -153,7 +163,12 @@ export const decodeTimetableShare = (rawValue: string): TimetableSharePreview =>
     !Array.isArray(payload.c) ||
     payload.c.length === 0 ||
     payload.c.length > MAX_SLOTS ||
-    !payload.c.every(isCompactSlot)
+    !payload.c.every(isCompactSlot) ||
+    (payload.k !== undefined && (
+      !Array.isArray(payload.k) ||
+      payload.k.length !== payload.c.length ||
+      !payload.k.every((group) => Number.isInteger(group) && group >= 0 && group < MAX_SLOTS)
+    ))
   ) {
     throw new Error('這份課表 QR Code 格式不完整')
   }
@@ -163,7 +178,9 @@ export const decodeTimetableShare = (rawValue: string): TimetableSharePreview =>
   const recordId = `${sourceId}:${semesterId}`
   const slots = payload.c.map((slot, index): TimetableSlot => ({
     id: `shared-${recordId}-${index}`,
-    courseId: `shared-${recordId}-${cleanText(slot[0], 40) || index}`,
+    courseId: payload.k
+      ? `shared-${recordId}-group-${payload.k[index]}`
+      : `shared-${recordId}-${cleanText(slot[0], 40) || index}`,
     courseCode: cleanText(slot[0], 40),
     courseTitle: cleanText(slot[1], 100) || '未命名課程',
     instructor: cleanText(slot[2], 60),

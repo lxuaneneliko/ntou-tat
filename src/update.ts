@@ -71,7 +71,7 @@ export const releaseHighlights = (body: string) => {
     .slice(0, 3)
     .map((line) => (line.length > 96 ? `${line.slice(0, 93)}…` : line))
 
-  return highlights.length ? highlights : ['包含最新功能改善與錯誤修正。']
+  return highlights.length ? highlights : ['修復了一些已知問題。']
 }
 
 const stringValue = (value: unknown) => (typeof value === 'string' ? value.trim() : '')

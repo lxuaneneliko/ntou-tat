@@ -9,6 +9,11 @@ describe('app update helpers', () => {
     expect(isNewerVersion('1.12.4', '1.12.5')).toBe(false)
   })
 
+  it('allows the next public release to replace the multi-day test build', () => {
+    expect(isNewerVersion('1.13.30', '1.13.29.2-test')).toBe(true)
+    expect(isNewerVersion('1.13.29', '1.13.29.2-test')).toBe(false)
+  })
+
   it('selects the stable NTOUTAT APK asset', () => {
     const update = parseLatestRelease(
       {
@@ -42,6 +47,10 @@ describe('app update helpers', () => {
       '新增功能',
       '詳細說明',
     ])
+  })
+
+  it('uses the standard known-issues repair note when a release has no notes', () => {
+    expect(releaseHighlights('')).toEqual(['修復了一些已知問題。'])
   })
 
   it('checks for app updates at 04:30, 10:30, 16:30, and 22:30', () => {
