@@ -3732,25 +3732,30 @@ function CourseSheet({
           </button>
         ) : null}
 
-        <div className="section-label">{isSharedSnapshot ? '課表來源' : '課程檔案'}</div>
         {isSharedSnapshot ? (
-          <div className="shared-course-note">
-            <Users size={18} />
-            <span>這是從 QR Code 匯入的唯讀課表快照，不會影響你的選課資料。</span>
-          </div>
-        ) : loading ? (
-          <div className="loading-line" />
-        ) : files.length ? (
-          files.map((file) => (
-            <a className="file-row" href={file.url} key={file.id} rel="noreferrer" target="_blank">
-              <FileText size={19} />
-              <span>{file.title}</span>
-              <ExternalLink size={16} />
-            </a>
-          ))
-        ) : (
-          <div className="muted-row">尚未取得課程檔案</div>
-        )}
+          <>
+            <div className="section-label">課表來源</div>
+            <div className="shared-course-note">
+              <Users size={18} />
+              <span>這是從 QR Code 匯入的唯讀課表快照，不會影響你的選課資料。</span>
+            </div>
+          </>
+        ) : loading || files.length ? (
+          <>
+            <div className="section-label">課程檔案</div>
+            {loading ? (
+              <div className="loading-line" />
+            ) : (
+              files.map((file) => (
+                <a className="file-row" href={file.url} key={file.id} rel="noreferrer" target="_blank">
+                  <FileText size={19} />
+                  <span>{file.title}</span>
+                  <ExternalLink size={16} />
+                </a>
+              ))
+            )}
+          </>
+        ) : null}
       </section>
     </div>
   )
