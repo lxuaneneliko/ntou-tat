@@ -4,7 +4,6 @@ import type {
   CalendarEvent,
   CampusLink,
   CourseFile,
-  CourseSyllabus,
   CreditSummary,
   ExternalCompetition,
   Grade,
@@ -14,7 +13,6 @@ import type {
   Semester,
   StudentProfile,
   TimetableResponse,
-  TimetableSlot,
   TrafficInfo,
 } from '../types'
 
@@ -35,10 +33,6 @@ export type NtouApi = {
   getGrades: (semesterId: string) => Promise<Grade[]>
   getCredits: () => Promise<CreditSummary>
   getCourseFiles: (courseId: string) => Promise<CourseFile[]>
-  getCourseSyllabus?: (
-    semesterId: string,
-    course: Pick<TimetableSlot, 'courseId' | 'courseCode' | 'courseTitle' | 'instructor' | 'department' | 'className'>,
-  ) => Promise<CourseSyllabus>
   getAnnouncements: () => Promise<Announcement[]>
   getExternalCompetitions: () => Promise<ExternalCompetition[]>
   getIndustryNews: () => Promise<IndustryNews[]>

@@ -4,7 +4,6 @@ type CourseMetadata = {
   code: string
   title: string
   department: string
-  className: string
   instructor: string
   credits: number
 }
@@ -94,17 +93,11 @@ const findHeaderIndex = (headers: string[], patterns: RegExp[], fallback: number
   return index >= 0 ? index : fallback
 }
 
-const findOptionalHeaderIndex = (headers: string[], patterns: RegExp[], fallback: number) => {
-  const index = headers.findIndex((header) => patterns.some((pattern) => pattern.test(header)))
-  return index >= 0 ? index : headers.length ? -1 : fallback
-}
-
 const metadataFromCells = (cells: string[], headers: string[] = []): CourseMetadata | null => {
   const codeIndex = findHeaderIndex(headers, [/課(?:程)?號|科目代碼|course\s*(?:code|no)/i], 2)
   const titleIndex = findHeaderIndex(headers, [/課(?:程)?名|科目名稱|course\s*(?:title|name)/i], 3)
   const departmentIndex = findHeaderIndex(headers, [/開課單位|系所|department/i], 4)
   const instructorIndex = findHeaderIndex(headers, [/授課.*(?:老師|教師)|教師|instructor/i], 6)
-  const classNameIndex = findOptionalHeaderIndex(headers, [/班別|年級班別|開課年班|class/i], 5)
   const creditsIndex = findHeaderIndex(headers, [/學分|credit/i], 8)
   const code = normalizeText(cells[codeIndex] ?? '')
   const title = normalizeText(cells[titleIndex] ?? '')
@@ -116,7 +109,6 @@ const metadataFromCells = (cells: string[], headers: string[] = []): CourseMetad
     code,
     title,
     department: normalizeText(cells[departmentIndex] ?? ''),
-    className: classNameIndex >= 0 ? normalizeText(cells[classNameIndex] ?? '') : '',
     instructor: normalizeText(cells[instructorIndex] ?? ''),
     credits: parseCredits(normalizeText(cells[creditsIndex] ?? '')),
   }
@@ -222,7 +214,6 @@ const slotsFromCourseLines = (
     metadata?.code,
     metadata?.title,
     metadata?.department,
-    metadata?.className,
     metadata?.instructor,
     metadata?.credits ? String(metadata.credits) : undefined,
   ].filter(Boolean))
@@ -241,8 +232,6 @@ const slotsFromCourseLines = (
     section: String(period),
     credits: metadata?.credits || normalizedLines.map(parseCredits).find((credits) => credits > 0) || 0,
     color: courseColor(key),
-    department: metadata?.department ?? '',
-    className: metadata?.className ?? '',
   }
 }
 

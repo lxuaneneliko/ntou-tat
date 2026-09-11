@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent, RefObject } from 'react'
 import { App as CapApp } from '@capacitor/app'
+import { Camera as DeviceCamera, MediaTypeSelection } from '@capacitor/camera'
 import { Capacitor } from '@capacitor/core'
 import {
   BarcodeFormat,
@@ -23,6 +24,7 @@ import {
   FileText,
   GraduationCap,
   Handshake,
+  Image as ImageIcon,
   KeyRound,
   LayoutGrid,
   List as ListIcon,
@@ -84,7 +86,6 @@ import {
   type TodayCourseNote,
 } from './storage/courseNoteStorage'
 import {
-  decodeTimetableShare,
   encodeTimetableShare,
   importTimetablePreview,
   readSharedTimetables,
@@ -92,6 +93,13 @@ import {
   type SharedTimetable,
   type TimetableSharePreview,
 } from './timetableShare'
+import {
+  decodeTimetableShareFromBarcodes,
+  galleryImportErrorMessage,
+  isGallerySelectionCancelled,
+  restoredGalleryImportFromEvent,
+  type RestoredGalleryImport,
+} from './timetableQrImport'
 import {
   readStoredExternalCompetitions,
   writeStoredExternalCompetitions,
@@ -140,7 +148,6 @@ import type {
   CalendarEvent,
   CampusLink,
   CourseFile,
-  CourseSyllabus,
   CourseSummary,
   CreditSummary,
   ExternalCompetition,
@@ -157,12 +164,6 @@ import type {
   TimetableSlot,
   TrafficInfo,
 } from './types'
-import {
-  courseSyllabusCacheKey,
-  readCourseSyllabusCache,
-  writeCourseSyllabusCache,
-  type CourseSyllabusCache,
-} from './storage/courseSyllabusStorage'
 
 type AppData = {
   profile: StudentProfile
@@ -458,9 +459,6 @@ function App() {
   const [activeCourse, setActiveCourse] = useState<CourseSummary | null>(null)
   const [courseFiles, setCourseFiles] = useState<Record<string, CourseFile[]>>({})
   const [fileLoadingId, setFileLoadingId] = useState<string | null>(null)
-  const [courseSyllabusCache, setCourseSyllabusCache] = useState<CourseSyllabusCache>(readCourseSyllabusCache)
-  const [syllabusLoadingId, setSyllabusLoadingId] = useState<string | null>(null)
-  const [syllabusErrors, setSyllabusErrors] = useState<Record<string, string>>({})
   const [isBooting, setIsBooting] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [semesterPrefetchProgress, setSemesterPrefetchProgress] = useState<SemesterPrefetchProgress | null>(null)
@@ -503,6 +501,7 @@ function App() {
   const [sharedTimetables, setSharedTimetables] = useState<SharedTimetable[]>(readSharedTimetables)
   const [selectedTimetableSource, setSelectedTimetableSource] = useState('mine')
   const [timetableDialog, setTimetableDialog] = useState<'share' | 'scan' | 'rename' | null>(null)
+  const [restoredGalleryImport, setRestoredGalleryImport] = useState<RestoredGalleryImport | null>(null)
   const [activeCourseSlot, setActiveCourseSlot] = useState<TimetableSlot | null>(null)
   const [activeCourseIsShared, setActiveCourseIsShared] = useState(false)
   const [courseNotes, setCourseNotes] = useState<CourseNoteStore>(readCourseNotes)
@@ -541,6 +540,10 @@ function App() {
     if (exitHintTimerRef.current !== undefined) window.clearTimeout(exitHintTimerRef.current)
     exitHintTimerRef.current = window.setTimeout(() => clearExitHint(), 2000)
   }, [clearExitHint])
+
+  const clearRestoredGalleryImport = useCallback(() => {
+    setRestoredGalleryImport(null)
+  }, [])
 
   const checkForUpdate = useCallback(async () => {
     if (!Capacitor.isNativePlatform() || updateCheckRunningRef.current || !shouldCheckForUpdate()) {
@@ -617,7 +620,6 @@ function App() {
   const calendarRefreshPromiseRef = useRef<Promise<void> | null>(null)
   const competitionRefreshPromiseRef = useRef<Promise<void> | null>(null)
   const industryRefreshPromiseRef = useRef<Promise<void> | null>(null)
-  const syllabusRequestsRef = useRef(new Set<string>())
 
   const applyData = useCallback((nextData: AppData | null) => {
     dataRef.current = nextData
@@ -1184,6 +1186,28 @@ function App() {
   }, [checkForUpdate])
 
   useEffect(() => {
+    if (Capacitor.getPlatform() !== 'android') return
+
+    let active = true
+    const restoredListener = CapApp.addListener('appRestoredResult', (event) => {
+      if (!active) return
+      const restoredImport = restoredGalleryImportFromEvent(event)
+      if (!restoredImport || restoredImport === 'cancelled') return
+
+      setSelectedTab('timetable')
+      setMoreView(null)
+      setHeaderMenuOpen(false)
+      setRestoredGalleryImport(restoredImport)
+      setTimetableDialog('scan')
+    })
+
+    return () => {
+      active = false
+      void restoredListener.then((handle) => handle.remove())
+    }
+  }, [])
+
+  useEffect(() => {
     let mounted = true
     const boot = async () => {
       try {
@@ -1467,36 +1491,12 @@ function App() {
     }
   }
 
-  const loadCourseSyllabus = async (semesterId: string, slot: TimetableSlot, force = false) => {
-    if (!api.getCourseSyllabus || slot.courseCode === 'CUSTOM') return
-    const key = courseSyllabusCacheKey(semesterId, slot)
-    if (!force && courseSyllabusCache[key]) return
-    if (syllabusRequestsRef.current.has(key)) return
-    syllabusRequestsRef.current.add(key)
-    setSyllabusLoadingId(key)
-    setSyllabusErrors((current) => {
-      const next = { ...current }
-      delete next[key]
-      return next
-    })
-    try {
-      const syllabus = await api.getCourseSyllabus(semesterId, slot)
-      setCourseSyllabusCache((current) => writeCourseSyllabusCache(current, key, syllabus))
-    } catch (error) {
-      setSyllabusErrors((current) => ({ ...current, [key]: messageFromError(error) }))
-    } finally {
-      syllabusRequestsRef.current.delete(key)
-      setSyllabusLoadingId((current) => current === key ? null : current)
-    }
-  }
-
   const openCourse = async (course: CourseSummary, slot?: TimetableSlot) => {
     setActiveCourseSlot(slot ?? null)
     setActiveCourseIsShared(false)
     setActiveCourse(course)
     const isCustom = (customCourses[selectedSemester] ?? []).some((item) => item.courseId === course.id)
     if (isCustom) return
-    if (slot) void loadCourseSyllabus(selectedSemester, slot)
     if (courseFiles[course.id]) return
     setFileLoadingId(course.id)
     try {
@@ -2058,26 +2058,10 @@ function App() {
         ) : null}
 
         {activeCourse ? (
-          (() => {
-            const syllabusKey = activeCourseSlot
-              ? courseSyllabusCacheKey(selectedSemester, activeCourseSlot)
-              : ''
-            return <CourseSheet
+          <CourseSheet
             course={activeCourse}
             files={courseFiles[activeCourse.id] ?? []}
             loading={fileLoadingId === activeCourse.id}
-            syllabus={syllabusKey ? courseSyllabusCache[syllabusKey]?.syllabus ?? null : null}
-            syllabusLoading={Boolean(syllabusKey && syllabusLoadingId === syllabusKey)}
-            syllabusError={syllabusKey ? syllabusErrors[syllabusKey] ?? '' : ''}
-            showSyllabus={Boolean(
-              !activeCourseIsShared
-              && activeCourseSlot
-              && activeCourseSlot.courseCode !== 'CUSTOM'
-              && api.getCourseSyllabus
-            )}
-            onRetrySyllabus={activeCourseSlot
-              ? () => void loadCourseSyllabus(selectedSemester, activeCourseSlot, true)
-              : undefined}
             onClose={() => setActiveCourse(null)}
             slot={activeCourseSlot}
             courseSlots={displayedTimetableSlots.filter((slot) => slot.courseId === activeCourse.id)}
@@ -2117,7 +2101,6 @@ function App() {
               setActiveCourse(null)
             }}
           />
-          })()
         ) : null}
 
         {isAddCourseOpen ? (
@@ -2215,7 +2198,12 @@ function App() {
 
         {timetableDialog === 'scan' ? (
           <TimetableScanSheet
-            onClose={() => setTimetableDialog(null)}
+            restoredGalleryImport={restoredGalleryImport}
+            onRestoredGalleryImportHandled={clearRestoredGalleryImport}
+            onClose={() => {
+              clearRestoredGalleryImport()
+              setTimetableDialog(null)
+            }}
             onImport={(preview, displayName) => {
               const existing = sharedTimetables.find((item) => item.id === preview.id)
               if (existing && !confirm(`「${existing.displayName}」已存在，要用這次掃描的快照取代嗎？`)) {
@@ -2230,6 +2218,7 @@ function App() {
                 updateWeekendPreference(true)
               }
               setSelectedTimetableSource(imported.id)
+              clearRestoredGalleryImport()
               setTimetableDialog(null)
               return true
             }}
@@ -3628,13 +3617,8 @@ function CourseSheet({
   note,
   onClose,
   onDeleteCourse,
-  onRetrySyllabus,
   onSaveNote,
-  showSyllabus,
   slot,
-  syllabus,
-  syllabusError,
-  syllabusLoading,
 }: {
   course: CourseSummary
   courseSlots?: TimetableSlot[]
@@ -3644,27 +3628,13 @@ function CourseSheet({
   note: string
   onClose: () => void
   onDeleteCourse?: (title: string) => void
-  onRetrySyllabus?: () => void
   onSaveNote?: (note: string) => void
-  showSyllabus: boolean
   slot?: TimetableSlot | null
-  syllabus: CourseSyllabus | null
-  syllabusError: string
-  syllabusLoading: boolean
 }) {
   const [noteDraft, setNoteDraft] = useState(note)
   useEffect(() => setNoteDraft(note), [course.id, note])
   const normalizedDraft = noteDraft.trim().slice(0, COURSE_NOTE_MAX_LENGTH)
   const noteChanged = normalizedDraft !== note
-  const syllabusSections = syllabus ? [
-    { id: 'objective', label: '教學目標', zh: syllabus.objectiveZh, en: syllabus.objectiveEn },
-    { id: 'prerequisites', label: '先修科目', zh: syllabus.prerequisitesZh, en: syllabus.prerequisitesEn },
-    { id: 'content', label: '教材內容', zh: syllabus.contentZh, en: syllabus.contentEn },
-    { id: 'method', label: '教學方式', zh: syllabus.teachingMethodZh, en: syllabus.teachingMethodEn },
-    { id: 'references', label: '參考書目', zh: syllabus.referencesZh, en: syllabus.referencesEn },
-    { id: 'schedule', label: '教學進度', zh: syllabus.scheduleZh, en: syllabus.scheduleEn },
-    { id: 'evaluation', label: '評量方式', zh: syllabus.evaluationZh, en: syllabus.evaluationEn },
-  ].filter((section) => section.zh || section.en) : []
   const weekday = slot ? weekdays.find((item) => item.value === slot.day)?.short : undefined
   const scheduleText = slot
     ? `週${weekday ?? slot.day} ${slot.startsAt || `第 ${slot.section} 節`}${slot.endsAt ? `–${slot.endsAt}` : ''}`
@@ -3760,60 +3730,6 @@ function CourseSheet({
             <Trash2 size={17} />
             刪除此課程
           </button>
-        ) : null}
-
-        {showSyllabus ? (
-          <section className="course-syllabus" aria-labelledby="course-syllabus-title">
-            <div className="course-syllabus-heading">
-              <div>
-                <BookOpenCheck size={18} aria-hidden="true" />
-                <span className="section-label" id="course-syllabus-title">課程大綱</span>
-              </div>
-              <small>AIS 官方資料</small>
-            </div>
-            {syllabusLoading ? (
-              <div className="course-syllabus-loading" role="status">
-                <Loader2 size={18} className="spin" aria-hidden="true" />
-                <span>正在取得課程大綱…</span>
-              </div>
-            ) : syllabusError ? (
-              <div className="course-syllabus-error">
-                <AlertCircle size={18} aria-hidden="true" />
-                <p>{syllabusError}</p>
-                {onRetrySyllabus ? <button type="button" onClick={onRetrySyllabus}>重試</button> : null}
-              </div>
-            ) : syllabus ? (
-              <>
-                {syllabus.englishTitle ? <p className="course-syllabus-english-title">{syllabus.englishTitle}</p> : null}
-                {syllabusSections.length ? (
-                  <div className="course-syllabus-sections">
-                    {syllabusSections.map((section, index) => (
-                      <details key={section.id} open={index === 0}>
-                        <summary>{section.label}</summary>
-                        <div>
-                          {section.zh ? <p>{section.zh}</p> : null}
-                          {section.en ? (
-                            <div className="course-syllabus-english">
-                              <small>English</small>
-                              <p lang="en">{section.en}</p>
-                            </div>
-                          ) : null}
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                ) : <div className="muted-row">這門課尚未填寫課程大綱內容</div>}
-                {/^https?:\/\//i.test(syllabus.referenceUrl) ? (
-                  <a className="course-syllabus-link" href={syllabus.referenceUrl} rel="noreferrer" target="_blank">
-                    <ExternalLink size={15} aria-hidden="true" />
-                    開啟參考網址
-                  </a>
-                ) : null}
-              </>
-            ) : (
-              <div className="muted-row">課程大綱會在開啟課程後載入</div>
-            )}
-          </section>
         ) : null}
 
         <div className="section-label">{isSharedSnapshot ? '課表來源' : '課程檔案'}</div>
@@ -3925,18 +3841,77 @@ function TimetableShareSheet({
   )
 }
 
+const readTimetableShareFromImage = async (imageUri: string) => {
+  const result = await BarcodeScanner.readBarcodesFromImage({
+    path: imageUri,
+    formats: [BarcodeFormat.QrCode],
+  })
+  return decodeTimetableShareFromBarcodes(
+    result.barcodes,
+    '圖片裡沒有找到 QR Code，請換一張較清楚的圖片',
+  )
+}
+
 function TimetableScanSheet({
   onClose,
   onImport,
+  onRestoredGalleryImportHandled,
+  restoredGalleryImport,
 }: {
   onClose: () => void
   onImport: (preview: TimetableSharePreview, displayName: string) => boolean
+  onRestoredGalleryImportHandled: () => void
+  restoredGalleryImport: RestoredGalleryImport | null
 }) {
-  const [busy, setBusy] = useState(false)
+  const [busySource, setBusySource] = useState<'camera' | 'gallery' | null>(null)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
   const [preview, setPreview] = useState<TimetableSharePreview | null>(null)
   const [displayName, setDisplayName] = useState('')
+  const busy = busySource !== null
+
+  const showImportPreview = (
+    barcodes: Array<{ rawValue?: string | null; displayValue?: string | null }>,
+    emptyMessage?: string,
+  ) => {
+    const decoded = decodeTimetableShareFromBarcodes(barcodes, emptyMessage)
+    setPreview(decoded)
+    setDisplayName(decoded.ownerName)
+  }
+
+  useEffect(() => {
+    if (!restoredGalleryImport) return
+    if (restoredGalleryImport.kind === 'error') {
+      setError(restoredGalleryImport.message)
+      onRestoredGalleryImportHandled()
+      return
+    }
+
+    let active = true
+    setBusySource('gallery')
+    setError('')
+    setStatus('正在恢復並辨識圖片…')
+    void readTimetableShareFromImage(restoredGalleryImport.imageUri)
+      .then((decoded) => {
+        if (!active) return
+        setPreview(decoded)
+        setDisplayName(decoded.ownerName)
+      })
+      .catch((galleryError) => {
+        if (!active || isGallerySelectionCancelled(galleryError)) return
+        setError(galleryImportErrorMessage(galleryError))
+      })
+      .finally(() => {
+        if (!active) return
+        setBusySource(null)
+        setStatus('')
+        onRestoredGalleryImportHandled()
+      })
+
+    return () => {
+      active = false
+    }
+  }, [onRestoredGalleryImportHandled, restoredGalleryImport])
 
   const ensureAndroidScannerModule = async () => {
     if (Capacitor.getPlatform() !== 'android') return
@@ -3975,11 +3950,11 @@ function TimetableScanSheet({
   }
 
   const startScan = async () => {
-    if (!Capacitor.isNativePlatform()) {
+    if (Capacitor.getPlatform() !== 'android') {
       setError('請在 Android 手機版海大 TAT 使用相機掃描')
       return
     }
-    setBusy(true)
+    setBusySource('camera')
     setError('')
     setStatus('正在開啟相機…')
     try {
@@ -3988,18 +3963,52 @@ function TimetableScanSheet({
       await ensureAndroidScannerModule()
       setStatus('')
       const result = await BarcodeScanner.scan({ formats: [BarcodeFormat.QrCode], autoZoom: true })
-      const rawValue = result.barcodes[0]?.rawValue || result.barcodes[0]?.displayValue
-      if (!rawValue) throw new Error('沒有讀到 QR Code 內容，請再試一次')
-      const decoded = decodeTimetableShare(rawValue)
-      setPreview(decoded)
-      setDisplayName(decoded.ownerName)
+      showImportPreview(result.barcodes)
     } catch (scanError) {
       const message = messageFromError(scanError)
       if (!/cancel|取消/i.test(message)) setError(message)
     } finally {
-      setBusy(false)
+      setBusySource(null)
       setStatus('')
     }
+  }
+
+  const startGalleryScan = async () => {
+    if (Capacitor.getPlatform() !== 'android') {
+      setError('請在 Android 手機版海大 TAT 從圖庫選擇圖片')
+      return
+    }
+    setBusySource('gallery')
+    setError('')
+    setStatus('正在開啟圖庫…')
+    try {
+      const { results } = await DeviceCamera.chooseFromGallery({
+        mediaType: MediaTypeSelection.Photo,
+        allowMultipleSelection: false,
+        editable: 'no',
+      })
+      const imageUri = results[0]?.uri
+      if (!imageUri) throw new Error('沒有選到圖片，請再試一次')
+
+      setStatus('正在辨識圖片…')
+      const decoded = await readTimetableShareFromImage(imageUri)
+      setPreview(decoded)
+      setDisplayName(decoded.ownerName)
+    } catch (galleryError) {
+      if (!isGallerySelectionCancelled(galleryError)) {
+        setError(galleryImportErrorMessage(galleryError))
+      }
+    } finally {
+      setBusySource(null)
+      setStatus('')
+    }
+  }
+
+  const resetPreview = () => {
+    setPreview(null)
+    setDisplayName('')
+    setError('')
+    setStatus('')
   }
 
   return (
@@ -4011,7 +4020,7 @@ function TimetableScanSheet({
         </button>
         <div className="timetable-sheet-heading">
           <div className="timetable-sheet-icon"><ScanLine size={24} /></div>
-          <div><span>同學課表</span><h2>掃描課表 QR Code</h2></div>
+          <div><span>同學課表</span><h2>匯入同學課表</h2></div>
         </div>
 
         {preview ? (
@@ -4040,8 +4049,8 @@ function TimetableScanSheet({
             >
               <Users size={19} />新增同學課表
             </button>
-            <button className="timetable-secondary-action" type="button" onClick={() => void startScan()}>
-              重新掃描
+            <button className="timetable-secondary-action" type="button" onClick={resetPreview}>
+              重新選擇 QR Code
             </button>
           </>
         ) : (
@@ -4052,15 +4061,21 @@ function TimetableScanSheet({
               <QrCode size={72} strokeWidth={1.35} />
               <div className="scan-line" />
             </div>
-            <p className="timetable-scan-copy">請對準同學手機上的「海大 TAT 課表 QR Code」。掃描後會先讓你確認名稱、學期和課程數量。</p>
-            <button className="timetable-primary-action" type="button" disabled={busy} onClick={() => void startScan()}>
-              {busy ? <Loader2 className="spin" size={19} /> : <Camera size={19} />}
-              {status || '開啟相機掃描'}
-            </button>
+            <p className="timetable-scan-copy">可直接掃描另一支手機，或從圖庫選擇已儲存的「海大 TAT 課表 QR Code」。匯入前會先確認名稱、學期和課程數量。</p>
+            <div className="timetable-scan-actions">
+              <button className="timetable-primary-action" type="button" disabled={busy} onClick={() => void startScan()}>
+                {busySource === 'camera' ? <Loader2 className="spin" size={19} /> : <Camera size={19} />}
+                {busySource === 'camera' ? status : '開啟相機掃描'}
+              </button>
+              <button className="timetable-secondary-action timetable-gallery-action" type="button" disabled={busy} onClick={() => void startGalleryScan()}>
+                {busySource === 'gallery' ? <Loader2 className="spin" size={19} /> : <ImageIcon size={19} />}
+                {busySource === 'gallery' ? status : '從圖庫選擇 QR Code'}
+              </button>
+            </div>
           </>
         )}
         {error ? <div className="timetable-share-error"><AlertCircle size={17} />{error}</div> : null}
-        <p className="timetable-privacy-note"><ShieldCheck size={16} />匯入內容只會儲存在這台手機，不會上傳到伺服器。</p>
+        <p className="timetable-privacy-note"><ShieldCheck size={16} />相片與匯入內容只會在這台手機處理，不會上傳到伺服器。</p>
       </section>
     </div>
   )

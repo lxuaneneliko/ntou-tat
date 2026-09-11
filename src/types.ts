@@ -53,9 +53,6 @@ export type TimetableSlot = {
   section: string
   credits: number
   color: string
-  /** Official AIS identity fields used to avoid matching the wrong syllabus. */
-  department?: string
-  className?: string
 }
 
 export type TimetableResponse = {
@@ -91,31 +88,6 @@ export type Announcement = {
   publishedAt: string
   pinned: boolean
   url: string
-}
-
-export type CourseSyllabus = {
-  semesterId: string
-  courseCode: string
-  title: string
-  englishTitle: string
-  instructor: string
-  department: string
-  className: string
-  objectiveZh: string
-  objectiveEn: string
-  prerequisitesZh: string
-  prerequisitesEn: string
-  contentZh: string
-  contentEn: string
-  teachingMethodZh: string
-  teachingMethodEn: string
-  referencesZh: string
-  referencesEn: string
-  scheduleZh: string
-  scheduleEn: string
-  evaluationZh: string
-  evaluationEn: string
-  referenceUrl: string
 }
 
 export type ExternalCompetition = {

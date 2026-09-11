@@ -74,8 +74,6 @@ describe('AIS personal timetable parser', () => {
       courseCode: 'CODE1001',
       courseTitle: '海洋資料分析',
       instructor: '林老師',
-      department: '海洋系',
-      className: '一A',
       classroom: 'INS101',
       credits: 3,
       day: 2,
@@ -114,8 +112,6 @@ describe('AIS personal timetable parser', () => {
     expect(parsed).toMatchObject({
       courseCode: 'CODE1001',
       instructor: '林老師',
-      department: '海洋系',
-      className: '一A',
       credits: 3,
     })
   })
