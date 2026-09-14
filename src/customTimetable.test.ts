@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   createCustomCourseSlots,
+  customCoursePeriods,
   mergeTimetableSlots,
   removeCustomCourse,
+  timetablePeriodLabel,
 } from './customTimetable'
 import { decodeTimetableShare, encodeTimetableShare } from './timetableShare'
 
@@ -14,6 +16,29 @@ const details = {
 }
 
 describe('multi-day custom timetable courses', () => {
+  it('keeps the official noon and afternoon period numbers', () => {
+    expect(customCoursePeriods.find((period) => period.value === 5)).toMatchObject({
+      time: '12:10',
+      endsAt: '13:00',
+    })
+    expect(customCoursePeriods.find((period) => period.value === 6)).toMatchObject({
+      time: '13:10',
+      endsAt: '14:00',
+    })
+    expect(timetablePeriodLabel(5)).toBe('5')
+    expect(timetablePeriodLabel(6)).toBe('6')
+    expect(timetablePeriodLabel(10)).toBe('10')
+    expect(timetablePeriodLabel(11)).toBe('A')
+
+    const slots = createCustomCourseSlots(details, [
+      { day: 1, periods: [5, 6] },
+    ], 'custom-noon')
+    expect(slots.map(({ section, startsAt, endsAt }) => ({ section, startsAt, endsAt }))).toEqual([
+      { section: '5', startsAt: '12:10', endsAt: '13:00' },
+      { section: '6', startsAt: '13:10', endsAt: '14:00' },
+    ])
+  })
+
   it('saves Monday one period and Friday two periods as one course with shared metadata', () => {
     const slots = createCustomCourseSlots(details, [
       { day: 5, periods: [4, 3] },

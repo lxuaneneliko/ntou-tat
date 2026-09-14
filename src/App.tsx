@@ -64,6 +64,7 @@ import {
   customCoursePeriods as periods,
   mergeTimetableSlots,
   removeCustomCourse,
+  timetablePeriodLabel as getPeriodLabel,
   type CustomCourseSchedule,
 } from './customTimetable'
 import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
@@ -215,15 +216,6 @@ const weekdays = [
   { value: 7, short: '日' },
 ]
 
-const getPeriodLabel = (val: number) => {
-  if (val === 0) return '0'
-  if (val >= 1 && val <= 4) return String(val)
-  if (val === 5) return '中午'
-  if (val >= 6 && val <= 10) return String(val - 1) // 6->5, 7->6, 8->7, 9->8, 10->9
-  if (val >= 11 && val <= 14) return ['A', 'B', 'C', 'D'][val - 11]
-  return String(val)
-}
-
 const tabs: Array<{ key: TabKey; label: string; icon: typeof CalendarDays }> = [
   { key: 'timetable', label: '課表', icon: Clock3 },
   { key: 'calendar', label: '行事曆', icon: CalendarDays },
@@ -360,13 +352,13 @@ const timetableBlocks = (slots: TimetableSlot[]): TimetableBlock[] => {
 const visibleTimetablePeriods = (blocks: TimetableBlock[]) => {
   if (!blocks.length) {
     return periods.filter((period) =>
-      period.value >= 1 && period.value <= 14 && period.value !== 5,
+      period.value >= 1 && period.value <= 14,
     )
   }
   const first = Math.min(1, ...blocks.map((block) => block.startPeriod))
   const last = Math.max(14, ...blocks.map((block) => block.endPeriod))
   return periods.filter((period) =>
-    period.value >= first && period.value <= last && period.value !== 5,
+    period.value >= first && period.value <= last,
   )
 }
 
@@ -4515,7 +4507,7 @@ function AddCourseModal({
                 ) : null}
               </div>
               <div className="custom-period-grid">
-                {periods.filter((period) => period.value !== 5).map((period) => {
+                {periods.map((period) => {
                   const checked = schedule.periods.includes(period.value)
                   return (
                     <label className={`custom-period-option ${checked ? 'selected' : ''}`} key={period.value}>

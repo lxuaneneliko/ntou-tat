@@ -23,6 +23,11 @@ export const customCoursePeriods = [
   { value: 14, time: '21:10', endsAt: '22:00' },
 ]
 
+export const timetablePeriodLabel = (value: number) => {
+  if (value >= 11 && value <= 14) return ['A', 'B', 'C', 'D'][value - 11]
+  return String(value)
+}
+
 const customCourseColors = ['#176db9', '#0a8f68', '#7c3aed', '#c45616', '#d81b4e']
 
 export const createCustomCourseSlots = (
