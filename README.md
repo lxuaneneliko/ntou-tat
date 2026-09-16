@@ -52,6 +52,14 @@ App 不會在背景下載或自動安裝。
 
 完整說明請見 [PRIVACY.md](PRIVACY.md)。
 
+## 授權
+
+本專案原創程式碼依 [MIT License](LICENSE) 公開授權。第三方套件、模型、
+國立臺灣海洋大學的名稱與標誌、校歌、校園地圖、校方資料，以及外部服務內容，
+不因收錄或連結於本專案而改用 MIT 授權；其權利仍屬各自權利人。
+
+詳細範圍與來源請見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
 ## 開發
 
 需求：
