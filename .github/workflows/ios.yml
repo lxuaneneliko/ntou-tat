@@ -41,9 +41,6 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run ios:sync
-      - name: Native mail parser and safety tests
-        if: ${{ !inputs.runtime_only }}
-        run: swift test --package-path ios/App/NtouNative
       - name: Select simulator
         timeout-minutes: 3
         run: |
@@ -65,12 +62,6 @@ jobs:
           sleep 10
           xcrun simctl io "$DEVICE" screenshot ios-launch.png
           xcrun simctl spawn "$DEVICE" launchctl list | grep com.lxuan.ntoutat
-      - name: Create unsigned device archive (not an installable IPA)
-        if: ${{ !inputs.runtime_only }}
-        run: |
-          set -o pipefail
-          test ! -d ios/App/App/public/__qa__
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -derivedDataPath DerivedData -archivePath output/NTOUTAT-unsigned.xcarchive CODE_SIGNING_ALLOWED=NO archive | tee ios-device-build.log
       - name: Test real iOS bridges, vector map and walking route (no student account)
         timeout-minutes: 8
         run: |
@@ -84,7 +75,7 @@ jobs:
         run: |
           xcrun simctl io "$SIMULATOR_UDID" screenshot ios-final-state.png || true
           xcrun simctl spawn "$SIMULATOR_UDID" log show --last 5m --style compact --predicate 'process == "App" OR process == "com.apple.WebKit.GPU"' > ios-runtime-build.log || true
-      - name: Upload build evidence and unsigned archive
+      - name: Upload simulator test evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -95,6 +86,46 @@ jobs:
             ios-map.png
             ios-final-state.png
             ios-integration.xcresult
+            ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          retention-days: 14
+  device:
+    if: ${{ !inputs.runtime_only }}
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ios/App/NtouNative/.build
+            DerivedData/SourcePackages
+          key: ios-spm-xcode263-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ios/App/NtouNative/Package.swift', 'ios/App/Vendor/SwiftMail/Package.swift', 'package-lock.json') }}
+      - run: npm ci
+      - run: npm run ios:sync
+      - name: Native mail safety and real QR decoder tests
+        run: |
+          set -o pipefail
+          swift test --package-path ios/App/NtouNative | tee ios-native-tests.log
+      - name: Create unsigned device archive (not an installable IPA)
+        timeout-minutes: 18
+        run: |
+          set -o pipefail
+          test ! -d ios/App/App/public/__qa__
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -derivedDataPath DerivedData -archivePath output/NTOUTAT-unsigned.xcarchive CODE_SIGNING_ALLOWED=NO archive | tee ios-device-build.log
+      - name: Upload device archive and native test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-device-archive
+          path: |
+            ios-native-tests.log
+            ios-device-build.log
             output/NTOUTAT-unsigned.xcarchive
             ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
           retention-days: 14

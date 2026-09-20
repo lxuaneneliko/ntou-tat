@@ -13,15 +13,15 @@ Android 的套件 ID、資料與發行管道保持獨立；此分支沒有發布
 - `ios/App/CapApp-SPM/Package.swift` 由 Capacitor 管理，不要手動改；自有功能在 `ios/App/NtouNative`。
 - `swift test --package-path ios/App/NtouNative` 測試信件解析、地址及標頭防注入。
 
-GitHub Actions `iOS build and tests` 會做前端測試、原生測試、模擬器編譯、啟動截圖與無簽章實機 archive。
-另以 App 內真實 WKWebView 執行橋接／即時向量圖資／教授搜尋切換／步行路線整合測試；這項測試需要公共地圖服務連線，不會登入 AIS。先以乾淨的正式資產建立 device archive，再將測試頁暫放於模擬器 bundle；測試頁不會進入實機封存檔。
-artifact `ios-build-evidence` 裡的 `.xcarchive` **不是可安裝 IPA，也不能直接提交 App Store**。
+GitHub Actions `iOS build and tests` 分成平行的 `ios` 與 `device` 兩項工作：前者做前端測試、模擬器編譯、啟動截圖，後者做原生信件／QR 測試與無簽章實機 archive。
+App 內真實 WKWebView 的整合測試包含橋接／即時向量圖資／教授搜尋切換／步行路線；這項測試需要公共地圖服務連線，不會登入 AIS。測試頁只放在模擬器工作的 bundle，實機封存由另一份乾淨 checkout 建立，不會包含測試頁。
+artifact `ios-device-archive` 裡的 `.xcarchive` **不是可安裝 IPA，也不能直接提交 App Store**；`ios-build-evidence` 是模擬器操作紀錄。兩項工作都必須檢查，封存成功不代表操作測試成功。
 
 ## 功能與平台差異
 
 - 課表／成績、歷史快取、手動採計、行事曆、自訂課程、課程備註、公告與行政／系網沿用共用功能。
 - AIS 使用原生 URLSession、Cookie jar、Keychain；系統頁面在 WKWebView 開啟。
-- QR：Apple AVFoundation 掃描、Vision 圖庫辨識，無 Google Play 依賴。
+- QR：Apple AVFoundation 掃描、Vision 圖庫辨識，另有本機 Core Image QR 備援；模擬器使用 CPU 解碼，無 Google Play 依賴。
 - 信箱：原生 TLS IMAP／SMTP、分頁、資料夾、已讀／星號、移動、純文字與原位圖片、附件分享、寄信／回覆／轉寄。
 - 舊版 Mail2000 若沒有 MOVE／UIDPLUS，移動採複製後標記來源刪除，App 隱藏已刪除項目；不執行會連帶清除其他郵件的全資料夾 EXPUNGE。來源實體副本由學校信箱後續清理，伺服器總封數可能暫時包含該副本。
 - iOS 信箱背景檢查使用 BGAppRefreshTask，系統可能延後、暫停；不是即時推播，不保證 15 分鐘一次。強制關閉／低耗電／停用背景重新整理可能不執行。
