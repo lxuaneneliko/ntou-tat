@@ -1,6 +1,6 @@
 # 海大 TAT
 
-海大 TAT 是以 React、TypeScript、Vite 與 Capacitor 製作的非官方 Android 學生工具，
+海大 TAT 是以 React、TypeScript、Vite 與 Capacitor 製作的非官方 Android／iOS 學生工具，
 將國立臺灣海洋大學 AIS 的課表、成績與校務資訊整理成行動版介面。
 
 > 本專案不是海大官方 App，也未受海大委託或背書。AIS 網頁結構或登入流程變更時，
@@ -26,6 +26,13 @@ App 不會在背景下載或自動安裝。
 3. 建立非草稿、非 prerelease 的 GitHub Release，並上傳固定名稱 `NTOUTAT.apk`。
 4. APK 使用與舊版相同的簽章金鑰，使用者才能直接覆蓋安裝並保留資料。
 
+公開更新說明統一使用「修復了一些已知問題。」；詳細變更保留在程式提交與測試紀錄。
+
+本機測試 APK 可用 Gradle 的 `-PtatVersionName`、`-PtatVersionCode` 指定獨立版本，
+例如 PowerShell 使用 `'-PtatVersionName=1.13.29.5-test' '-PtatVersionCode=72'`（參數需加引號）。
+測試版不建立 GitHub Release；下一個正式版須使用更高的版本名稱與 versionCode
+（接續此測試版至少 `1.13.30`、`73`），才能通知測試版使用者並覆蓋安裝。
+
 ## 功能
 
 - 海大 AIS 自動辨識驗證碼登入與 Session 保存
@@ -33,6 +40,7 @@ App 不會在背景下載或自動安裝。
 - 分學期成績、4.0 GPA 與學分統計
 - 海大官方行事曆、月份滑動切換與本機個人事件
 - 海大校務系統功能樹與 App 內頁面
+- 海大 TAT 內建 MapLibre 校園地圖、館樓／教授搜尋、約略步行路線與使用者主動授權的單次定位（館樓與辦公室索引經 ntoumap.com 作者同意使用）
 - 海大首頁校務公告、20 個行政單位與 45 個所屬單位官方消息
 - 校園常用連結、交通與緊急聯絡
 - APK 內完整 Mail2000 信箱：資料夾、全部郵件分頁、純文字內容、內文圖片、附件、星號、移動、寄信、回覆與轉寄
@@ -54,9 +62,13 @@ App 不會在背景下載或自動安裝。
 
 ## 開發
 
+iOS 原始碼、原生信箱與掃碼、建置方式和上架交接請見 [iOS 交接文件](docs/IOS_HANDOFF.md)。
+iOS 透過 App Store／TestFlight 發行，不下載 Android APK。原生編譯與模擬器檢查由
+GitHub Actions 的 `iOS build and tests` 執行；綠燈不代表已完成真機驗收或 Apple 審核。
+
 需求：
 
-- Node.js 20+
+- Node.js 24+
 - Java 21
 - Android SDK
 

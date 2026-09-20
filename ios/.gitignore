@@ -4,6 +4,8 @@ App/output
 App/App/public
 DerivedData
 xcuserdata
+.build/
+.swiftpm/
 
 # Cordova plugins for Capacitor
 capacitor-cordova-ios-plugins

@@ -8,8 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.ios-deps/
+DerivedData/
 dist
 dist-ssr
+.map-qa-dist/
 *.local
 .env
 .env.*
@@ -75,3 +78,4 @@ pageinit.js
 validate_code.html
 ocr_clean.ts
 /public/ntou-calendar.html
+/.course-crawl-cache/

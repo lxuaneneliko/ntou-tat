@@ -71,7 +71,7 @@ type NativeMailPlugin = {
   setFlag(options: MailCredentials & { folder: string; uid: string; flag: 'seen' | 'flagged'; value: boolean }): Promise<void>
   moveMessage(options: MailCredentials & { folder: string; uid: string; targetFolder: string }): Promise<void>
   openAttachment(options: MailCredentials & { folder: string; uid: string; partId: string }): Promise<void>
-  sendMessage(options: MailCredentials & MailDraft): Promise<void>
+  sendMessage(options: MailCredentials & MailDraft): Promise<{ warning?: string } | void>
 }
 
 const NativeMail = registerPlugin<NativeMailPlugin>('NtouMail')
@@ -99,7 +99,7 @@ export const normalizeMailAccount = (account: string) => {
 }
 
 const requireNative = () => {
-  if (!isMailMock && !Capacitor.isNativePlatform()) throw new Error('海大信箱僅支援 Android APK')
+  if (!isMailMock && !Capacitor.isNativePlatform()) throw new Error('海大信箱請使用 Android 或 iOS 手機版')
 }
 
 const normalizedCredentials = (credentials: MailCredentials): MailCredentials => ({

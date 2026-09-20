@@ -7,8 +7,10 @@ android {
         applicationId "com.lxuan.ntou_tat"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode = (project.findProperty('tatVersionCode') ?: '78').toInteger()
-        versionName = (project.findProperty('tatVersionName') ?: "1.13.32")
+        // Keep builds above the previously distributed test packages (code 82)
+        // so Android does not reject them as a version downgrade.
+        versionCode = (project.findProperty('tatVersionCode') ?: '83').toInteger()
+        versionName = (project.findProperty('tatVersionName') ?: "1.13.33")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

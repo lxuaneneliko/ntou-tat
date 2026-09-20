@@ -179,10 +179,11 @@ export type EmergencyContact = {
   subtitle: string
 }
 
-export type TabKey = 'timetable' | 'calendar' | 'grades' | 'mail' | 'more'
+export type TabKey = 'timetable' | 'calendar' | 'grades' | 'map' | 'more'
 
 export type MoreView =
   | 'portal'
+  | 'mail'
   | 'announcements'
   | 'departments'
   | 'industry'

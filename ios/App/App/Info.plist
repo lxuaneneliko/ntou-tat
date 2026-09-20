@@ -5,7 +5,7 @@
     <key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>zh_TW</string>
 	<key>CFBundleDisplayName</key>
         <string>海大 TAT</string>
 	<key>CFBundleExecutable</key>
@@ -26,6 +26,12 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>用於掃描海大 TAT 課表 QR Code。</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>在你使用海大地圖定位或從目前位置規劃步行路線時取得位置，不會在背景追蹤。</string>
+	<key>UIBackgroundModes</key>
+	<array><string>fetch</string></array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array><string>com.lxuan.ntoutat.mail-refresh</string></array>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>海大 TAT 不會主動儲存圖片到照片圖庫。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -34,10 +40,6 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>armv7</string>
-	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

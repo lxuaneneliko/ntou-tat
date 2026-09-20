@@ -9,6 +9,13 @@ const config: CapacitorConfig = {
   android: {
     backgroundColor: '#f7f9f8',
   },
+  ios: {
+    // Apple-native QR bridge on iOS; ML Kit remains Android-only.
+    includePlugins: ['@capacitor/app', '@capacitor/browser', '@capacitor/camera',
+      '@capacitor/geolocation', '@capacitor/preferences', '@capacitor/status-bar',
+      'capacitor-secure-storage-plugin'],
+    backgroundColor: '#0f151d',
+  },
   plugins: {
     CapacitorHttp: {
       enabled: true,

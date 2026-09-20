@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Browser } from '@capacitor/browser'
+import { Capacitor } from '@capacitor/core'
 import {
   AlertCircle,
   Archive,
@@ -502,9 +503,9 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
     setActionBusy(true)
     setError(null)
     try {
-      await mailApi.sendMessage(credentials, compose)
+      const sent = await mailApi.sendMessage(credentials, compose)
       setCompose(null)
-      setNotice('信件已寄出')
+      setNotice(sent?.warning || '信件已寄出')
     } catch (sendError) {
       await handleAuthFailure(sendError)
       setError(mailErrorMessage(sendError))
@@ -524,7 +525,9 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
       if (settings.enabled) {
         await mailCredentialsStore.save(credentials)
         setRemember(true)
-        setNotice('新信通知已開啟；背景會定期檢查 Mail2000')
+        setNotice(Capacitor.getPlatform() === 'ios'
+          ? '新信通知已開啟；iOS 自行安排背景檢查，關閉 App 或低耗電時可能暫停，並非即時推播。'
+          : '新信通知已開啟；背景會定期檢查 Mail2000')
       } else {
         setNotice('新信通知已關閉')
       }
