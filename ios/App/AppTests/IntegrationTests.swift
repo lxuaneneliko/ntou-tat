@@ -1,6 +1,7 @@
 import XCTest
 import UIKit
 import WebKit
+import CoreImage
 
 /// Hosted by the real app; checks the actual Capacitor/WKWebView runtime, not Safari.
 @MainActor final class IntegrationTests: XCTestCase {
@@ -40,6 +41,19 @@ import WebKit
         XCTAssertNotNil(scanner?["camera"])
         let portal = try await js(web, "return await Capacitor.nativePromise('NtouPortal', 'cacheGet', {key:'__ios_smoke_empty__'})") as? [String: Any]
         XCTAssertNotNil(portal)
+        // Exercise Vision through the same JS/native contract used by the photo picker.
+        let filter = try XCTUnwrap(CIFilter(name: "CIQRCodeGenerator"))
+        filter.setValue(Data("NTOUTAT iOS QR bridge check".utf8), forKey: "inputMessage")
+        let qr = try XCTUnwrap(filter.outputImage).transformed(by: CGAffineTransform(scaleX: 12, y: 12))
+        let cgImage = try XCTUnwrap(CIContext().createCGImage(qr, from: qr.extent))
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("ios-qr-smoke.png")
+        try XCTUnwrap(UIImage(cgImage: cgImage).pngData()).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let decoded = try await web.callAsyncJavaScript(
+            "return await Capacitor.nativePromise('BarcodeScanner','readBarcodesFromImage',{path:path})",
+            arguments: ["path": file.absoluteString], in: nil, contentWorld: .page) as? [String: Any]
+        let barcodes = decoded?["barcodes"] as? [[String: Any]]
+        XCTAssertEqual(barcodes?.first?["rawValue"] as? String, "NTOUTAT iOS QR bridge check")
         _ = try await js(web, "setTimeout(() => location.href='/__qa__/index.html', 100); return true")
         try await waitFor(web, "document.querySelectorAll('input').length === 2")
         try await waitFor(web, "Number(document.querySelector('#map-evidence')?.dataset.tiles) > 0", seconds: 60)

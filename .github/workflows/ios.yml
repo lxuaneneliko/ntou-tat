@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: ios-${{ github.ref }}
+  group: ios-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 jobs:
   ios:
