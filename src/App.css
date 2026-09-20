@@ -5049,6 +5049,27 @@ button:disabled {
   box-shadow: 0 0 0 3px rgba(73, 174, 255, 0.14);
 }
 
+.login-panel label.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.login-panel .remember-me input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin: 0;
+  padding: 0;
+  accent-color: #49aeff;
+}
+
+.login-panel input:not([type='checkbox']) {
+  font-size: 16px;
+}
+
 .captcha-row {
   height: 66px;
   display: grid;
