@@ -19,6 +19,12 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ios/App/NtouNative/.build
+            DerivedData/SourcePackages
+          key: ios-spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ios/App/NtouNative/Package.swift', 'package-lock.json') }}
       - name: Toolchain
         run: |
           xcodebuild -version

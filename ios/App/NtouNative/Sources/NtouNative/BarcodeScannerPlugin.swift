@@ -25,11 +25,11 @@ public final class NtouBarcodeScannerPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc public func isSupported(_ call: CAPPluginCall) {
         call.resolve(["supported": AVCaptureDevice.default(for: .video) != nil])
     }
-    @objc public func checkPermissions(_ call: CAPPluginCall) {
+    @objc public override func checkPermissions(_ call: CAPPluginCall) {
         let state = AVCaptureDevice.authorizationStatus(for: .video)
         call.resolve(["camera": state == .authorized ? "granted" : state == .notDetermined ? "prompt" : "denied"])
     }
-    @objc public func requestPermissions(_ call: CAPPluginCall) {
+    @objc public override func requestPermissions(_ call: CAPPluginCall) {
         AVCaptureDevice.requestAccess(for: .video) { allowed in call.resolve(["camera": allowed ? "granted" : "denied"]) }
     }
     @objc public func scan(_ call: CAPPluginCall) {
@@ -148,7 +148,9 @@ private final class QRScannerController: UIViewController, AVCaptureMetadataOutp
         guard !finished else { return }
         finished = true
         captureQueue.async { self.session.stopRunning() }
-        completion?(value, error)
+        let callback = completion
+        completion = nil
+        callback?(value, error)
     }
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         if let value = (metadataObjects.first as? AVMetadataMachineReadableCodeObject)?.stringValue { finish(value, nil) }

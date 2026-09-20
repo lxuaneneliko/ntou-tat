@@ -178,7 +178,7 @@ export const NtouMapTabScreen = forwardRef<NtouMapTabScreenHandle, { onOpenStati
         attributionControl: false,
       })
     } catch {
-      setMapError('無法啟用互動地圖，請確認 Android System WebView 已更新後再試')
+      setMapError('無法啟用互動地圖，請更新手機系統與瀏覽器後重新開啟 App 再試')
       return
     }
     mapRef.current = map

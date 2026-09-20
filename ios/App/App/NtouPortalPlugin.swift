@@ -226,7 +226,18 @@ public final class NtouPortalPlugin: CAPPlugin, CAPBridgedPlugin {
             }
             PortalKeychain.delete(Self.cookieAccount)
         }
-        call.resolve()
+        // Also clear any school cookies left by older persistent in-app pages.
+        DispatchQueue.main.async {
+            let store = WKWebsiteDataStore.default().httpCookieStore
+            store.getAllCookies { cookies in
+                let group = DispatchGroup()
+                for cookie in cookies where self.isNtouCookie(cookie) {
+                    group.enter()
+                    store.delete(cookie) { group.leave() }
+                }
+                group.notify(queue: .main) { call.resolve() }
+            }
+        }
     }
 
     @objc public func cacheGet(_ call: CAPPluginCall) {
@@ -308,10 +319,19 @@ public final class NtouPortalPlugin: CAPPlugin, CAPBridgedPlugin {
 
         for redirectCount in 0...Self.maximumRedirects {
             try assertGeneration(expectedGeneration)
+            // Credential-bearing requests must never follow an off-campus redirect.
+            guard isAllowedSystemURL(url), url.user == nil, url.password == nil else {
+                throw URLError(.unsupportedURL)
+            }
             var request = URLRequest(url: url)
             request.httpMethod = method
             request.timeoutInterval = TimeInterval(timeoutMs) / 1_000
             request.cachePolicy = .reloadIgnoringLocalCacheData
+            request.httpShouldHandleCookies = false
+            let cookies = cookieStorage.cookies(for: url) ?? []
+            for (name, value) in HTTPCookie.requestHeaderFields(with: cookies) {
+                request.setValue(value, forHTTPHeaderField: name)
+            }
             request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
             request.setValue("zh-TW,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
             for (name, value) in headers where !isRestrictedHeader(name) {
@@ -322,19 +342,22 @@ public final class NtouPortalPlugin: CAPPlugin, CAPBridgedPlugin {
             }
 
             let configuration = URLSessionConfiguration.ephemeral
-            configuration.httpCookieStorage = cookieStorage
-            configuration.httpShouldSetCookies = true
+            configuration.httpCookieStorage = nil
+            configuration.httpShouldSetCookies = false
             configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
             let delegate = NoRedirectSessionDelegate()
             let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
+            defer { session.finishTasksAndInvalidate() }
             let (data, rawResponse) = try await session.data(for: request)
-            session.finishTasksAndInvalidate()
             guard let response = rawResponse as? HTTPURLResponse else {
                 throw URLError(.badServerResponse)
             }
 
             try assertGeneration(expectedGeneration)
-            storeResponseCookies(response, for: url)
+            try stateQueue.sync {
+                guard cookieGeneration == expectedGeneration else { throw URLError(.cancelled) }
+                storeResponseCookies(response, for: url)
+            }
             persistCookies(expectedGeneration: expectedGeneration)
 
             if isRedirect(response.statusCode),
@@ -583,7 +606,8 @@ private final class PortalWebViewController: UIViewController, WKNavigationDeleg
         navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
 
         let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()
+        // The app owns the persistent AIS session; this viewer must not retain a second one.
+        configuration.websiteDataStore = .nonPersistent()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 
         webView = WKWebView(frame: .zero, configuration: configuration)

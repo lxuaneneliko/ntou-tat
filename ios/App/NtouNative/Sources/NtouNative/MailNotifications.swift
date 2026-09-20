@@ -60,6 +60,7 @@ actor MailNotifications {
     }
     func configure(enabled: Bool, login: MailLogin?) async throws -> [String: Any] {
         generation += 1
+        let version = generation
         if !enabled {
             try save(nil)
             BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: NativeMailBackground.taskIdentifier)
@@ -69,7 +70,7 @@ actor MailNotifications {
         }
         guard let login else { throw NativeMailError.message("請先登入信箱") }
         guard try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) else { return await settings() }
-        let version = generation
+        guard version == generation else { return await settings() }
         let state = try await MailClient.withInbox(login) { server -> NotificationState in
             let selected = try await server.selectMailbox("INBOX")
             return NotificationState(login: login, nextUID: max(1, selected.uidNext.value), uidValidity: String(describing: selected.uidValidity))
@@ -102,7 +103,7 @@ actor MailNotifications {
             }
             try Task.checkCancellation()
             guard version == generation, read() != nil else { return true }
-            state.nextUID = result.0; state.uidValidity = result.1
+            state.nextUID = max(1, result.0); state.uidValidity = result.1
             try save(state)
             if result.2 > 0 {
                 let content = UNMutableNotificationContent()

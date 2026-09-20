@@ -8,7 +8,7 @@ import UIKit
 public final class NtouMailPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "NtouMailPlugin"
     public let jsName = "NtouMail"
-    public let pluginMethods = ["login", "getNotificationSettings", "setNotifications", "listFolders", "listMessages", "getMessage", "setFlag", "moveMessage", "openAttachment", "sendMessage"].map {
+    public let pluginMethods: [CAPPluginMethod] = ["login", "getNotificationSettings", "setNotifications", "listFolders", "listMessages", "getMessage", "setFlag", "moveMessage", "openAttachment", "sendMessage"].compactMap {
         CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise)
     }
     private func run(_ call: CAPPluginCall, _ work: @escaping () async throws -> [String: Any]) {
@@ -120,13 +120,18 @@ public final class NtouMailPlugin: CAPPlugin, CAPBridgedPlugin {
             let safeName = URL(fileURLWithPath: filename).lastPathComponent
             let url = directory.appendingPathComponent(safeName.isEmpty ? "attachment" : safeName)
             try data.write(to: url, options: [.atomic, .completeFileProtection])
-            await MainActor.run {
-                guard let presenter = self.bridge?.viewController else { return }
+            let presented = await MainActor.run {
+                guard let presenter = self.bridge?.viewController, presenter.presentedViewController == nil else { return false }
                 let share = UIActivityViewController(activityItems: [url], applicationActivities: nil)
                 share.popoverPresentationController?.sourceView = presenter.view
                 share.popoverPresentationController?.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 1, height: 1)
                 share.completionWithItemsHandler = { _, _, _, _ in try? FileManager.default.removeItem(at: directory) }
                 presenter.present(share, animated: true)
+                return true
+            }
+            guard presented else {
+                try? FileManager.default.removeItem(at: directory)
+                throw NativeMailError.message("請關閉目前視窗後再開啟附件")
             }
             return [:]
         }
