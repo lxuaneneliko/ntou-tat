@@ -72,7 +72,7 @@ actor MailNotifications {
         let version = generation
         let state = try await MailClient.withInbox(login) { server -> NotificationState in
             let selected = try await server.selectMailbox("INBOX")
-            return NotificationState(login: login, nextUID: selected.uidNext.value, uidValidity: String(describing: selected.uidValidity))
+            return NotificationState(login: login, nextUID: max(1, selected.uidNext.value), uidValidity: String(describing: selected.uidValidity))
         }
         guard version == generation else { return await settings() }
         try save(state)

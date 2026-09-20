@@ -31,7 +31,8 @@ enum MailContent {
         return value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     static func safeHeader(_ value: String) throws -> String {
-        guard !value.contains("\r"), !value.contains("\n"), !value.contains("\0") else {
+        // CRLF is a single Swift Character; check Unicode scalars, not grapheme membership.
+        guard !value.unicodeScalars.contains(where: { $0.value == 13 || $0.value == 10 || $0.value == 0 }) else {
             throw NativeMailError.message("郵件標題或地址格式不正確")
         }
         return value
