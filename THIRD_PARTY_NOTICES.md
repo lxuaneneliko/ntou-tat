@@ -21,21 +21,6 @@ inclusion does not imply university endorsement and does not grant trademark
 or content-redistribution rights. Any required permission must be obtained
 separately from the relevant rights holder.
 
-## Campus map data and services
-
-- `src/data/ntou-map-buildings.json` and `src/data/ntou-map-professors.json`
-  contain campus location indexes supplied through `ntoumap.com`. They are
-  included with the author's permission, are attributed in the App, and are
-  excluded from NTOU TAT's MIT License unless the relevant rights holder states
-  otherwise.
-- Map rendering uses [MapLibre GL JS](https://maplibre.org/) under BSD-3-Clause.
-- Map styles and tiles are provided by [OpenFreeMap](https://openfreemap.org/)
-  and OpenMapTiles with data from OpenStreetMap. Their upstream licenses and
-  required attribution remain applicable.
-- Optional walking routes are calculated by the public
-  [FOSSGIS routing service](https://routing.openstreetmap.de/about.html) using
-  OpenStreetMap data. Its usage policy, attribution and privacy terms apply.
-
 ## OCR components
 
 - Portions under `src/utils/ddddocr_web_temp/` come from

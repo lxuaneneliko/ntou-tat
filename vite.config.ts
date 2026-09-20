@@ -4,9 +4,6 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 // https://vite.dev/config/
 export default defineConfig({
-  optimizeDeps: {
-    exclude: ['maplibre-gl'],
-  },
   plugins: [
     react(),
     viteStaticCopy({

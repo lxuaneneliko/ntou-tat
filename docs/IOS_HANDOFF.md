@@ -1,4 +1,4 @@
-# iOS 1.13.33（83）交接
+# iOS 1.13.32（78）交接
 
 這是共用 React 介面的原生 Capacitor iOS App，不是網站捷徑。尚未宣稱已上架或通過真機驗收。
 Android 的套件 ID、資料與發行管道保持獨立；此分支沒有發布 Android Release。
@@ -14,7 +14,7 @@ Android 的套件 ID、資料與發行管道保持獨立；此分支沒有發布
 - `swift test --package-path ios/App/NtouNative` 測試信件解析、地址及標頭防注入。
 
 GitHub Actions `iOS build and tests` 分成平行的 `ios` 與 `device` 兩項工作：前者做前端測試、模擬器編譯、啟動截圖，後者做原生信件／QR 測試與無簽章實機 archive。
-App 內真實 WKWebView 的整合測試包含橋接／即時向量圖資／教授搜尋切換／步行路線；這項測試需要公共地圖服務連線，不會登入 AIS。測試頁只放在模擬器工作的 bundle，實機封存由另一份乾淨 checkout 建立，不會包含測試頁。
+App 內真實 WKWebView 的整合測試包含原生信箱、相機權限、AIS 快取橋接與 QR 圖片辨識；測試不會登入 AIS。
 artifact `ios-device-archive` 裡的 `.xcarchive` **不是可安裝 IPA，也不能直接提交 App Store**；`ios-build-evidence` 是模擬器操作紀錄。兩項工作都必須檢查，封存成功不代表操作測試成功。
 
 ## 功能與平台差異
@@ -25,7 +25,7 @@ artifact `ios-device-archive` 裡的 `.xcarchive` **不是可安裝 IPA，也不
 - 信箱：原生 TLS IMAP／SMTP、分頁、資料夾、已讀／星號、移動、純文字與原位圖片、附件分享、寄信／回覆／轉寄。
 - 舊版 Mail2000 若沒有 MOVE／UIDPLUS，移動採複製後標記來源刪除，App 隱藏已刪除項目；不執行會連帶清除其他郵件的全資料夾 EXPUNGE。來源實體副本由學校信箱後續清理，伺服器總封數可能暫時包含該副本。
 - iOS 信箱背景檢查使用 BGAppRefreshTask，系統可能延後、暫停；不是即時推播，不保證 15 分鐘一次。強制關閉／低耗電／停用背景重新整理可能不執行。
-- 地圖：真正的 MapLibre 向量地圖、拖曳縮放、館樓／教室／教授搜尋、步行路線與前景單次定位；定位拒絕仍可用兩個館樓規劃。
+- 「交通與地圖」沿用正式版的校園平面圖與外部交通連結；本次 iOS 移植不包含互動式定位或路線功能。
 - 更新由 App Store／TestFlight 處理；iOS 不顯示 GitHub APK 安裝提示。
 - 不提供新帳號註冊；學校帳號由海大管理。App 信箱登入／AIS 登入互相獨立。
 
@@ -34,10 +34,10 @@ artifact `ios-device-archive` 裡的 `.xcarchive` **不是可安裝 IPA，也不
 1. Apple Developer / App Store Connect 建立 App。iOS bundle ID 是 `com.lxuan.ntoutat`（不是含底線的 Android ID）。若該 ID 已被占用，首次發行前換成團隊自己的 ID，並同步修改 Info.plist / MailNotifications.swift 的背景 task identifier。
 2. Xcode → App → Signing & Capabilities，選擇自己的 Team，自動簽章。不要把憑證、私鑰、profile、Apple 密碼提交到 Git。
 3. 接 iPhone 完成以下驗收，再以 Generic iOS Device → Product → Archive → Validate App → Distribute App → App Store Connect 發佈 TestFlight。
-4. 版本 1.13.33、build 83；若 Connect 已存在此 build，遞增 build number，再更新對應紀錄。
-5. 補上 App 描述、支援及隱私網址、螢幕截圖、內容分級、出口合規與 App Privacy 問卷；由帳號持有人依實際資料流確認，不能照抄「不收集」而忽略學校／地圖服務。
+4. 版本 1.13.32、build 78；若 Connect 已存在此 build，遞增 build number，再更新對應紀錄。
+5. 補上 App 描述、支援及隱私網址、螢幕截圖、內容分級、出口合規與 App Privacy 問卷；由帳號持有人依實際資料流確認。
 6. 審查登入功能需要可合法提供的測試帳號或經 Apple 同意的審查方式。不要提供個人真實學生密碼，不要為過審偽裝功能。
-7. 校名／校徽／校歌等權利仍屬各權利人，App 說明要維持「非官方」，上架前確認素材授權；ntoumap 作者同意不代表學校素材全部獲授權。
+7. 校名／校徽／校歌等權利仍屬各權利人，App 說明要維持「非官方」，上架前確認素材授權。
 
 ## 真機驗收門檻（不能用 CI 綠燈取代）
 
@@ -47,7 +47,7 @@ artifact `ios-device-archive` 裡的 `.xcarchive` **不是可安裝 IPA，也不
 - [ ] QR 相機允許／拒絕／取消、圖庫大圖／旋轉圖／無 QR、匯入後課程資訊。
 - [ ] Mail2000 真實帳號收信、Big5／UTF-8、CID 內文圖、外部圖片同意、附件、寄信／回覆／轉寄、寄件備份。
 - [ ] 通知預設關閉、啟用、撤銷系統權限、停用、信箱登出後不再收信。
-- [ ] 實際校園定位、拒絕定位、兩欄互不干擾、教授→館樓路線、拖曳／縮放及網路中斷提示。
+- [ ] 「交通與地圖」校園平面圖、縮放與外部交通連結可正常開啟。
 - [ ] 安裝 TestFlight 新 build 後，自訂課程、備註、朋友課表與行事曆仍保存。
 
-在 Windows 完成來源碼與前端測試，不等於已驗證相機、GPS、真實信箱或 Apple 審核；請在勾完上列清單後再公開上架。
+在 Windows 完成來源碼與前端測試，不等於已驗證相機、真實信箱或 Apple 審核；請在勾完上列清單後再公開上架。

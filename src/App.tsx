@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent, RefObject } from 'react'
 import { App as CapApp } from '@capacitor/app'
 import { Camera as DeviceCamera, MediaTypeSelection } from '@capacitor/camera'
@@ -54,7 +54,6 @@ import {
   ZoomOut,
 } from 'lucide-react'
 import './App.css'
-import './MoreMailScreen.css'
 import { apiMode, createNtouApi } from './api'
 import { UnauthorizedError } from './api/errors'
 import { emergencyContacts, emptyCredits } from './api/publicData'
@@ -72,7 +71,6 @@ import { GPA_MAX, hasPassingResult, scoreToGpa } from './gpa'
 import { GeneralEducationProgressSheet } from './GeneralEducationProgressSheet'
 import { GraduationAuditSheet } from './GraduationAuditSheet'
 import { MailScreen, type MailScreenHandle } from './MailScreen'
-import type { NtouMapTabScreenHandle } from './NtouMapTabScreen'
 import { DepartmentSitesScreen, type DepartmentSitesScreenHandle } from './DepartmentSitesScreen'
 import { AdministrativeUnitsScreen, type AdministrativeUnitsScreenHandle } from './AdministrativeUnitsScreen'
 import { SchoolSongScreen, type SchoolSongScreenHandle } from './SchoolSongScreen'
@@ -107,7 +105,6 @@ import {
   readStoredExternalCompetitions,
   writeStoredExternalCompetitions,
 } from './storage/externalCompetitionStorage'
-
 import {
   readStoredIndustryNews,
   writeStoredIndustryNews,
@@ -169,10 +166,6 @@ import type {
   TrafficInfo,
 } from './types'
 
-const NtouMapTabScreen = lazy(() =>
-  import('./NtouMapTabScreen').then((module) => ({ default: module.NtouMapTabScreen })),
-)
-
 type AppData = {
   profile: StudentProfile
   semesters: Semester[]
@@ -227,7 +220,7 @@ const tabs: Array<{ key: TabKey; label: string; icon: typeof CalendarDays }> = [
   { key: 'timetable', label: '課表', icon: Clock3 },
   { key: 'calendar', label: '行事曆', icon: CalendarDays },
   { key: 'grades', label: '成績', icon: GraduationCap },
-  { key: 'map', label: '地圖', icon: MapPinned },
+  { key: 'mail', label: '信箱', icon: Mail },
   { key: 'more', label: '其它', icon: Menu },
 ]
 
@@ -235,7 +228,7 @@ const tabTitles: Record<TabKey, string> = {
   timetable: '課表',
   calendar: '行事曆',
   grades: '成績',
-  map: '海大地圖',
+  mail: '海大信箱',
   more: '其它',
 }
 
@@ -512,7 +505,6 @@ function App() {
   const departmentSitesRef = useRef<DepartmentSitesScreenHandle>(null)
   const administrativeUnitsRef = useRef<AdministrativeUnitsScreenHandle>(null)
   const schoolSongRef = useRef<SchoolSongScreenHandle>(null)
-  const ntouMapScreenRef = useRef<NtouMapTabScreenHandle>(null)
   const includeSummerSemestersRef = useRef(includeSummerSemesters)
   const semesterPrefetchWasRunningRef = useRef(false)
   const lastRootBackAtRef = useRef(0)
@@ -1272,9 +1264,7 @@ function App() {
       } else if (activeCourse) {
         clearExitHint()
         setActiveCourse(null)
-      } else if (selectedTab === 'map' && !moreView && ntouMapScreenRef.current?.goBack()) {
-        clearExitHint()
-      } else if (moreView === 'mail' && mailScreenRef.current?.goBack()) {
+      } else if (selectedTab === 'mail' && mailScreenRef.current?.goBack()) {
         clearExitHint()
       } else if (moreView === 'departments' && departmentSitesRef.current?.goBack()) {
         clearExitHint()
@@ -1686,7 +1676,6 @@ function App() {
               <button className="header-icon" type="button" aria-label="返回" onClick={() => {
                 if (moreView === 'departments' && departmentSitesRef.current?.goBack()) return
                 if (moreView === 'administration' && administrativeUnitsRef.current?.goBack()) return
-                if (moreView === 'mail' && mailScreenRef.current?.goBack()) return
                 setMoreView(null)
               }}>
                 <ChevronLeft size={24} />
@@ -1706,7 +1695,7 @@ function App() {
                   ? <Pause size={22} fill="currentColor" />
                   : <Play size={22} fill="currentColor" />}
               </button>
-            ) : moreView !== 'mail' && selectedTab !== 'map' ? (
+            ) : selectedTab !== 'mail' || moreView ? (
               <button
                 className="header-icon"
                 type="button"
@@ -1970,7 +1959,6 @@ function App() {
                 administrativeUnitsRef={administrativeUnitsRef}
                 schoolSongRef={schoolSongRef}
                 onSchoolSongPlayingChange={setSchoolSongPlaying}
-                mailScreenRef={mailScreenRef}
               />
             ) : selectedTab === 'timetable' ? (
               <TimetableScreen
@@ -2024,20 +2012,8 @@ function App() {
                   saveCustomGrades({ ...customGrades, [selectedSemester]: nextCustom })
                 }}
               />
-            ) : selectedTab === 'map' ? (
-              <Suspense
-                fallback={(
-                  <div className="map-module-loading" role="status">
-                    <Loader2 className="spin" size={24} />
-                    <span>正在開啟海大地圖</span>
-                  </div>
-                )}
-              >
-                <NtouMapTabScreen
-                  ref={ntouMapScreenRef}
-                  onOpenStaticMap={() => setMoreView('traffic')}
-                />
-              </Suspense>
+            ) : selectedTab === 'mail' ? (
+              <MailScreen ref={mailScreenRef} studentId={data.profile.id} />
             ) : (
               <MoreScreen
                 avatarUrl={customAvatar}
@@ -3012,28 +2988,19 @@ function MoreScreen({
     }
   }
 
-  const tools: Array<{
-    icon: typeof Bell
-    id: string
-    label: string
-    view?: MoreView
-  }> = [
-    { icon: Building2, id: 'portal', label: '海大校務系統', view: 'portal' },
-    { icon: Mail, id: 'mail', label: '海大信箱', view: 'mail' },
-    { icon: Bell, id: 'announcements', label: '校務公告', view: 'announcements' },
-    { icon: Building2, id: 'administration', label: '行政單位', view: 'administration' },
-    { icon: Building2, id: 'departments', label: '各系系網', view: 'departments' },
-    { icon: Handshake, id: 'industry', label: '海大產學中心', view: 'industry' },
-    { icon: Trophy, id: 'competitions', label: '校外競賽', view: 'competitions' },
-    { icon: Music2, id: 'school-song', label: '海大校歌', view: 'school-song' },
-    { icon: CalendarDays, id: 'calendar', label: '重要日期', view: 'calendar' },
-    { icon: Phone, id: 'emergency', label: '緊急聯絡', view: 'emergency' },
-    { icon: ShieldCheck, id: 'settings', label: '帳號與設定', view: 'settings' },
+  const tools: Array<{ icon: typeof Bell; label: string; view: MoreView }> = [
+    { icon: Building2, label: '海大校務系統', view: 'portal' },
+    { icon: Bell, label: '校務公告', view: 'announcements' },
+    { icon: Building2, label: '行政單位', view: 'administration' },
+    { icon: Building2, label: '各系系網', view: 'departments' },
+    { icon: Handshake, label: '海大產學中心', view: 'industry' },
+    { icon: Trophy, label: '校外競賽', view: 'competitions' },
+    { icon: Music2, label: '海大校歌', view: 'school-song' },
+    { icon: CalendarDays, label: '重要日期', view: 'calendar' },
+    { icon: MapPinned, label: '交通與地圖', view: 'traffic' },
+    { icon: Phone, label: '緊急聯絡', view: 'emergency' },
+    { icon: ShieldCheck, label: '帳號與設定', view: 'settings' },
   ]
-
-  const handleToolOpen = (tool: (typeof tools)[number]) => {
-    if (tool.view) onOpen(tool.view)
-  }
   return (
     <section className="more-screen">
       <div className="profile-block">
@@ -3070,9 +3037,9 @@ function MoreScreen({
           const Icon = tool.icon
           return (
             <button
-              key={tool.id}
+              key={tool.view}
               type="button"
-              onClick={() => handleToolOpen(tool)}
+              onClick={() => onOpen(tool.view)}
             >
               <Icon size={22} />
               <span>{tool.label}</span>
@@ -3104,7 +3071,6 @@ function MoreSubview({
   onRefreshIndustry,
   onSchoolSongPlayingChange,
   schoolSongRef,
-  mailScreenRef,
   view,
 }: {
   data: AppData
@@ -3120,7 +3086,6 @@ function MoreSubview({
   onRefreshIndustry: () => Promise<void>
   onSchoolSongPlayingChange: (playing: boolean) => void
   schoolSongRef: RefObject<SchoolSongScreenHandle | null>
-  mailScreenRef: RefObject<MailScreenHandle | null>
   view: MoreView
 }) {
   if (view === 'portal') {
@@ -3169,14 +3134,6 @@ function MoreSubview({
   if (view === 'traffic') return <CampusMapScreen />
   if (view === 'school-song') {
     return <SchoolSongScreen ref={schoolSongRef} onPlayingChange={onSchoolSongPlayingChange} />
-  }
-
-  if (view === 'mail') {
-    return (
-      <div className="mail-more-view">
-        <MailScreen ref={mailScreenRef} studentId={data.profile.id} />
-      </div>
-    )
   }
 
   if (view === 'announcements') {
@@ -4306,14 +4263,13 @@ function LoadingScreen() {
 function moreViewTitle(view: MoreView) {
   const titles: Record<MoreView, string> = {
     portal: '海大校務系統',
-    mail: '海大信箱',
     announcements: '校務公告',
     departments: '各系系網',
     industry: '海大產學中心',
     competitions: '校外競賽',
     calendar: '重要日期',
     administration: '行政單位',
-    traffic: '校園平面圖',
+    traffic: '交通與地圖',
     emergency: '緊急聯絡',
     'school-song': '海大校歌',
     settings: '帳號與設定',

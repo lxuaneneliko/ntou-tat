@@ -26,10 +26,6 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>用於掃描海大 TAT 課表 QR Code。</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>在你使用海大地圖定位或從目前位置規劃步行路線時取得位置，不會在背景追蹤。</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>在你使用海大地圖定位或從目前位置規劃步行路線時取得位置，不會在背景追蹤。</string>
 	<key>UIBackgroundModes</key>
 	<array><string>fetch</string></array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>

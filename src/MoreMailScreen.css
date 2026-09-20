@@ -1,8 +1,0 @@
-.mail-more-view .mail-screen {
-  min-height: calc(100dvh - 70px - env(safe-area-inset-top));
-  padding-bottom: calc(24px + env(safe-area-inset-bottom));
-}
-
-.mail-more-view .mail-compose-fab {
-  bottom: calc(18px + env(safe-area-inset-bottom));
-}

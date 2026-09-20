@@ -62,13 +62,11 @@ jobs:
           sleep 10
           xcrun simctl io "$DEVICE" screenshot ios-launch.png
           xcrun simctl spawn "$DEVICE" launchctl list | grep com.lxuan.ntoutat
-      - name: Test real iOS bridges, vector map and walking route (no student account)
+      - name: Test real iOS bridges and QR image import (no student account)
         timeout-minutes: 8
         run: |
           set -o pipefail
-          npx vite build --config test-fixtures/ios-map/vite.config.ts
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" -derivedDataPath DerivedData -resultBundlePath ios-integration.xcresult -parallel-testing-enabled NO -test-timeouts-enabled YES -maximum-test-execution-time-allowance 240 ARCHS="$(uname -m)" CODE_SIGNING_ALLOWED=NO test | tee ios-integration-build.log
-          xcrun simctl io "$SIMULATOR_UDID" screenshot ios-map.png
       - name: Capture simulator diagnostics
         if: always() && env.SIMULATOR_UDID != ''
         timeout-minutes: 2
@@ -83,7 +81,6 @@ jobs:
           path: |
             ios-*-build.log
             ios-launch.png
-            ios-map.png
             ios-final-state.png
             ios-integration.xcresult
             ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
@@ -116,7 +113,6 @@ jobs:
         timeout-minutes: 18
         run: |
           set -o pipefail
-          test ! -d ios/App/App/public/__qa__
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -derivedDataPath DerivedData -archivePath output/NTOUTAT-unsigned.xcarchive CODE_SIGNING_ALLOWED=NO archive | tee ios-device-build.log
       - name: Upload device archive and native test evidence
         if: always()

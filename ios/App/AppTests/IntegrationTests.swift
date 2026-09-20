@@ -48,19 +48,8 @@ import CoreImage
         XCTFail("Timed out: \(condition)\n\(visible)")
         throw NSError(domain: "UITest", code: 2)
     }
-    func testNativeBridgeAndLiveVectorMap() async throws {
+    func testNativeBridgeAndQRImageImport() async throws {
         executionTimeAllowance = 240
-        // Diagnose HTTPS independently of our bridge / MapLibre, without changing TLS policy.
-        for endpoint in ["https://www.apple.com/library/test/success.html", "https://tiles.openfreemap.org/styles/dark"] {
-            do {
-                var request = URLRequest(url: URL(string: endpoint)!)
-                request.timeoutInterval = 15
-                let (data, response) = try await URLSession.shared.data(for: request)
-                print("IOS_NETWORK: \(endpoint) HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0), \(data.count) bytes")
-            } catch {
-                print("IOS_NETWORK: \(endpoint) \(error)")
-            }
-        }
         print("IOS_CHECK: production login")
         let web = try await webView()
         try await waitFor(web, "window.Capacitor && document.querySelector('input')")
@@ -94,35 +83,10 @@ import CoreImage
         let barcodes = decoded?["barcodes"] as? [[String: Any]]
         let qrMatches = barcodes?.first?["rawValue"] as? String == "NTOUTAT iOS QR bridge check"
         XCTAssertTrue(qrMatches, "Native Vision did not return the expected QR payload: \(String(describing: barcodes))")
-        print("IOS_CHECK: native QR image decode \(qrMatches ? "passed" : "FAILED"); loading real vector map")
-        _ = try await js(web, "setTimeout(() => location.href='/__qa__/index.html', 100); return true")
-        try await waitFor(web, "document.querySelectorAll('input').length === 2")
-        try await waitFor(web, "Number(document.querySelector('#map-evidence')?.dataset.tiles) > 0", seconds: 60)
-        print("IOS_CHECK: vector tiles rendered")
-        func fill(_ name: String, _ value: String) async throws {
-            _ = try await js(web, """
-              const e = document.querySelector('input[aria-label="\(name)"]'); e.focus();
-              Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'\(value)');
-              e.dispatchEvent(new Event('input',{bubbles:true})); return true;
-              """)
-        }
-        try await fill("起點", "馬尚彬")
-        try await waitFor(web, "document.querySelector('[role=listbox]')?.innerText.includes('馬尚彬')")
-        _ = try await js(web, "document.querySelector('input[aria-label=終點]').focus(); return true")
-        try await waitFor(web, "!document.querySelector('[role=listbox]')")
-        try await fill("起點", "BOH")
-        try await waitFor(web, "document.querySelector('[role=option]')")
-        _ = try await js(web, "document.querySelector('[role=option]').click(); return true")
-        try await fill("終點", "MEB")
-        try await waitFor(web, "document.querySelector('[role=option]')")
-        _ = try await js(web, "document.querySelector('[role=option]').click(); return true")
-        try await waitFor(web, "!document.querySelector('.ntou-map-route-submit').disabled")
-        _ = try await js(web, "document.querySelector('.ntou-map-route-submit').click(); document.activeElement.blur(); return true")
-        try await waitFor(web, "Number(document.querySelector('#map-evidence')?.dataset.routes) > 0", seconds: 60)
-        print("IOS_CHECK: independent fields and live walking route passed")
+        print("IOS_CHECK: native QR image decode \(qrMatches ? "passed" : "FAILED")")
         let snapshot = try await web.takeSnapshot(configuration: nil)
         let screenshot = XCTAttachment(image: snapshot)
-        screenshot.name = "Live iOS campus map with route"
+        screenshot.name = "iOS login and native bridge"
         screenshot.lifetime = .keepAlways
         add(screenshot)
     }

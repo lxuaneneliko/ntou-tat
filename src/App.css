@@ -342,17 +342,6 @@ button:disabled {
   padding-bottom: calc(78px + env(safe-area-inset-bottom));
 }
 
-.map-module-loading {
-  min-height: calc(100dvh - 138px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  color: #9eb3c2;
-  background: #0b1117;
-  font-size: 13px;
-}
-
 .view-transition {
   animation: view-enter 240ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
