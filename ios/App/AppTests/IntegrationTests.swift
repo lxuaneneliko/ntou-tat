@@ -50,6 +50,17 @@ import CoreImage
     }
     func testNativeBridgeAndLiveVectorMap() async throws {
         executionTimeAllowance = 240
+        // Diagnose HTTPS independently of our bridge / MapLibre, without changing TLS policy.
+        for endpoint in ["https://www.apple.com/library/test/success.html", "https://tiles.openfreemap.org/styles/dark"] {
+            do {
+                var request = URLRequest(url: URL(string: endpoint)!)
+                request.timeoutInterval = 15
+                let (data, response) = try await URLSession.shared.data(for: request)
+                print("IOS_NETWORK: \(endpoint) HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0), \(data.count) bytes")
+            } catch {
+                print("IOS_NETWORK: \(endpoint) \(error)")
+            }
+        }
         print("IOS_CHECK: production login")
         let web = try await webView()
         try await waitFor(web, "window.Capacitor && document.querySelector('input')")
@@ -68,14 +79,22 @@ import CoreImage
         let qr = try XCTUnwrap(filter.outputImage).transformed(by: CGAffineTransform(scaleX: 12, y: 12))
         let cgImage = try XCTUnwrap(CIContext(options: [.useSoftwareRenderer: true]).createCGImage(qr, from: qr.extent))
         let file = FileManager.default.temporaryDirectory.appendingPathComponent("ios-qr-smoke.png")
-        try XCTUnwrap(UIImage(cgImage: cgImage).pngData()).write(to: file)
+        // A real QR has a white quiet zone. Keep it in the fixture as well.
+        let size = CGSize(width: CGFloat(cgImage.width + 96), height: CGFloat(cgImage.height + 96))
+        let fixture = UIGraphicsImageRenderer(size: size).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            UIImage(cgImage: cgImage).draw(at: CGPoint(x: 48, y: 48))
+        }
+        try XCTUnwrap(fixture.pngData()).write(to: file)
         defer { try? FileManager.default.removeItem(at: file) }
         let decoded = try await js(web,
             "return await Capacitor.nativePromise('BarcodeScanner','readBarcodesFromImage',{path:path})",
             arguments: ["path": file.absoluteString]) as? [String: Any]
         let barcodes = decoded?["barcodes"] as? [[String: Any]]
-        XCTAssertEqual(barcodes?.first?["rawValue"] as? String, "NTOUTAT iOS QR bridge check")
-        print("IOS_CHECK: native QR image decode passed; loading real vector map")
+        let qrMatches = barcodes?.first?["rawValue"] as? String == "NTOUTAT iOS QR bridge check"
+        XCTAssertTrue(qrMatches, "Native Vision did not return the expected QR payload: \(String(describing: barcodes))")
+        print("IOS_CHECK: native QR image decode \(qrMatches ? "passed" : "FAILED"); loading real vector map")
         _ = try await js(web, "setTimeout(() => location.href='/__qa__/index.html', 100); return true")
         try await waitFor(web, "document.querySelectorAll('input').length === 2")
         try await waitFor(web, "Number(document.querySelector('#map-evidence')?.dataset.tiles) > 0", seconds: 60)

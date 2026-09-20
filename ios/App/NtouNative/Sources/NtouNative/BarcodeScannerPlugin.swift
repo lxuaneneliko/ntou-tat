@@ -68,6 +68,11 @@ public final class NtouBarcodeScannerPlugin: CAPPlugin, CAPBridgedPlugin {
                       ] as CFDictionary) else { throw NativeMailError.message("無法開啟圖片") }
                 let request = VNDetectBarcodesRequest()
                 request.symbologies = [.qr]
+                #if targetEnvironment(simulator)
+                // Hosted macOS VMs cannot compile Vision's GPU/Neural Engine model.
+                // Physical iPhones retain Vision's normal hardware acceleration.
+                request.usesCPUOnly = true
+                #endif
                 try VNImageRequestHandler(cgImage: image).perform([request])
                 let values = request.results?.compactMap(\.payloadStringValue) ?? []
                 call.resolve(["barcodes": values.map(Self.barcode)])
