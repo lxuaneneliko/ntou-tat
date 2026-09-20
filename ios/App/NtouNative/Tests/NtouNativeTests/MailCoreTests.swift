@@ -1,4 +1,5 @@
 import XCTest
+import SwiftMail
 @testable import NtouNative
 
 final class MailCoreTests: XCTestCase {
@@ -14,6 +15,13 @@ final class MailCoreTests: XCTestCase {
     func testRecipients() throws {
         XCTAssertEqual(try MailContent.recipients("同學 <a@example.com>; b@example.com").map(\.address), ["a@example.com", "b@example.com"])
         XCTAssertThrowsError(try MailContent.recipients("invalid"))
+    }
+    func testReplyToOverridesOriginalSender() {
+        let message = MessageInfo(sequenceNumber: SequenceNumber(1), from: "Notice <noreply@example.com>",
+                                  additionalFields: ["reply-to": "Office <office@example.com>"])
+        XCTAssertEqual(MailContent.replyAddresses(message), ["office@example.com"])
+        let fallback = MessageInfo(sequenceNumber: SequenceNumber(2), from: "Teacher <teacher@example.com>")
+        XCTAssertEqual(MailContent.replyAddresses(fallback), ["teacher@example.com"])
     }
     func testHTMLReadingOrderAndExternalPrivacy() throws {
         let html = "<p>前段</p><img src='cid:poster'><p>後段</p><img src='https://example.com/image.png'><script>bad()</script><img src='javascript:bad()'>"

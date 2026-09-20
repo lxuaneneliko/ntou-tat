@@ -13,6 +13,8 @@ jobs:
   ios:
     runs-on: macos-26
     timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,11 +26,12 @@ jobs:
           path: |
             ios/App/NtouNative/.build
             DerivedData/SourcePackages
-          key: ios-spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ios/App/NtouNative/Package.swift', 'package-lock.json') }}
+          key: ios-spm-xcode263-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ios/App/NtouNative/Package.swift', 'ios/App/Vendor/SwiftMail/Package.swift', 'package-lock.json') }}
       - name: Toolchain
         run: |
           xcodebuild -version
           swift --version
+          xcrun simctl list devices available
       - run: npm ci
       - run: npm test
       - run: npm run ios:sync
@@ -37,10 +40,12 @@ jobs:
       - name: Compile and link iPhone simulator app
         run: |
           set -o pipefail
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO build | tee ios-simulator-build.log
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath DerivedData ARCHS="$(uname -m)" CODE_SIGNING_ALLOWED=NO build | tee ios-simulator-build.log
       - name: Launch simulator smoke test
+        timeout-minutes: 5
         run: |
-          DEVICE=$(xcrun simctl list devices available -j | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const d=Object.values(JSON.parse(s).devices).flat().find(d=>d.name.startsWith("iPhone"));if(!d)process.exit(1);process.stdout.write(d.udid)})')
+          DEVICE=$(xcrun simctl list devices available -j | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const d=JSON.parse(s).devices["com.apple.CoreSimulator.SimRuntime.iOS-26-2"]?.find(d=>d.name==="iPhone 16e");if(!d)process.exit(1);process.stdout.write(d.udid)})')
+          echo "SIMULATOR_UDID=$DEVICE" >> "$GITHUB_ENV"
           xcrun simctl boot "$DEVICE"
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" DerivedData/Build/Products/Release-iphonesimulator/App.app
@@ -48,21 +53,23 @@ jobs:
           sleep 10
           xcrun simctl io "$DEVICE" screenshot ios-launch.png
           xcrun simctl spawn "$DEVICE" launchctl list | grep com.lxuan.ntoutat
-          echo "SIMULATOR_UDID=$DEVICE" >> "$GITHUB_ENV"
-      - name: Test real iOS bridges, vector map and walking route (no student account)
-        run: |
-          set -o pipefail
-          npx vite build --config test-fixtures/ios-map/vite.config.ts
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" -derivedDataPath DerivedData -resultBundlePath ios-integration.xcresult CODE_SIGNING_ALLOWED=NO test | tee ios-integration-build.log
-          xcrun simctl io "$SIMULATOR_UDID" screenshot ios-map.png
-      - name: Restore production assets (exclude test fixtures from archive)
-        run: |
-          npm run ios:sync
-          test ! -d ios/App/App/public/__qa__
       - name: Create unsigned device archive (not an installable IPA)
         run: |
           set -o pipefail
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath output/NTOUTAT-unsigned.xcarchive CODE_SIGNING_ALLOWED=NO archive | tee ios-device-build.log
+          test ! -d ios/App/App/public/__qa__
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -derivedDataPath DerivedData -archivePath output/NTOUTAT-unsigned.xcarchive CODE_SIGNING_ALLOWED=NO archive | tee ios-device-build.log
+      - name: Test real iOS bridges, vector map and walking route (no student account)
+        timeout-minutes: 8
+        run: |
+          set -o pipefail
+          npx vite build --config test-fixtures/ios-map/vite.config.ts
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" -derivedDataPath DerivedData -resultBundlePath ios-integration.xcresult -parallel-testing-enabled NO -test-timeouts-enabled YES -maximum-test-execution-time-allowance 240 ARCHS="$(uname -m)" CODE_SIGNING_ALLOWED=NO test | tee ios-integration-build.log
+          xcrun simctl io "$SIMULATOR_UDID" screenshot ios-map.png
+      - name: Capture simulator diagnostics
+        if: always() && env.SIMULATOR_UDID != ''
+        run: |
+          xcrun simctl io "$SIMULATOR_UDID" screenshot ios-final-state.png || true
+          xcrun simctl spawn "$SIMULATOR_UDID" log show --last 5m --style compact --predicate 'process == "App" OR process == "com.apple.WebKit.GPU"' > ios-runtime-build.log || true
       - name: Upload build evidence and unsigned archive
         if: always()
         uses: actions/upload-artifact@v4
@@ -72,6 +79,7 @@ jobs:
             ios-*-build.log
             ios-launch.png
             ios-map.png
+            ios-final-state.png
             ios-integration.xcresult
             output/NTOUTAT-unsigned.xcarchive
             ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved

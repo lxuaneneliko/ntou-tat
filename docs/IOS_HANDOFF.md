@@ -23,6 +23,7 @@ artifact `ios-build-evidence` 裡的 `.xcarchive` **不是可安裝 IPA，也不
 - AIS 使用原生 URLSession、Cookie jar、Keychain；系統頁面在 WKWebView 開啟。
 - QR：Apple AVFoundation 掃描、Vision 圖庫辨識，無 Google Play 依賴。
 - 信箱：原生 TLS IMAP／SMTP、分頁、資料夾、已讀／星號、移動、純文字與原位圖片、附件分享、寄信／回覆／轉寄。
+- 舊版 Mail2000 若沒有 MOVE／UIDPLUS，移動採複製後標記來源刪除，App 隱藏已刪除項目；不執行會連帶清除其他郵件的全資料夾 EXPUNGE。來源實體副本由學校信箱後續清理，伺服器總封數可能暫時包含該副本。
 - iOS 信箱背景檢查使用 BGAppRefreshTask，系統可能延後、暫停；不是即時推播，不保證 15 分鐘一次。強制關閉／低耗電／停用背景重新整理可能不執行。
 - 地圖：真正的 MapLibre 向量地圖、拖曳縮放、館樓／教室／教授搜尋、步行路線與前景單次定位；定位拒絕仍可用兩個館樓規劃。
 - 更新由 App Store／TestFlight 處理；iOS 不顯示 GitHub APK 安裝提示。

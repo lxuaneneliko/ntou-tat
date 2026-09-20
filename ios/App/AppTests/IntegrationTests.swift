@@ -18,11 +18,29 @@ import CoreImage
         }
         throw NSError(domain: "UITest", code: 1, userInfo: [NSLocalizedDescriptionKey: "App did not create WKWebView"])
     }
-    func js(_ web: WKWebView, _ source: String) async throws -> Any? {
-        try await web.callAsyncJavaScript(source, arguments: [:], in: nil, contentWorld: .page)
+    func js(_ web: WKWebView, _ source: String, arguments: [String: Any] = [:]) async throws -> Any? {
+        // A terminated WebContent/GPU process may never return its JS callback.
+        // Bound this operation separately from the condition polling deadline.
+        try await withCheckedThrowingContinuation { continuation in
+            var completed = false
+            let timeout = DispatchWorkItem {
+                guard !completed else { return }
+                completed = true
+                continuation.resume(throwing: NSError(domain: "UITest", code: 3,
+                    userInfo: [NSLocalizedDescriptionKey: "WKWebView JS did not respond within 8 seconds"]))
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: timeout)
+            web.callAsyncJavaScript(source, arguments: arguments, in: nil, contentWorld: .page) { result in
+                guard !completed else { return }
+                completed = true
+                timeout.cancel()
+                continuation.resume(with: result.map { Optional($0) })
+            }
+        }
     }
     func waitFor(_ web: WKWebView, _ condition: String, seconds: Int = 30) async throws {
-        for _ in 0..<(seconds * 2) {
+        let deadline = Date().addingTimeInterval(TimeInterval(seconds))
+        while Date() < deadline {
             if (try? await js(web, "return Boolean(\(condition))")) as? Bool == true { return }
             try await Task.sleep(nanoseconds: 500_000_000)
         }
@@ -31,6 +49,8 @@ import CoreImage
         throw NSError(domain: "UITest", code: 2)
     }
     func testNativeBridgeAndLiveVectorMap() async throws {
+        executionTimeAllowance = 240
+        print("IOS_CHECK: production login")
         let web = try await webView()
         try await waitFor(web, "window.Capacitor && document.querySelector('input')")
         let platform = try await js(web, "return Capacitor.getPlatform()") as? String
@@ -41,22 +61,25 @@ import CoreImage
         XCTAssertNotNil(scanner?["camera"])
         let portal = try await js(web, "return await Capacitor.nativePromise('NtouPortal', 'cacheGet', {key:'__ios_smoke_empty__'})") as? [String: Any]
         XCTAssertNotNil(portal)
+        print("IOS_CHECK: native mail, camera permission and portal bridges passed")
         // Exercise Vision through the same JS/native contract used by the photo picker.
         let filter = try XCTUnwrap(CIFilter(name: "CIQRCodeGenerator"))
         filter.setValue(Data("NTOUTAT iOS QR bridge check".utf8), forKey: "inputMessage")
         let qr = try XCTUnwrap(filter.outputImage).transformed(by: CGAffineTransform(scaleX: 12, y: 12))
-        let cgImage = try XCTUnwrap(CIContext().createCGImage(qr, from: qr.extent))
+        let cgImage = try XCTUnwrap(CIContext(options: [.useSoftwareRenderer: true]).createCGImage(qr, from: qr.extent))
         let file = FileManager.default.temporaryDirectory.appendingPathComponent("ios-qr-smoke.png")
         try XCTUnwrap(UIImage(cgImage: cgImage).pngData()).write(to: file)
         defer { try? FileManager.default.removeItem(at: file) }
-        let decoded = try await web.callAsyncJavaScript(
+        let decoded = try await js(web,
             "return await Capacitor.nativePromise('BarcodeScanner','readBarcodesFromImage',{path:path})",
-            arguments: ["path": file.absoluteString], in: nil, contentWorld: .page) as? [String: Any]
+            arguments: ["path": file.absoluteString]) as? [String: Any]
         let barcodes = decoded?["barcodes"] as? [[String: Any]]
         XCTAssertEqual(barcodes?.first?["rawValue"] as? String, "NTOUTAT iOS QR bridge check")
+        print("IOS_CHECK: native QR image decode passed; loading real vector map")
         _ = try await js(web, "setTimeout(() => location.href='/__qa__/index.html', 100); return true")
         try await waitFor(web, "document.querySelectorAll('input').length === 2")
         try await waitFor(web, "Number(document.querySelector('#map-evidence')?.dataset.tiles) > 0", seconds: 60)
+        print("IOS_CHECK: vector tiles rendered")
         func fill(_ name: String, _ value: String) async throws {
             _ = try await js(web, """
               const e = document.querySelector('input[aria-label="\(name)"]'); e.focus();
@@ -77,6 +100,7 @@ import CoreImage
         try await waitFor(web, "!document.querySelector('.ntou-map-route-submit').disabled")
         _ = try await js(web, "document.querySelector('.ntou-map-route-submit').click(); document.activeElement.blur(); return true")
         try await waitFor(web, "Number(document.querySelector('#map-evidence')?.dataset.routes) > 0", seconds: 60)
+        print("IOS_CHECK: independent fields and live walking route passed")
         let snapshot = try await web.takeSnapshot(configuration: nil)
         let screenshot = XCTAttachment(image: snapshot)
         screenshot.name = "Live iOS campus map with route"

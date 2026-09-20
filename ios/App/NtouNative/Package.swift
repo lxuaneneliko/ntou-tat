@@ -7,7 +7,7 @@ let package = Package(
     products: [.library(name: "NtouNative", targets: ["NtouNative"])],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.4.2"),
-        .package(url: "https://github.com/Cocoanetics/SwiftMail.git", exact: "1.11.0"),
+        .package(path: "../Vendor/SwiftMail"),
         .package(url: "https://github.com/scinfu/SwiftSoup.git", exact: "2.13.9"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0")
     ],
@@ -18,6 +18,6 @@ let package = Package(
             .product(name: "SwiftSoup", package: "SwiftSoup"),
             .product(name: "Logging", package: "swift-log")
         ]),
-        .testTarget(name: "NtouNativeTests", dependencies: ["NtouNative"])
+        .testTarget(name: "NtouNativeTests", dependencies: ["NtouNative", .product(name: "SwiftMail", package: "SwiftMail")])
     ]
 )

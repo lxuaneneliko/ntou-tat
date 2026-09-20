@@ -57,10 +57,14 @@ separately from the relevant rights holder.
 
 ## Other dependencies
 
-The iOS native package uses SwiftMail (MIT), SwiftSoup (MIT), Apple's SwiftNIO
+The iOS native package uses SwiftMail (BSD-2-Clause), SwiftSoup (MIT), Apple's SwiftNIO
 and swift-log (Apache-2.0), and Capacitor (MIT). Their license files and transitive
 dependency notices remain applicable. Apple AVFoundation and Vision provide QR
 scanning on iOS; Google ML Kit is not included in the iOS target.
+
+SwiftMail 1.11.0 is vendored in `ios/App/Vendor/SwiftMail` with its full original
+license bundled as a resource. `UPSTREAM.md` records the source commit and the
+Reply-To preservation patch; its BSD license is not replaced by this project's license.
 
 Other dependencies are listed in `package.json`, `package-lock.json`, and the
 Android Gradle files. Each remains governed by its own license and notices.

@@ -96,7 +96,7 @@ public final class NtouMailPlugin: CAPPlugin, CAPBridgedPlugin {
             guard let target = call.getString("targetFolder"), !target.isEmpty else { throw NativeMailError.message("請選擇目的資料夾") }
             return try await MailClient.withInbox(self.loginInfo(call)) { server in
                 try await server.selectMailbox(call.getString("folder") ?? "INBOX")
-                try await server.move(messages: UIDSet(self.uid(call)), to: target)
+                try await MailClient.move(server, uid: self.uid(call), target: target)
                 return [:]
             }
         }

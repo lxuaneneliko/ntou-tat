@@ -54,6 +54,13 @@ enum MailContent {
                 "unread": !header.flags.contains(where: { $0.description == "seen" }),
                 "starred": header.flags.contains(where: { $0.description == "flagged" })]
     }
+    static func replyAddresses(_ header: MessageInfo) -> [String] {
+        if let reply = header.additionalFields?.first(where: { $0.key.lowercased() == "reply-to" })?.value,
+           let recipients = try? recipients(reply), !recipients.isEmpty {
+            return recipients.map(\.address)
+        }
+        return [address(header.from ?? "")]
+    }
     static func folderKind(_ folder: Mailbox.Info) -> String {
         let name = folder.name.lowercased()
         if name == "inbox" { return "inbox" }
@@ -122,6 +129,23 @@ enum MailClient {
     static let maxPartBytes = 20 * 1024 * 1024
     private static let silenceLogs: Void = LoggingSystem.bootstrap { _ in SwiftLogNoOpLogHandler() }
 
+    // Never use an unqualified EXPUNGE: it could remove unrelated messages marked
+    // deleted by another mail client. Older Mail2000 servers advertise neither extension.
+    static func move(_ server: IMAPServer, uid: SwiftMail.UID, target: String) async throws {
+        if await server.supportsMove {
+            try await server.move(messages: UIDSet(uid), to: target, fallback: .disabled)
+        } else if await server.supportsUIDPlus {
+            try await server.move(messages: UIDSet(uid), to: target)
+        } else {
+            try await server.copy(messages: UIDSet(uid), to: target)
+            do {
+                try await server.store(flags: [.deleted, .seen], on: UIDSet(uid), operation: .add)
+            } catch {
+                throw NativeMailError.message("已複製到目的資料夾，但來源狀態尚未確認；請重新整理兩個資料夾，勿重複移動。")
+            }
+        }
+    }
+
     static func withInbox<T>(_ login: MailLogin, _ operation: (IMAPServer) async throws -> T) async throws -> T {
         _ = silenceLogs
         let server = IMAPServer(host: host, port: 993, transportSecurity: .implicitTLS, certificateVerificationPolicy: .fullVerification)
@@ -147,7 +171,8 @@ enum MailClient {
         let unread = try await server.mailboxStatus(folder).unseenCount ?? 0
         return ["account": login.account, "folder": folder, "total": total, "unread": unread, "offset": offset,
                 "nextOffset": offset + headers.count, "hasMore": first > 1,
-                "messages": headers.sorted { $0.sequenceNumber.value > $1.sequenceNumber.value }.map(MailContent.summary)]
+                "messages": headers.filter { !$0.flags.contains(where: { $0.description == "deleted" }) }
+                    .sorted { $0.sequenceNumber.value > $1.sequenceNumber.value }.map(MailContent.summary)]
     }
     static func message(_ server: IMAPServer, folder: String, uid: SwiftMail.UID) async throws -> [String: Any] {
         try await server.selectMailbox(folder)
@@ -180,10 +205,9 @@ enum MailClient {
         let message = Message(header: header, parts: bodyParts)
         let (body, images, blocks) = try MailContent.body(html: message.htmlBody, plain: message.textBody ?? "", inlineImages: inlineImages)
         var result = MailContent.summary(header)
-        result.merge(["recipients": header.to, "cc": header.cc, "replyTo": [MailContent.address(header.from ?? "")],
+        result.merge(["recipients": header.to, "cc": header.cc, "replyTo": MailContent.replyAddresses(header),
                       "messageId": header.messageId?.description ?? "", "references": header.references?.map(\.description).joined(separator: " ") ?? "",
                       "body": body, "bodyImages": images, "bodyBlocks": blocks, "attachments": attachments]) { _, value in value }
-        if let reply = header.additionalFields?.first(where: { $0.key.lowercased() == "reply-to" })?.value { result["replyTo"] = [MailContent.address(reply)] }
         try await server.store(flags: [.seen], on: UIDSet(uid), operation: .add)
         result["unread"] = false
         return result
