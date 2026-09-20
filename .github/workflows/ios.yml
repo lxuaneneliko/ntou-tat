@@ -4,6 +4,11 @@ on:
     branches: [main, 'feat/ios-*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      runtime_only:
+        description: 'Rerun simulator checks only; requires an already verified device archive of unchanged App sources'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -22,6 +27,7 @@ jobs:
           node-version: 24
           cache: npm
       - uses: actions/cache@v4
+        id: spm-cache
         with:
           path: |
             ios/App/NtouNative/.build
@@ -36,7 +42,14 @@ jobs:
       - run: npm test
       - run: npm run ios:sync
       - name: Native mail parser and safety tests
+        if: ${{ !inputs.runtime_only }}
         run: swift test --package-path ios/App/NtouNative
+      - name: Boot simulator while compiling
+        timeout-minutes: 3
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const d=JSON.parse(s).devices["com.apple.CoreSimulator.SimRuntime.iOS-26-2"]?.find(d=>d.name==="iPhone 16e");if(!d)process.exit(1);process.stdout.write(d.udid)})')
+          echo "SIMULATOR_UDID=$DEVICE" >> "$GITHUB_ENV"
+          xcrun simctl boot "$DEVICE"
       - name: Compile and link iPhone simulator app
         run: |
           set -o pipefail
@@ -44,9 +57,7 @@ jobs:
       - name: Launch simulator smoke test
         timeout-minutes: 5
         run: |
-          DEVICE=$(xcrun simctl list devices available -j | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const d=JSON.parse(s).devices["com.apple.CoreSimulator.SimRuntime.iOS-26-2"]?.find(d=>d.name==="iPhone 16e");if(!d)process.exit(1);process.stdout.write(d.udid)})')
-          echo "SIMULATOR_UDID=$DEVICE" >> "$GITHUB_ENV"
-          xcrun simctl boot "$DEVICE"
+          DEVICE="$SIMULATOR_UDID"
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" DerivedData/Build/Products/Release-iphonesimulator/App.app
           xcrun simctl launch "$DEVICE" com.lxuan.ntoutat
@@ -54,6 +65,7 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot ios-launch.png
           xcrun simctl spawn "$DEVICE" launchctl list | grep com.lxuan.ntoutat
       - name: Create unsigned device archive (not an installable IPA)
+        if: ${{ !inputs.runtime_only }}
         run: |
           set -o pipefail
           test ! -d ios/App/App/public/__qa__
@@ -67,6 +79,7 @@ jobs:
           xcrun simctl io "$SIMULATOR_UDID" screenshot ios-map.png
       - name: Capture simulator diagnostics
         if: always() && env.SIMULATOR_UDID != ''
+        timeout-minutes: 2
         run: |
           xcrun simctl io "$SIMULATOR_UDID" screenshot ios-final-state.png || true
           xcrun simctl spawn "$SIMULATOR_UDID" log show --last 5m --style compact --predicate 'process == "App" OR process == "com.apple.WebKit.GPU"' > ios-runtime-build.log || true

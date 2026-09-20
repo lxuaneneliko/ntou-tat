@@ -30,7 +30,7 @@ import CoreImage
                     userInfo: [NSLocalizedDescriptionKey: "WKWebView JS did not respond within 8 seconds"]))
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: timeout)
-            web.callAsyncJavaScript(source, arguments: arguments, in: nil, contentWorld: .page) { result in
+            web.callAsyncJavaScript(source, arguments: arguments, in: nil, in: .page) { result in
                 guard !completed else { return }
                 completed = true
                 timeout.cancel()
