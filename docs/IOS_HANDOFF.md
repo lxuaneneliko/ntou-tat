@@ -14,6 +14,7 @@ Android 的套件 ID、資料與發行管道保持獨立；此分支沒有發布
 - `swift test --package-path ios/App/NtouNative` 測試信件解析、地址及標頭防注入。
 
 GitHub Actions `iOS build and tests` 會做前端測試、原生測試、模擬器編譯、啟動截圖與無簽章實機 archive。
+另以 App 內真實 WKWebView 執行橋接／即時向量圖資／教授搜尋切換／步行路線整合測試；這項測試需要公共地圖服務連線，不會登入 AIS。測試頁只暫放於模擬器 bundle，device archive 前會重新同步乾淨的正式資產。
 artifact `ios-build-evidence` 裡的 `.xcarchive` **不是可安裝 IPA，也不能直接提交 App Store**。
 
 ## 功能與平台差異

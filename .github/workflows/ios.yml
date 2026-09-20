@@ -48,6 +48,17 @@ jobs:
           sleep 10
           xcrun simctl io "$DEVICE" screenshot ios-launch.png
           xcrun simctl spawn "$DEVICE" launchctl list | grep com.lxuan.ntoutat
+          echo "SIMULATOR_UDID=$DEVICE" >> "$GITHUB_ENV"
+      - name: Test real iOS bridges, vector map and walking route (no student account)
+        run: |
+          set -o pipefail
+          npx vite build --config test-fixtures/ios-map/vite.config.ts
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" -derivedDataPath DerivedData -resultBundlePath ios-integration.xcresult CODE_SIGNING_ALLOWED=NO test | tee ios-integration-build.log
+          xcrun simctl io "$SIMULATOR_UDID" screenshot ios-map.png
+      - name: Restore production assets (exclude test fixtures from archive)
+        run: |
+          npm run ios:sync
+          test ! -d ios/App/App/public/__qa__
       - name: Create unsigned device archive (not an installable IPA)
         run: |
           set -o pipefail
@@ -60,6 +71,8 @@ jobs:
           path: |
             ios-*-build.log
             ios-launch.png
+            ios-map.png
+            ios-integration.xcresult
             output/NTOUTAT-unsigned.xcarchive
             ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
           retention-days: 14
