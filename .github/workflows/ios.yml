@@ -44,13 +44,13 @@ jobs:
       - name: Native mail parser and safety tests
         if: ${{ !inputs.runtime_only }}
         run: swift test --package-path ios/App/NtouNative
-      - name: Boot simulator while compiling
+      - name: Select simulator
         timeout-minutes: 3
         run: |
           DEVICE=$(xcrun simctl list devices available -j | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const d=JSON.parse(s).devices["com.apple.CoreSimulator.SimRuntime.iOS-26-2"]?.find(d=>d.name==="iPhone 16e");if(!d)process.exit(1);process.stdout.write(d.udid)})')
           echo "SIMULATOR_UDID=$DEVICE" >> "$GITHUB_ENV"
-          xcrun simctl boot "$DEVICE"
       - name: Compile and link iPhone simulator app
+        timeout-minutes: 12
         run: |
           set -o pipefail
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath DerivedData ARCHS="$(uname -m)" CODE_SIGNING_ALLOWED=NO build | tee ios-simulator-build.log
@@ -58,6 +58,7 @@ jobs:
         timeout-minutes: 5
         run: |
           DEVICE="$SIMULATOR_UDID"
+          xcrun simctl boot "$DEVICE"
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" DerivedData/Build/Products/Release-iphonesimulator/App.app
           xcrun simctl launch "$DEVICE" com.lxuan.ntoutat
