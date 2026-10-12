@@ -1,7 +1,7 @@
 {
   "name": "ntou-tat",
   "private": true,
-  "version": "1.13.32",
+  "version": "3.0.0-test.10",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -187,6 +187,7 @@ public class NtouMailPlugin extends Plugin {
                 JSObject result = new JSObject();
                 result.put("account", credentials.account);
                 result.put("folder", folderName);
+                result.put("uidValidity", Long.toString(uidFolder.getUIDValidity()));
                 result.put("total", total);
                 result.put("unread", Math.max(0, folder.getUnreadMessageCount()));
                 result.put("offset", offset);

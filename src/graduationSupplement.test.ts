@@ -11,6 +11,14 @@ import {
 } from './graduationSupplement'
 import type { Grade } from './types'
 
+it('marks the advanced-English group complete only after manual approved exemption and avoids duplicate credits', () => {
+  const approved = analyzeGraduationSupplement(curriculum, [], 114, {}, {}, 'approved-exemption').rules.find((rule) => rule.id === 'advanced-english')
+  expect(approved?.earned).toBe(2)
+  expect(approved?.status).toBe('complete')
+  expect(analyzeGraduationSupplement(curriculum, [], 114, {}, {}, 'eligible').rules.find((rule) => rule.id === 'advanced-english')?.earned).toBe(0)
+  expect(analyzeGraduationSupplement(curriculum, [], 114, {}, {}, 'completed').rules.find((rule) => rule.id === 'advanced-english')?.status).toBe('complete')
+})
+
 const curriculum: GraduationCurriculum = {
   departmentId: 'me', departmentCode: '0702', departmentName: '機械與機電工程學系',
   requestedYear: 114, sourceYear: 114, fallbackUsed: false, enrollmentIdentity: '一般生',

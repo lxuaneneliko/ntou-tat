@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.lxuan.ntou_tat',
-  appName: '海大 TAT',
+  appId: 'com.lxuan.ntou_tat.v3test',
+  appName: '海大 TAT 3.0 測試',
   webDir: 'dist',
   bundledWebRuntime: false,
   loggingBehavior: 'none',

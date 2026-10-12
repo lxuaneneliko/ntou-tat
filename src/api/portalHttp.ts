@@ -13,6 +13,7 @@ export type PortalResponse = {
 const isNative = () => Capacitor.isNativePlatform()
 
 type NativePortalPlugin = {
+  campusSession(options: { studentNumber: string; name: string }): Promise<{ status: number; data: string }>
   request(options: {
     url: string
     method?: string
@@ -37,6 +38,8 @@ type NativePortalPlugin = {
 }
 
 const NativePortal = registerPlugin<NativePortalPlugin>('NtouPortal')
+export const exchangeCampusSession = (studentNumber: string, name: string) =>
+  NativePortal.campusSession({ studentNumber, name })
 const NATIVE_REQUEST_TIMEOUT_MS = 25000
 
 type PortalRequestOptions = HttpOptions & {

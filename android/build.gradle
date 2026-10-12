@@ -18,6 +18,10 @@ buildscript {
 apply from: "variables.gradle"
 
 allprojects {
+    // Optional ASCII-only build output prevents Windows JVM classpath decoding failures.
+    if (rootProject.hasProperty('tatBuildRoot')) {
+        buildDir = new File(rootProject.property('tatBuildRoot'), project.name)
+    }
     repositories {
         google()
         mavenCentral()

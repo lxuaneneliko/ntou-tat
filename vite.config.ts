@@ -4,6 +4,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: { watch: { ignored: ['**/releases/**', '**/android/**', '**/ios/**', '**/qa/**'] } },
   plugins: [
     react(),
     viteStaticCopy({

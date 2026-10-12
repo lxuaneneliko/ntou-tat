@@ -49,6 +49,8 @@ public class MailNotificationWorker extends Worker {
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_LAST_UID = "last_uid";
     private static final String KEY_UID_VALIDITY = "uid_validity";
+    private static final String KEY_SCHEDULE_VERSION = "schedule_version";
+    private static final int DAILY_SCHEDULE_VERSION = 2;
     private static final String SECURE_ACCOUNT_KEY = "ntou_mail_notification_account_v1";
     private static final String SECURE_PASSWORD_KEY = "ntou_mail_notification_password_v1";
     private static final String CHANNEL_ID = "ntou_mail_new_messages";
@@ -64,6 +66,10 @@ public class MailNotificationWorker extends Worker {
         Context context = getApplicationContext();
         SharedPreferences preferences = preferences(context);
         if (!preferences.getBoolean(KEY_ENABLED, false)) return Result.success();
+        restoreDailySchedule(context);
+        // Leave the UID cursor untouched during the cooldown. Unread messages
+        // arriving later today are included in the next eligible daily check.
+        if (!shouldCheckMail(context, System.currentTimeMillis())) return Result.success();
 
         Credentials credentials = readCredentials(context);
         if (credentials == null) {
@@ -87,7 +93,7 @@ public class MailNotificationWorker extends Worker {
             long savedUidValidity = preferences.getLong(KEY_UID_VALIDITY, 0L);
             long latestUid = latestUid(folder, uidFolder);
 
-            if (lastUid <= 0L || savedUidValidity != uidValidity) {
+            if (lastUid < 0L || savedUidValidity <= 0L || savedUidValidity != uidValidity) {
                 saveCursor(context, latestUid, uidValidity);
                 return Result.success();
             }
@@ -112,12 +118,13 @@ public class MailNotificationWorker extends Worker {
                 }
             }
 
-            saveCursor(context, newestUid, uidValidity);
-            if (!newMessages.isEmpty()) showNewMailNotification(context, newMessages);
+            if (newMessages.isEmpty() || showNewMailNotification(context, newMessages, System.currentTimeMillis())) {
+                saveCursor(context, newestUid, uidValidity);
+            }
             return Result.success();
         } catch (AuthenticationFailedException exception) {
             disable(context);
-            showAuthenticationNotification(context);
+            showAuthenticationNotification(context, System.currentTimeMillis());
             return Result.success();
         } catch (MessagingException exception) {
             return Result.retry();
@@ -132,8 +139,27 @@ public class MailNotificationWorker extends Worker {
     }
 
     static boolean canPostNotifications(Context context) {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-            || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            NotificationChannel channel = manager == null ? null : manager.getNotificationChannel(CHANNEL_ID);
+            if (channel != null && channel.getImportance() == NotificationManager.IMPORTANCE_NONE) return false;
+        }
+        return true;
+    }
+
+    static boolean shouldCheckMail(Context context, long now) {
+        return isEnabled(context) && canPostNotifications(context)
+            && MailDailyNotificationPolicy.canNotify(preferences(context), now);
+    }
+
+    static void restoreDailySchedule(Context context) {
+        if (isEnabled(context) && preferences(context).getInt(KEY_SCHEDULE_VERSION, 0) != DAILY_SCHEDULE_VERSION) {
+            ensureChannel(context);
+            schedule(context);
+        }
     }
 
     static void enable(Context context, String account, String password, long lastUid, long uidValidity) {
@@ -161,18 +187,22 @@ public class MailNotificationWorker extends Worker {
         WorkManager.getInstance(context.getApplicationContext()).cancelUniqueWork(WORK_NAME);
     }
 
-    private static void schedule(Context context) {
+    static PeriodicWorkRequest dailyWorkRequest() {
         Constraints constraints = new Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build();
-        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(MailNotificationWorker.class, 15, TimeUnit.MINUTES)
+        return new PeriodicWorkRequest.Builder(MailNotificationWorker.class, 24, TimeUnit.HOURS)
             .setConstraints(constraints)
             .build();
+    }
+
+    private static void schedule(Context context) {
         WorkManager.getInstance(context.getApplicationContext()).enqueueUniquePeriodicWork(
             WORK_NAME,
             ExistingPeriodicWorkPolicy.UPDATE,
-            request
+            dailyWorkRequest()
         );
+        preferences(context).edit().putInt(KEY_SCHEDULE_VERSION, DAILY_SCHEDULE_VERSION).apply();
     }
 
     private static SharedPreferences preferences(Context context) {
@@ -250,7 +280,7 @@ public class MailNotificationWorker extends Worker {
             "Mail2000 新信通知",
             NotificationManager.IMPORTANCE_HIGH
         );
-        channel.setDescription("海大 Mail2000 收件匣的新信通知");
+        channel.setDescription("海大 Mail2000 每日新信摘要；每 24 小時最多通知一次");
         NotificationManager manager = context.getSystemService(NotificationManager.class);
         if (manager != null) manager.createNotificationChannel(channel);
     }
@@ -274,8 +304,8 @@ public class MailNotificationWorker extends Worker {
             .setPriority(NotificationCompat.PRIORITY_HIGH);
     }
 
-    private static void showNewMailNotification(Context context, List<NewMessage> messages) {
-        if (!canPostNotifications(context)) return;
+    static boolean showNewMailNotification(Context context, List<NewMessage> messages, long now) {
+        if (messages.isEmpty() || !isEnabled(context) || !canPostNotifications(context)) return false;
         ensureChannel(context);
         NotificationCompat.Builder builder = baseNotification(context);
         if (messages.size() == 1) {
@@ -294,17 +324,21 @@ public class MailNotificationWorker extends Worker {
             style.setSummaryText("海大 Mail2000");
             builder.setStyle(style).setNumber(messages.size());
         }
+        if (!MailDailyNotificationPolicy.claim(preferences(context), now)) return false;
         NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build());
+        return true;
     }
 
-    private static void showAuthenticationNotification(Context context) {
-        if (!canPostNotifications(context)) return;
+    static boolean showAuthenticationNotification(Context context, long now) {
+        if (!canPostNotifications(context)) return false;
         ensureChannel(context);
         NotificationCompat.Builder builder = baseNotification(context)
             .setContentTitle("Mail2000 通知已暫停")
             .setContentText("請回到海大 TAT 重新登入信箱")
             .setStyle(new NotificationCompat.BigTextStyle().bigText("Mail2000 登入已失效，請回到海大 TAT 重新登入信箱並再次開啟通知。"));
+        if (!MailDailyNotificationPolicy.claim(preferences(context), now)) return false;
         NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build());
+        return true;
     }
 
     private static void closeFolder(Folder folder) {
@@ -336,7 +370,7 @@ public class MailNotificationWorker extends Worker {
         }
     }
 
-    private static class NewMessage {
+    static class NewMessage {
         final String sender;
         final String subject;
 

@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">海大 TAT</string>
-    <string name="title_activity_main">海大 TAT</string>
+    <string name="app_name">海大 TAT 3.0 測試</string>
+    <string name="title_activity_main">海大 TAT 3.0 測試</string>
+    <string name="widget_description">今日課程、教室與下一堂課倒數，點擊可開啟課表</string>
     <string name="package_name">com.lxuan.ntou_tat</string>
     <string name="custom_url_scheme">com.lxuan.ntou_tat</string>
 </resources>

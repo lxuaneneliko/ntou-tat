@@ -38,6 +38,7 @@ import {
 } from './graduationSupplement'
 import type { GeneralEducationOverrides } from './generalEducation'
 import type { Grade } from './types'
+import { readAdvancedEnglish, type AdvancedEnglishStatus } from './advancedEnglish'
 
 type GraduationAuditSheetProps = {
   grades: Grade[]
@@ -267,6 +268,9 @@ export function GraduationAuditSheet({
     readInitialDepartment(studentId, profileDepartment),
   )
   const [cohortYear, setCohortYear] = useState(() => readInitialCohort(studentId, initialCohortYear))
+  const advancedEnglishKey = `ntou-advanced-english-v3:${studentId}:${departmentId}:${cohortYear}`
+  const [advancedEnglishStatus, setAdvancedEnglishStatus] = useState<AdvancedEnglishStatus>(() => readAdvancedEnglish(advancedEnglishKey))
+  useEffect(() => { setAdvancedEnglishStatus(readAdvancedEnglish(advancedEnglishKey)) }, [advancedEnglishKey])
   const [programVariantCode, setProgramVariantCode] = useState(() => {
     const initialDepartment = readInitialDepartment(studentId, profileDepartment)
     const initialCohort = readInitialCohort(studentId, initialCohortYear)
@@ -362,8 +366,8 @@ export function GraduationAuditSheet({
   )
 
   const audit = useMemo(
-    () => curriculum ? analyzeGraduationAudit(curriculum, grades) : null,
-    [curriculum, grades],
+    () => curriculum ? analyzeGraduationAudit(curriculum, grades, advancedEnglishStatus) : null,
+    [curriculum, grades, advancedEnglishStatus],
   )
   const supplement = useMemo(
     () => curriculum
@@ -373,9 +377,10 @@ export function GraduationAuditSheet({
           cohortYear,
           manualSelections,
           readGeneralEducationOverrides(studentId),
+          advancedEnglishStatus,
         )
       : null,
-    [cohortYear, curriculum, grades, manualSelections, studentId],
+    [cohortYear, curriculum, grades, manualSelections, studentId, advancedEnglishStatus],
   )
   const progressPercent = curriculum && audit
     ? Math.round(Math.min(1, audit.totalEarnedCredits / curriculum.graduationMinimumCredits) * 100)
@@ -650,12 +655,18 @@ export function GraduationAuditSheet({
                     <GraduationRuleCard
                       key={rule.id}
                       rule={rule}
+                      advancedEnglishStatus={/進階英文|外文領域/u.test(rule.title) ? advancedEnglishStatus : undefined}
+                      cohortYear={cohortYear}
+                      onAdvancedEnglishChange={(next) => {
+                        setAdvancedEnglishStatus(next)
+                        try { localStorage.setItem(advancedEnglishKey, next) } catch { /* Use the current session selection. */ }
+                      }}
                       onChange={(courseKeys) => updateManualRule(rule.id, courseKeys)}
                     />
                   ))}
                 </div>
                 <p className="graduation-audit-rule-note">
-                  手動採計與確認結果僅用於本機畢業進度估算，系統會依你的選擇重新計算；實際畢業資格仍以系所及教務處正式審核結果為準。
+                  畢業資格以系所及教務處審核為準。
                 </p>
               </section>
             ) : null}
@@ -719,8 +730,12 @@ export function GraduationAuditSheet({
                       <strong>{course.title}</strong>
                       <span>{course.category}{course.codes.length ? ` · ${course.codes.join('、')}` : ''}</span>
                       {course.notes ? <small>{course.notes}</small> : null}
+                      {/進階英文/u.test(course.title) ? <AdvancedEnglishSelector value={advancedEnglishStatus} cohortYear={cohortYear} onChange={(next) => {
+                        setAdvancedEnglishStatus(next)
+                        try { localStorage.setItem(advancedEnglishKey, next) } catch { /* Use the current session selection. */ }
+                      }} /> : null}
                     </div>
-                    <b>{statusCopy[course.status]}<small>{course.earnedCredits}/{course.credits}</small></b>
+                    <b>{course.waived ? '已免修' : statusCopy[course.status]}<small>{course.waived ? '不計學分' : `${course.earnedCredits}/${course.credits}`}</small></b>
                   </article>
                 )) : (
                   <div className="graduation-audit-list-empty">
@@ -770,9 +785,15 @@ export function GraduationAuditSheet({
 function GraduationRuleCard({
   rule,
   onChange,
+  advancedEnglishStatus,
+  cohortYear,
+  onAdvancedEnglishChange,
 }: {
   rule: GraduationSupplementRule
   onChange: (courseKeys: string[]) => void
+  advancedEnglishStatus?: AdvancedEnglishStatus
+  cohortYear: number
+  onAdvancedEnglishChange: (value: AdvancedEnglishStatus) => void
 }) {
   const [selectionFilter, setSelectionFilter] = useState<SelectionFilter>('all')
   const selected = new Set(rule.selectedCourseKeys)
@@ -783,7 +804,7 @@ function GraduationRuleCard({
     (selectionFilter === 'suggested' && suggested.has(course.key)) ||
     (selectionFilter === 'selected' && selected.has(course.key)),
   )
-  const progress = rule.required > 0 ? Math.min(100, rule.earned / rule.required * 100) : 100
+  const progress = rule.waived ? 100 : rule.required > 0 ? Math.min(100, rule.earned / rule.required * 100) : 100
   const toggleCourse = (courseKey: string) => {
     if (locked.has(courseKey)) return
     const next = new Set(selected)
@@ -800,11 +821,11 @@ function GraduationRuleCard({
         </span>
         <div>
           <strong>{rule.title}</strong>
-          <small>{rule.description}</small>
+          {advancedEnglishStatus === undefined ? <small>{rule.description}</small> : null}
         </div>
         <b>
-          {rule.earned}/{rule.required}
-          <small>{rule.unit}</small>
+          {rule.waived ? '已免修' : `${rule.earned}/${rule.required}`}
+          <small>{rule.waived ? '不計學分' : rule.unit}</small>
         </b>
       </div>
       <div
@@ -812,17 +833,20 @@ function GraduationRuleCard({
         role="progressbar"
         aria-label={`${rule.title}完成進度`}
         aria-valuemin={0}
-        aria-valuemax={rule.required}
-        aria-valuenow={rule.earned}
+        aria-valuemax={rule.waived ? 1 : rule.required}
+        aria-valuenow={rule.waived ? 1 : rule.earned}
+        aria-valuetext={rule.waived ? '已免修，不計學分' : undefined}
       >
         <i style={{ width: `${progress}%` }} />
       </div>
       <div className="graduation-audit-rule-result">
-        <span>{rule.status === 'complete' ? '已達成' : `尚缺 ${rule.remaining} ${rule.unit}`}</span>
+        <span>{rule.waived ? '須另修選修補足畢業總學分' : rule.status === 'complete' ? '已達成' : `尚缺 ${rule.remaining} ${rule.unit}`}</span>
         <em>{rule.method === 'automatic' ? '自動分析' : '手動採計'}</em>
       </div>
 
-      {rule.method !== 'automatic' ? (
+      {advancedEnglishStatus !== undefined ? <AdvancedEnglishSelector value={advancedEnglishStatus} cohortYear={cohortYear} onChange={onAdvancedEnglishChange} /> : null}
+
+      {rule.method !== 'automatic' && !rule.waived ? (
         <details className="graduation-audit-rule-picker">
           <summary>
             <span>選擇採計課程</span>
@@ -863,6 +887,11 @@ function GraduationRuleCard({
       ) : null}
     </article>
   )
+}
+
+function AdvancedEnglishSelector({ value, cohortYear, onChange }: { value: AdvancedEnglishStatus; cohortYear: number; onChange: (value: AdvancedEnglishStatus) => void }) {
+  const exemptionLabel = cohortYear >= 115 ? '免修' : '抵免'
+  return <label className="graduation-rule-status"><span>修習狀態</span><select aria-label="進階英文狀態" value={value} onChange={(event) => onChange(event.target.value as AdvancedEnglishStatus)}><option value="unconfirmed">依成績採計</option><option value="course">修習中</option><option value="completed">已修畢</option><option value="eligible">符合{exemptionLabel}資格（尚未核准）</option><option value="approved-exemption">已核准{exemptionLabel}</option></select></label>
 }
 
 function SelectionFilters({

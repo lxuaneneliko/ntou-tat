@@ -5,6 +5,7 @@ import {
 } from './generalEducation'
 import { hasPassingResult } from './gpa'
 import type { Grade } from './types'
+import { advancedEnglishCreditAdjustment, isNonCreditAdvancedEnglishExemption, type AdvancedEnglishStatus } from './advancedEnglish'
 
 export type GraduationManualSelections = Record<string, string[]>
 
@@ -57,6 +58,7 @@ export type GraduationSupplementRule = {
   selectedCourseKeys: string[]
   automaticCourseKeys: string[]
   lockedCourseKeys: string[]
+  waived?: boolean
 }
 
 export type GraduationSupplement = {
@@ -227,6 +229,7 @@ export const analyzeGraduationSupplement = (
   cohortYear: number,
   selections: GraduationManualSelections = {},
   generalEducationOverrides: GeneralEducationOverrides = {},
+  advancedEnglishStatus: AdvancedEnglishStatus = 'unconfirmed',
 ): GraduationSupplement => {
   const creditCourses = completedCreditCourses(grades)
   const transcriptCoursesBySemester = completedGraduationCourses(grades, true)
@@ -292,16 +295,28 @@ export const analyzeGraduationSupplement = (
 
       if (/進階英文|外文領域/u.test(title)) {
         const automaticCourseKeys = creditCourses.filter(isAdvancedEnglishCourse).map((course) => course.key)
-        rules.push(buildCourseRule({
+        const rule = buildCourseRule({
           id: requirement.id,
           title: requirement.title,
-          description: '明確標示為進階英文的課程會先勾選；若成績單名稱不同，請自行指定採計課程。',
+          description: '進階英文修習與抵免狀態。',
           required: requirement.credits,
           method: 'mixed',
           selectableCourses: creditCourses,
           automaticCourseKeys,
           selections,
-        }))
+        })
+        if (isNonCreditAdvancedEnglishExemption(advancedEnglishStatus, cohortYear)) {
+          rule.waived = true
+          rule.earned = 0
+          rule.remaining = 0
+          rule.status = 'complete'
+        } else if (advancedEnglishStatus === 'approved-exemption' || advancedEnglishStatus === 'completed') {
+          const extra = advancedEnglishCreditAdjustment(grades, advancedEnglishStatus, requirement.credits, cohortYear)
+          rule.earned = Math.min(rule.required, rule.earned + extra)
+          rule.remaining = Math.max(0, rule.required - rule.earned)
+          rule.status = rule.remaining === 0 ? 'complete' : 'missing'
+        }
+        rules.push(rule)
         return
       }
 

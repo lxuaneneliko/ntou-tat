@@ -4,11 +4,11 @@ android {
     namespace = "com.lxuan.ntou_tat"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.lxuan.ntou_tat"
+        applicationId "com.lxuan.ntou_tat.v3test"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode = (project.findProperty('tatVersionCode') ?: '78').toInteger()
-        versionName = (project.findProperty('tatVersionName') ?: "1.13.32")
+        versionCode = (project.findProperty('tatVersionCode') ?: '300010').toInteger()
+        versionName = (project.findProperty('tatVersionName') ?: "3.0.0-test.10")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -17,6 +17,13 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // Keep the installed Play build intact when previewing icon changes.
+            if (project.findProperty('tatIconPreview') == 'true') {
+                applicationIdSuffix '.iconpreview'
+                versionNameSuffix '-icon-preview'
+            }
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -25,6 +32,16 @@ android {
     packagingOptions {
         resources {
             pickFirsts += ['META-INF/LICENSE.md', 'META-INF/NOTICE.md']
+        }
+    }
+    testOptions {
+        unitTests.includeAndroidResources = true
+        unitTests.all {
+            // Run the Android 11/15 matrix in separate JVM invocations on Windows.
+            // Robolectric's native font ZIP mount cannot be reopened across SDK sandboxes.
+            systemProperty 'robolectric.enabledSdks', project.findProperty('tatTestSdk') ?: '35'
+            systemProperty 'robolectric.dependency.repo.url', 'https://repo.maven.apache.org/maven2'
+            jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED', '--add-opens=java.base/java.util=ALL-UNNAMED', '--add-opens=java.base/java.io=ALL-UNNAMED', '--add-opens=java.base/java.net=ALL-UNNAMED', '--add-opens=java.base/java.security=ALL-UNNAMED', '--add-opens=java.base/java.text=ALL-UNNAMED', '--add-opens=java.base/jdk.internal.access=ALL-UNNAMED', '--add-opens=java.desktop/java.awt.font=ALL-UNNAMED', '--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED'
         }
     }
 }
@@ -46,6 +63,7 @@ dependencies {
     implementation 'org.eclipse.angus:angus-activation:2.0.0'
     implementation 'jakarta.activation:jakarta.activation-api:2.1.1'
     testImplementation "junit:junit:$junitVersion"
+    testImplementation 'org.robolectric:robolectric:4.17'
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')

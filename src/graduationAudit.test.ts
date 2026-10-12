@@ -24,6 +24,16 @@ const grade = (courseId: string, courseTitle: string, credits: number, score = 8
 })
 
 describe('graduation audit', () => {
+  it('counts approved advanced-English credits without treating eligibility as approval', () => {
+    const withEnglish: GraduationCurriculum = { ...curriculum, requirements: [...curriculum.requirements, { id: 'en', title: '進階英文', credits: 2, codes: [], notes: '', category: '共同教育', kind: 'course' }] }
+    expect(analyzeGraduationAudit(withEnglish, [], 'eligible').totalEarnedCredits).toBe(0)
+    const approved = analyzeGraduationAudit(withEnglish, [], 'approved-exemption')
+    expect(approved.totalEarnedCredits).toBe(2)
+    expect(approved.requirements.find((item) => item.id === 'en')?.status).toBe('complete')
+    expect(analyzeGraduationAudit(withEnglish, [grade('EN01', '進階英文', 2)], 'approved-exemption').totalEarnedCredits).toBe(2)
+    expect(analyzeGraduationAudit(withEnglish, [], 'completed').requirements.find((item) => item.id === 'en')?.status).toBe('complete')
+    expect(analyzeGraduationAudit(withEnglish, [grade('EN01', '進階英文', 2)], 'completed').totalEarnedCredits).toBe(2)
+  })
   it('matches by course code first and title when the official row has no code', () => {
     const result = analyzeGraduationAudit(curriculum, [
       grade('B5701M33', '程式設計新版名稱', 3),

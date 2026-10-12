@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="4dp">
+  <ImageView android:id="@+id/widget_background" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/tat_widget_preview_bg" android:importantForAccessibility="no" />
+  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="14dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+      <TextView android:layout_width="32dp" android:layout_height="1dp" android:importantForAccessibility="no" />
+      <TextView android:id="@+id/widget_title" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:gravity="center" android:text="海大 TAT · 今日課表" android:textColor="#233340" android:textSize="15sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
+      <Button android:id="@+id/widget_refresh" android:layout_width="32dp" android:layout_height="32dp" android:contentDescription="更新課表小工具" android:text="↻" android:textSize="20sp" android:textColor="#526779" android:background="@android:color/transparent" android:padding="0dp" android:minWidth="0dp" android:minHeight="0dp" />
+    </LinearLayout>
+    <TextView android:id="@+id/widget_date" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="開啟 TAT 自動同步課表" android:textColor="#6b7b88" android:textSize="11sp" android:paddingBottom="8dp" />
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+      <ListView android:id="@+id/widget_courses" android:layout_width="match_parent" android:layout_height="match_parent" android:divider="@android:color/transparent" android:dividerHeight="4dp" android:scrollbars="none" />
+      <TextView android:id="@+id/widget_empty" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="開啟 TAT 並登入，課表會自動同步" android:textColor="#6b7b88" android:textSize="13sp" />
+    </FrameLayout>
+    <ImageView android:id="@+id/widget_separator" android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="6dp" android:background="#22718190" android:importantForAccessibility="no" />
+    <TextView android:id="@+id/widget_next" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="點擊開啟課表" android:paddingTop="8dp" android:maxLines="2" android:textColor="#233340" android:textSize="12sp" />
+    <Chronometer android:id="@+id/widget_countdown" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:textColor="#6b7b88" android:textSize="11sp" android:visibility="gone" />
+  </LinearLayout>
+</FrameLayout>

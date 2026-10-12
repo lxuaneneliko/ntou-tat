@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, PointerEvent as ReactPointerEvent, RefObject } from 'react'
+import type { CSSProperties, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, RefObject } from 'react'
 import { App as CapApp } from '@capacitor/app'
+import { Browser } from '@capacitor/browser'
 import { Camera as DeviceCamera, MediaTypeSelection } from '@capacitor/camera'
 import { Capacitor } from '@capacitor/core'
 import {
@@ -54,6 +55,20 @@ import {
   ZoomOut,
 } from 'lucide-react'
 import './App.css'
+import './v3.css'
+import { restoreSemesterOverrides } from './timetableRestore'
+import { applyAppearance, readAppearance, saveAppearance, navigationLabels, type Appearance, type NavigationKey } from './appearance'
+import { AppearanceSettings } from './AppearanceSettings'
+import { Calendar3 } from './Calendar3'
+import { CampusBulletin } from './CampusBulletin'
+import { CampusBulletinDetails } from './CampusBulletinDetails'
+import { CampusActivitiesScreen } from './CampusActivitiesScreen'
+import { clearMeetupSession } from './campusMeetups'
+import { useCampusBulletins } from './useCampusBulletins'
+import type { CampusBulletinItem } from './campusBulletinData'
+import { OfficialCourseDetails } from './courseDetails'
+import { syncTimetableWidget } from './timetableWidget'
+import { WidgetSettings } from './WidgetSettings'
 import { apiMode, createNtouApi } from './api'
 import { UnauthorizedError } from './api/errors'
 import { emergencyContacts, emptyCredits } from './api/publicData'
@@ -216,16 +231,11 @@ const weekdays = [
   { value: 7, short: '日' },
 ]
 
-const tabs: Array<{ key: TabKey; label: string; icon: typeof CalendarDays }> = [
-  { key: 'timetable', label: '課表', icon: Clock3 },
-  { key: 'calendar', label: '行事曆', icon: CalendarDays },
-  { key: 'grades', label: '成績', icon: GraduationCap },
-  { key: 'mail', label: '信箱', icon: Mail },
-  { key: 'more', label: '其它', icon: Menu },
-]
+const navIcons: Record<NavigationKey, typeof CalendarDays> = { timetable: Clock3, activities: Users, calendar: CalendarDays, grades: GraduationCap, mail: Mail, more: Menu, portal: Building2, announcements: Bell, administration: Building2, departments: Building2, industry: Handshake, competitions: Trophy, 'school-song': Music2, traffic: MapPinned, emergency: Phone, 'important-dates': CalendarDays, settings: ShieldCheck }
 
 const tabTitles: Record<TabKey, string> = {
   timetable: '課表',
+  activities: '活動',
   calendar: '行事曆',
   grades: '成績',
   mail: '海大信箱',
@@ -275,6 +285,13 @@ const coursePalette = ['#acd6f4', '#eef0b3', '#b9dfc4', '#f1bcc8', '#cdbfee', '#
 const TIMETABLE_VIEW_STORAGE_KEY = 'ntou-timetable-view-v2'
 const TIMETABLE_WEEKEND_STORAGE_KEY = 'ntou-timetable-show-weekend-v1'
 const SUMMER_SEMESTER_STORAGE_KEY = 'ntou-grades-summer-prefetch-v1'
+const PRIVACY_POLICY_URL = 'https://ntou-tat-privacy.vercel.app/'
+
+const openPrivacyPolicy = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+  if (!Capacitor.isNativePlatform()) return
+  event.preventDefault()
+  void Browser.open({ url: PRIVACY_POLICY_URL })
+}
 
 const readWeekendPreference = () => {
   try {
@@ -432,9 +449,21 @@ const useTimetableDay = () => {
 }
 
 function App() {
+  const [appearance, setAppearance] = useState(readAppearance)
+  const [semesterStarts, setSemesterStarts] = useState<Record<string, string>>(() => { try { return JSON.parse(localStorage.getItem('ntou-semester-starts-v3') || '{}') } catch { return {} } })
+  const updateAppearance = (next: Appearance) => { setAppearance(next); saveAppearance(next) }
+  useEffect(() => { applyAppearance(appearance) }, [appearance])
   const [session, setSession] = useState<AuthSession | null>(null)
   const [data, setData] = useState<AppData | null>(null)
+  const campusFeed = useCampusBulletins(Boolean(session && data))
+  const widgetCurrentSemesterRef = useRef('')
+  const pendingWidgetOpen = useRef(false)
+  widgetCurrentSemesterRef.current = data?.semesters.find((semester) => semester.current)?.id || ''
   const [selectedTab, setSelectedTab] = useState<TabKey>('timetable')
+  const [mainPageFromOther, setMainPageFromOther] = useState(false)
+  const [showCalendarCourses, setShowCalendarCourses] = useState(() => { try { return localStorage.getItem('ntou-calendar-show-courses-v3') === 'true' } catch { return false } })
+  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
+  const [calendarOptionsOpen, setCalendarOptionsOpen] = useState(false)
   const [timetableViewMode, setTimetableViewMode] = useState<'grid' | 'list'>(() => {
     try {
       return localStorage.getItem(TIMETABLE_VIEW_STORAGE_KEY) === 'list' ? 'list' : 'grid'
@@ -446,6 +475,10 @@ function App() {
   const [includeSummerSemesters, setIncludeSummerSemesters] = useState(readSummerSemesterPreference)
   const [selectedSemester, setSelectedSemester] = useState('')
   const [moreView, setMoreView] = useState<MoreView | null>(null)
+  const [activeCampusBulletin, setActiveCampusBulletin] = useState<CampusBulletinItem | null>(null)
+  const [meetupDraftEvent, setMeetupDraftEvent] = useState<CampusBulletinItem | null>(null)
+  const isPinnedPage = Boolean(moreView && appearance.navigation.includes(moreView as NavigationKey))
+  useEffect(() => { if (selectedTab === 'more' || appearance.navigation.includes(selectedTab)) setMainPageFromOther(false) }, [selectedTab, appearance.navigation])
   const [schoolSongPlaying, setSchoolSongPlaying] = useState(false)
   const [customAvatar, setCustomAvatar] = useState(readStoredAvatar)
   const [activeCourse, setActiveCourse] = useState<CourseSummary | null>(null)
@@ -569,6 +602,12 @@ function App() {
     setDeletedCourses(newDeleted)
     localStorage.setItem('ntou_deleted_courses_v9', JSON.stringify(newDeleted))
   }
+  const restoreOriginalTimetable = () => {
+    if (!confirm('還原目前學期的學校原始課表？此學期新增的自訂課程與本機刪除紀錄會清除，課程備註保留。')) return
+    const restored = restoreSemesterOverrides(customCourses, deletedCourses, selectedSemester)
+    saveCustomCourses(restored.courses); saveDeletedCourses(restored.deleted)
+    setSelectedTimetableSource('mine'); setActiveCourse(null); setHeaderMenuOpen(false)
+  }
   const updateWeekendPreference = useCallback((nextShowWeekend: boolean) => {
     setShowWeekend(nextShowWeekend)
     writeWeekendPreference(nextShowWeekend)
@@ -619,6 +658,7 @@ function App() {
   }, [])
 
   const handleUnauthorized = useCallback(async () => {
+    await clearMeetupSession()
     dataRequestRef.current += 1
     semesterPrefetchGenerationRef.current += 1
     semesterPrefetchQueueRef.current = []
@@ -861,7 +901,7 @@ function App() {
     const errors: string[] = []
     let requested = false
 
-    if (!force) onProgress?.(semesterCacheProgress(entry))
+    onProgress?.(force ? 0 : semesterCacheProgress(entry))
     semesterLoadInFlightRef.current.add(semesterId)
     try {
       if (force || !entry.timetableCached) {
@@ -870,10 +910,11 @@ function App() {
           const timetable = await api.getTimetable(semesterId)
           entry = withCachedTimetable(entry, timetable)
           await persistSemesterEntry(studentId, semesterId, entry)
-          if (!force) onProgress?.(semesterCacheProgress(entry))
         } catch (error) {
           if (error instanceof UnauthorizedError) throw error
           errors.push(`課表：${messageFromError(error)}`)
+        } finally {
+          onProgress?.(force ? 50 : semesterCacheProgress(entry))
         }
       }
 
@@ -883,10 +924,11 @@ function App() {
           const grades = await api.getGrades(semesterId)
           entry = withCachedGrades(entry, grades, creditSummaryFromGrades(grades))
           await persistSemesterEntry(studentId, semesterId, entry)
-          if (!force) onProgress?.(semesterCacheProgress(entry))
         } catch (error) {
           if (error instanceof UnauthorizedError) throw error
           errors.push(`成績：${messageFromError(error)}`)
+        } finally {
+          onProgress?.(force ? 100 : semesterCacheProgress(entry))
         }
       }
 
@@ -894,7 +936,7 @@ function App() {
         if (force) {
           entry = markEmptyTimetableVerified(entry)
           await persistSemesterEntry(studentId, semesterId, entry)
-          if (!force) onProgress?.(semesterCacheProgress(entry))
+          onProgress?.(force ? 100 : semesterCacheProgress(entry))
         } else {
           requested = true
           try {
@@ -918,6 +960,58 @@ function App() {
     }
   }, [api, persistSemesterEntry, readCachedSemesterEntry])
 
+  const startSemesterProgress = useCallback((semesterId: string) => {
+    let visualPercent = 0
+    let progressLimit = 49
+    const publish = () => {
+      setSemesterPrefetchProgress((progress) =>
+        progress?.semesterId === semesterId
+          ? { semesterId, percent: visualPercent }
+          : progress,
+      )
+    }
+
+    setSemesterPrefetchProgress({ semesterId, percent: 0 })
+    const timer = window.setInterval(() => {
+      if (visualPercent >= progressLimit) return
+      visualPercent = Math.min(progressLimit, visualPercent + 1)
+      publish()
+    }, 120)
+
+    const stop = () => window.clearInterval(timer)
+    const setActual = (actualPercent: number) => {
+      progressLimit = actualPercent >= 50 ? 99 : 49
+    }
+    const complete = async (canContinue: () => boolean = () => true) => {
+      stop()
+      const completionFrom = visualPercent
+      const completionStartedAt = performance.now()
+      const completionDuration = Math.max(320, (99 - completionFrom) * 7)
+      while (visualPercent < 99 && canContinue()) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 16))
+        const elapsed = performance.now() - completionStartedAt
+        const ratio = Math.min(1, elapsed / completionDuration)
+        const nextPercent = Math.min(
+          99,
+          Math.floor(completionFrom + (99 - completionFrom) * ratio),
+        )
+        if (nextPercent > visualPercent) {
+          visualPercent = nextPercent
+          publish()
+        }
+      }
+
+      if (canContinue()) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 140))
+        visualPercent = 100
+        publish()
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 260))
+      }
+    }
+
+    return { complete, setActual, stop }
+  }, [])
+
   const runSemesterPrefetchQueue = useCallback(() => {
     if (semesterPrefetchRunningRef.current || !appActiveRef.current) return
     semesterPrefetchRunningRef.current = true
@@ -940,72 +1034,25 @@ function App() {
         )
         if (!shouldPrefetchSemester(cachedBeforePrefetch)) continue
 
-        setSemesterPrefetchProgress({
-          semesterId,
-          percent: 0,
-        })
-
-        let visualPercent = 0
-        let progressLimit = 49
-        const publishVisualProgress = () => {
-          setSemesterPrefetchProgress((progress) =>
-            progress?.semesterId === semesterId
-              ? { semesterId, percent: visualPercent }
-              : progress,
-          )
-        }
-        const progressTimer = window.setInterval(() => {
-          if (visualPercent >= progressLimit) return
-          visualPercent = Math.min(progressLimit, visualPercent + 1)
-          publishVisualProgress()
-        }, 120)
+        const progress = startSemesterProgress(semesterId)
 
         try {
           const result = await loadSemesterIntoCache(
             current.profile.id,
             semesterId,
             false,
-            (actualPercent) => {
-              progressLimit = actualPercent >= 50 ? 99 : 49
-            },
+            progress.setActual,
           )
-          window.clearInterval(progressTimer)
           if (result.errors.length) {
             setAppError(`歷史資料預載已暫停：${result.errors.join('；')}`)
             semesterPrefetchGenerationRef.current += 1
             break
           }
 
-          const completionFrom = visualPercent
-          const completionStartedAt = performance.now()
-          const completionDuration = Math.max(320, (99 - completionFrom) * 7)
-          while (
-            visualPercent < 99 &&
+          await progress.complete(() =>
             appActiveRef.current &&
-            generation === semesterPrefetchGenerationRef.current
-          ) {
-            await new Promise<void>((resolve) => window.setTimeout(resolve, 16))
-            const elapsed = performance.now() - completionStartedAt
-            const ratio = Math.min(1, elapsed / completionDuration)
-            const nextPercent = Math.min(
-              99,
-              Math.floor(completionFrom + (99 - completionFrom) * ratio),
-            )
-            if (nextPercent > visualPercent) {
-              visualPercent = nextPercent
-              publishVisualProgress()
-            }
-          }
-
-          if (
-            appActiveRef.current &&
-            generation === semesterPrefetchGenerationRef.current
-          ) {
-            await new Promise<void>((resolve) => window.setTimeout(resolve, 140))
-            visualPercent = 100
-            publishVisualProgress()
-            await new Promise<void>((resolve) => window.setTimeout(resolve, 260))
-          }
+            generation === semesterPrefetchGenerationRef.current,
+          )
         } catch (error) {
           if (error instanceof UnauthorizedError) {
             const message = error.message === 'CAPTCHA_FAILED'
@@ -1019,7 +1066,7 @@ function App() {
           semesterPrefetchGenerationRef.current += 1
           break
         } finally {
-          window.clearInterval(progressTimer)
+          progress.stop()
         }
       }
     })().finally(() => {
@@ -1038,7 +1085,7 @@ function App() {
     })
 
     semesterPrefetchTaskRef.current = task
-  }, [loadLoginChallenge, loadSemesterIntoCache, readCachedSemesterEntry])
+  }, [loadLoginChallenge, loadSemesterIntoCache, readCachedSemesterEntry, startSemesterProgress])
 
   runSemesterPrefetchRef.current = runSemesterPrefetchQueue
 
@@ -1074,7 +1121,11 @@ function App() {
     runSemesterPrefetchRef.current()
   }, [])
 
-  const loadAppData = useCallback(async (semesterOverride?: string, force = false) => {
+  const loadAppData = useCallback(async (
+    semesterOverride?: string,
+    force = false,
+    onSemesterProgress?: (percent: number) => void,
+  ) => {
     setAppError(null)
     const existing = dataRef.current
     const rawSemesters = existing?.semesters ?? await api.getSemesters()
@@ -1130,7 +1181,7 @@ function App() {
     }
 
     if (force) {
-      const result = await loadSemesterIntoCache(profile.id, semesterId, true)
+      const result = await loadSemesterIntoCache(profile.id, semesterId, true, onSemesterProgress)
       if (result.errors.length) {
         setAppError(`重新整理失敗，已保留上次資料：${result.errors.join('；')}`)
       }
@@ -1237,9 +1288,16 @@ function App() {
     if (Capacitor.getPlatform() !== 'android') return
 
     const handleBackButton = CapApp.addListener('backButton', () => {
-      if (availableUpdate) {
+      const meetupDialog = document.querySelector<HTMLDialogElement>('dialog[data-campus-meetup][open]')
+      if (meetupDialog) {
+        clearExitHint()
+        meetupDialog.dispatchEvent(new Event('cancel', { cancelable: true }))
+      } else if (availableUpdate) {
         clearExitHint()
         remindAboutUpdateLater()
+      } else if (activeCampusBulletin) {
+        clearExitHint()
+        setActiveCampusBulletin(null)
       } else if (timetableDialog) {
         clearExitHint()
         setTimetableDialog(null)
@@ -1270,9 +1328,13 @@ function App() {
         clearExitHint()
       } else if (moreView === 'administration' && administrativeUnitsRef.current?.goBack()) {
         clearExitHint()
-      } else if (moreView) {
+      } else if (moreView && !isPinnedPage) {
         clearExitHint()
         setMoreView(null)
+      } else if (mainPageFromOther) {
+        clearExitHint()
+        setMainPageFromOther(false)
+        setSelectedTab('more')
       } else {
         requestAppExit()
       }
@@ -1281,6 +1343,7 @@ function App() {
       void handleBackButton.then((h: { remove: () => void }) => h.remove())
     }
   }, [
+    activeCampusBulletin,
     activeCourse,
     availableUpdate,
     clearExitHint,
@@ -1291,6 +1354,8 @@ function App() {
     isGeneralEducationOpen,
     isGraduationAuditOpen,
     moreView,
+    isPinnedPage,
+    mainPageFromOther,
     remindAboutUpdateLater,
     requestAppExit,
     selectedTab,
@@ -1402,16 +1467,20 @@ function App() {
   }
 
   const refresh = async () => {
+    const semesterId = selectedSemesterRef.current
     setIsRefreshing(true)
+    let progress: ReturnType<typeof startSemesterProgress> | null = null
     try {
       semesterPrefetchGenerationRef.current += 1
       await semesterPrefetchTaskRef.current
-      await loadAppData(selectedSemester, true)
+      progress = startSemesterProgress(semesterId)
+      await loadAppData(semesterId, true, progress.setActual)
+      await progress.complete()
       const current = dataRef.current
       if (current) {
         enqueueSemesterPrefetch(
           current.semesters,
-          selectedSemester,
+          semesterId,
           includeSummerSemestersRef.current,
         )
       }
@@ -1427,6 +1496,8 @@ function App() {
         setAppError(messageFromError(error))
       }
     } finally {
+      progress?.stop()
+      setSemesterPrefetchProgress(null)
       setIsRefreshing(false)
     }
   }
@@ -1502,6 +1573,7 @@ function App() {
   }
 
   const logout = async () => {
+    await clearMeetupSession()
     dataRequestRef.current += 1
     semesterPrefetchGenerationRef.current += 1
     semesterPrefetchQueueRef.current = []
@@ -1525,6 +1597,7 @@ function App() {
   }
 
   const beginPortalReauthentication = async () => {
+    await clearMeetupSession()
     dataRequestRef.current += 1
     semesterPrefetchGenerationRef.current += 1
     semesterPrefetchQueueRef.current = []
@@ -1554,6 +1627,33 @@ function App() {
     [selectedTimetableSource, sharedTimetables],
   )
   const displayedTimetableSlots = selectedSharedTimetable?.slots ?? mergedSlots
+  const defaultSemesterStart = (semester: string) => {
+    const [year, term] = semester.split('-').map(Number)
+    const officialStart = data?.calendar.find((event) => /開始上課|正式上課|開學/u.test(event.title) && event.startsOn.startsWith(String(year + 1911 + (term === 2 ? 1 : 0))) && Number(event.startsOn.slice(5, 7)) >= (term === 1 ? 8 : 1) && Number(event.startsOn.slice(5, 7)) <= (term === 1 ? 10 : 3))?.startsOn
+    return officialStart || `${year + 1911 + (term === 2 ? 1 : 0)}-${term === 1 ? '09-14' : '02-16'}`
+  }
+  const semesterStart = semesterStarts[selectedSemester] || defaultSemesterStart(selectedSemester || '115-1')
+  const updateSemesterStart = (date: string) => { const next = { ...semesterStarts, [selectedSemester]: date }; setSemesterStarts(next); localStorage.setItem('ntou-semester-starts-v3', JSON.stringify(next)) }
+  useEffect(() => {
+    if (isBooting) return
+    if (!session) { void syncTimetableWidget([], '', appearance, '2000-01-01', false).catch(() => {}); return }
+    if (!data || !data.semesters.find((s) => s.id === selectedSemester)?.current) return
+    void syncTimetableWidget(mergedSlots, selectedSemester, appearance, semesterStart).catch(() => {})
+  }, [session, data, mergedSlots, selectedSemester, appearance, semesterStart, isBooting])
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    const openFromWidget = (url?: string) => { if (url?.startsWith('ntoutat://timetable')) { setSelectedTab('timetable'); setMoreView(null); if (widgetCurrentSemesterRef.current) setSelectedSemester(widgetCurrentSemesterRef.current); else pendingWidgetOpen.current = true } }
+    const subscription = CapApp.addListener('appUrlOpen', ({ url }) => openFromWidget(url))
+    void CapApp.getLaunchUrl().then((result) => openFromWidget(result?.url))
+    return () => { void subscription.then((listener) => listener.remove()) }
+  }, [])
+  useEffect(() => {
+    if (pendingWidgetOpen.current && widgetCurrentSemesterRef.current) {
+      pendingWidgetOpen.current = false
+      setSelectedSemester(widgetCurrentSemesterRef.current)
+      setSelectedTab('timetable'); setMoreView(null)
+    }
+  }, [data])
   const localTimetableDay = useTimetableDay()
   const todayCourseNotes = useMemo<TodayCourseNote[]>(() => {
     const isCurrentSemester = data?.semesters.some(
@@ -1672,11 +1772,12 @@ function App() {
       <div className="app-shell">
         <header className="app-header">
           <div className="header-main">
-            {moreView ? (
+            {(moreView && !isPinnedPage) || mainPageFromOther ? (
               <button className="header-icon" type="button" aria-label="返回" onClick={() => {
                 if (moreView === 'departments' && departmentSitesRef.current?.goBack()) return
                 if (moreView === 'administration' && administrativeUnitsRef.current?.goBack()) return
                 setMoreView(null)
+                if (mainPageFromOther) { setMainPageFromOther(false); setSelectedTab('more') }
               }}>
                 <ChevronLeft size={24} />
               </button>
@@ -1700,10 +1801,10 @@ function App() {
                 className="header-icon"
                 type="button"
                 aria-label="重新整理"
-                disabled={isRefreshing}
-                onClick={() => void refresh()}
+                disabled={selectedTab === 'activities' && !moreView ? campusFeed.refreshing : isRefreshing}
+                onClick={() => selectedTab === 'activities' && !moreView ? campusFeed.refresh() : void refresh()}
               >
-                <RefreshCw className={isRefreshing ? 'spin' : ''} size={22} />
+                <RefreshCw className={(selectedTab === 'activities' && !moreView ? campusFeed.refreshing : isRefreshing) ? 'spin' : ''} size={22} />
               </button>
             ) : null}
             {!moreView ? (
@@ -1719,6 +1820,11 @@ function App() {
                 </button>
                 {headerMenuOpen ? (
                   <div className="header-menu" role="menu">
+                    {selectedTab === 'calendar' ? <button className="header-menu-toggle" type="button" role="menuitemcheckbox" aria-checked={showCalendarCourses} onClick={() => { const next = !showCalendarCourses; setShowCalendarCourses(next); try { localStorage.setItem('ntou-calendar-show-courses-v3', String(next)) } catch { /* Session setting still works. */ } setHeaderMenuOpen(false) }}><CalendarDays size={17} /><span>顯示課程</span><i className={showCalendarCourses ? 'active' : ''} aria-hidden="true"><b /></i></button> : null}
+                    {selectedTab === 'calendar' ? <><button type="button" role="menuitemradio" aria-checked={calendarMode === 'month'} onClick={() => { setCalendarMode('month'); setHeaderMenuOpen(false) }}><CalendarDays size={17} /><span>月檢視</span></button><button type="button" role="menuitemradio" aria-checked={calendarMode === 'week'} onClick={() => { setCalendarMode('week'); setHeaderMenuOpen(false) }}><CalendarDays size={17} /><span>週檢視</span></button><button type="button" role="menuitemcheckbox" aria-checked={calendarOptionsOpen} onClick={() => { setCalendarOptionsOpen(!calendarOptionsOpen); setHeaderMenuOpen(false) }}><CalendarDays size={17} /><span>學期週次設定</span></button></> : null}
+                    {selectedTab === 'timetable' && !selectedSharedTimetable ? (
+                      <button type="button" role="menuitem" onClick={restoreOriginalTimetable}><RefreshCw size={17} /><span>還原原本課表</span></button>
+                    ) : null}
                     {selectedTab === 'timetable' && !selectedSharedTimetable ? (
                       <button
                         type="button"
@@ -1888,6 +1994,8 @@ function App() {
           </div>
         </header>
 
+        <CampusBulletin feed={campusFeed} autoRotate={appearance.bulletinAutoRotate !== false} detailOpen={Boolean(activeCampusBulletin)} onOpen={setActiveCampusBulletin} />
+
         {(selectedTab === 'timetable' || selectedTab === 'grades') && !moreView ? (
           <StudentStrip
             profile={data.profile}
@@ -1959,6 +2067,8 @@ function App() {
                 administrativeUnitsRef={administrativeUnitsRef}
                 schoolSongRef={schoolSongRef}
                 onSchoolSongPlayingChange={setSchoolSongPlaying}
+                appearance={appearance}
+                onAppearanceChange={updateAppearance}
               />
             ) : selectedTab === 'timetable' ? (
               <TimetableScreen
@@ -1977,9 +2087,20 @@ function App() {
                   void openCourse(course, slot)
                 }}
               />
+            ) : selectedTab === 'activities' ? (
+              <CampusActivitiesScreen feed={campusFeed} onOpen={setActiveCampusBulletin} profile={data.profile} draftEvent={meetupDraftEvent} onConsumeDraft={() => setMeetupDraftEvent(null)} />
             ) : selectedTab === 'calendar' ? (
-              <CalendarScreen
+              <Calendar3
+                appearance={appearance}
+                mode={calendarMode}
+                optionsOpen={calendarOptionsOpen}
+                showCourses={showCalendarCourses}
                 events={mergedCalendarEvents}
+                slots={mergedSlots}
+                semesterId={selectedSemester}
+                semesterStart={semesterStart}
+                onSemesterStartChange={updateSemesterStart}
+                onOpenCourse={(slot) => void openCourse(coursesFromTimetable([slot])[0], slot)}
                 refreshing={calendarRefreshing}
                 onRefresh={() => void refreshOfficialCalendar()}
                 onDeleteEvent={(id) => {
@@ -2021,37 +2142,44 @@ function App() {
                 onAvatarChange={saveCustomAvatar}
                 onLogout={logout}
                 onOpen={setMoreView}
+                navigation={appearance.navigation}
+                onMainOpen={(key) => { setMainPageFromOther(true); setSelectedTab(key); setMoreView(null) }}
               />
             )}
           </div>
         </main>
 
-        {!moreView ? (
+        {!moreView || appearance.navigation.includes(moreView as NavigationKey) ? (
           <nav className="bottom-nav" aria-label="主功能">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
+            {appearance.navigation.map((key) => {
+              const Icon = navIcons[key]
               return (
                 <button
-                  className={`nav-button ${selectedTab === tab.key ? 'active' : ''}`}
-                  key={tab.key}
+                  className={`nav-button ${(moreView || selectedTab) === key ? 'active' : ''}`}
+                  key={key}
                   type="button"
                   onClick={() => {
                     setHeaderMenuOpen(false)
-                    setSelectedTab(tab.key)
+                    setMainPageFromOther(false)
+                    if (['timetable', 'activities', 'calendar', 'grades', 'mail', 'more'].includes(key)) { setSelectedTab(key as TabKey); setMoreView(null) }
+                    else { setSelectedTab('more'); setMoreView(key as MoreView) }
                     setActiveCourse(null)
                   }}
                 >
                   <Icon size={24} />
-                  <span>{tab.label}</span>
+                  <span>{navigationLabels[key]}</span>
                 </button>
               )
             })}
           </nav>
         ) : null}
 
+        {activeCampusBulletin ? <CampusBulletinDetails item={activeCampusBulletin} onClose={() => setActiveCampusBulletin(null)} onStartMeetup={item => { setActiveCampusBulletin(null); setMeetupDraftEvent(item); setSelectedTab('activities'); setMoreView(null) }} /> : null}
+
         {activeCourse ? (
           <CourseSheet
             course={activeCourse}
+            semester={selectedSemester}
             files={courseFiles[activeCourse.id] ?? []}
             loading={fileLoadingId === activeCourse.id}
             onClose={() => setActiveCourse(null)}
@@ -2632,7 +2760,7 @@ function TimetableScreen({
   )
 }
 
-function CalendarScreen({
+export function LegacyCalendarScreen({
   events,
   refreshing,
   onRefresh,
@@ -2854,9 +2982,9 @@ function GradesScreen({
       <div
         className="gpa-dashboard-card"
         style={{
-          background: 'rgba(23, 26, 31, 0.65)',
+          background: 'var(--surface-raised)',
           backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid var(--line)',
           borderRadius: '12px',
           padding: '18px',
           marginBottom: '16px',
@@ -2887,7 +3015,7 @@ function GradesScreen({
             width: '68px',
             height: '68px',
             borderRadius: '50%',
-            background: `conic-gradient(var(--active) ${gpaPercent}%, #252a30 0)`,
+            background: `conic-gradient(var(--active) ${gpaPercent}%, var(--surface) 0)`,
             display: 'grid',
             placeItems: 'center',
           }}
@@ -2897,7 +3025,7 @@ function GradesScreen({
               width: '54px',
               height: '54px',
               borderRadius: '50%',
-              background: '#171a1f',
+              background: 'var(--surface)',
               display: 'grid',
               placeItems: 'center',
               fontSize: '11px',
@@ -2915,7 +3043,7 @@ function GradesScreen({
       </div>
 
       {grades.length ? (
-        <div className="grade-list" style={{ borderTop: '1px solid var(--line)', background: '#111419', borderRadius: '8px', overflow: 'hidden' }}>
+        <div className="grade-list" style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', borderRadius: '8px', overflow: 'hidden' }}>
           {grades.map((grade) => (
             <div className="grade-row" key={grade.id} style={{ borderBottom: '1px solid var(--line)', padding: '12px 14px' }}>
               <div style={{ flex: 1 }}>
@@ -2926,7 +3054,7 @@ function GradesScreen({
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <b style={{ fontSize: '20px', color: '#65c5ff' }}>{grade.score ?? grade.letter ?? '—'}</b>
+                <b style={{ fontSize: '20px', color: 'var(--accent)' }}>{grade.score ?? grade.letter ?? '—'}</b>
                 {grade.id.startsWith('custom-') ? (
                   <button
                     type="button"
@@ -2949,7 +3077,7 @@ function GradesScreen({
           ))}
         </div>
       ) : (
-        <div className="inline-empty" style={{ background: '#111419', borderRadius: '8px' }}>
+        <div className="inline-empty" style={{ background: 'var(--surface)', borderRadius: '8px' }}>
           <GraduationCap size={26} />
           <strong>尚未取得 AIS 成績</strong>
           <span>請按右上角重新整理；模擬成績已移到三點選單</span>
@@ -2965,12 +3093,16 @@ function MoreScreen({
   onAvatarChange,
   onLogout,
   onOpen,
+  navigation,
+  onMainOpen,
 }: {
   avatarUrl: string
   data: AppData
   onAvatarChange: (dataUrl: string) => void
   onLogout: () => Promise<void>
   onOpen: (view: MoreView) => void
+  navigation: NavigationKey[]
+  onMainOpen: (key: TabKey) => void
 }) {
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
@@ -2991,19 +3123,20 @@ function MoreScreen({
   const tools: Array<{ icon: typeof Bell; label: string; view: MoreView }> = [
     { icon: Building2, label: '海大校務系統', view: 'portal' },
     { icon: Bell, label: '校務公告', view: 'announcements' },
+    { icon: ShieldCheck, label: '外觀設定', view: 'settings' },
     { icon: Building2, label: '行政單位', view: 'administration' },
     { icon: Building2, label: '各系系網', view: 'departments' },
     { icon: Handshake, label: '海大產學中心', view: 'industry' },
     { icon: Trophy, label: '校外競賽', view: 'competitions' },
     { icon: Music2, label: '海大校歌', view: 'school-song' },
-    { icon: CalendarDays, label: '重要日期', view: 'calendar' },
+    { icon: CalendarDays, label: '重要日期', view: 'important-dates' },
     { icon: MapPinned, label: '交通與地圖', view: 'traffic' },
     { icon: Phone, label: '緊急聯絡', view: 'emergency' },
-    { icon: ShieldCheck, label: '帳號與設定', view: 'settings' },
   ]
   return (
     <section className="more-screen">
-      <div className="profile-block">
+      <div className="profile-block tat-identity-card" aria-label="TAT 個人資訊卡">
+        <div className="identity-card-topline"><span>TAT / CAMPUS PROFILE</span><span className="identity-card-chip" aria-hidden="true"><i /><i /><i /></span></div>
         <button
           className="avatar-picker"
           type="button"
@@ -3027,13 +3160,16 @@ function MoreScreen({
           tabIndex={-1}
           onChange={(event) => void changeAvatar(event.target.files?.[0])}
         />
-        <div>
+        <div className="identity-card-person">
           <strong>{data.profile.name === data.profile.id ? '海大學生' : data.profile.name}</strong>
-          <span>{data.profile.id}</span>
+          <span>國立臺灣海洋大學</span>
         </div>
+        <div className="identity-card-fields"><div><small>STUDENT NO. / 學號</small><b>{data.profile.id}</b></div><div><small>DEPARTMENT / 系級</small><b>{[data.profile.department, data.profile.grade].filter(Boolean).join(' · ') || '未提供'}</b></div></div>
+        <div className="identity-card-footer"><span>TAT 個人資訊卡 · 非正式學生證</span><span aria-hidden="true">// NTOU</span></div>
       </div>
       <div className="tool-list">
-        {tools.map((tool) => {
+        {(['timetable', 'calendar', 'activities', 'grades', 'mail'] as TabKey[]).filter((key) => !navigation.includes(key)).map((key) => { const Icon = navIcons[key]; return <button key={key} type="button" onClick={() => onMainOpen(key)}><Icon size={22} /><span>{navigationLabels[key]}</span><ChevronRight size={19} /></button> })}
+        {tools.filter((tool) => !navigation.includes(tool.view as NavigationKey)).map((tool) => {
           const Icon = tool.icon
           return (
             <button
@@ -3058,6 +3194,8 @@ function MoreScreen({
 }
 
 function MoreSubview({
+  appearance,
+  onAppearanceChange,
   administrativeUnitsRef,
   competitionRefreshing,
   data,
@@ -3087,6 +3225,8 @@ function MoreSubview({
   onSchoolSongPlayingChange: (playing: boolean) => void
   schoolSongRef: RefObject<SchoolSongScreenHandle | null>
   view: MoreView
+  appearance: Appearance
+  onAppearanceChange: (next: Appearance) => void
 }) {
   if (view === 'portal') {
     return (
@@ -3101,6 +3241,9 @@ function MoreSubview({
   if (view === 'settings') {
     return (
       <section className="subview">
+        <AppearanceSettings value={appearance} onChange={onAppearanceChange} />
+        <WidgetSettings />
+        <div className="settings-row"><span>Email 2000 快取</span><strong>最新 1,000 則摘要與已讀內文</strong></div>
         <div className="settings-row">
           <span>資料來源</span>
           <strong>{apiMode === 'portal' ? '海大 AIS 直連' : apiMode}</strong>
@@ -3109,6 +3252,10 @@ function MoreSubview({
           <span>Cookie</span>
           <strong>僅存在本機</strong>
         </div>
+        <a className="settings-row privacy-settings-link" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" onClick={openPrivacyPolicy}>
+          <span>隱私權政策</span>
+          <ExternalLink size={18} />
+        </a>
         <button className="logout-button" type="button" onClick={() => void onLogout()}>
           <LogOut size={19} />
           登出
@@ -3606,6 +3753,7 @@ function LinkList({
 
 function CourseSheet({
   course,
+  semester,
   courseSlots,
   files,
   isSharedSnapshot,
@@ -3617,6 +3765,7 @@ function CourseSheet({
   slot,
 }: {
   course: CourseSummary
+  semester: string
   courseSlots?: TimetableSlot[]
   files: CourseFile[]
   isSharedSnapshot?: boolean
@@ -3661,6 +3810,8 @@ function CourseSheet({
           ) : scheduleText ? <div><dt>上課時間</dt><dd>{scheduleText}</dd></div> : null}
           <div><dt>學分</dt><dd>{course.credits || '—'}</dd></div>
         </dl>
+
+        {!course.id.startsWith('custom-') && !isSharedSnapshot ? <OfficialCourseDetails course={course} semester={semester} mock={apiMode === 'mock'} /> : null}
 
         {onSaveNote ? (
           <section className="course-note-editor" aria-labelledby="course-note-title">
@@ -4146,7 +4297,7 @@ function LoginScreen({
       <section className="login-panel">
         <div className="login-brand">
           <div className="brand-icon">
-            <img src={`${import.meta.env.BASE_URL}ntou-emblem.png`} alt="海大校徽" />
+            <img src={`${import.meta.env.BASE_URL}tat-mark.png`} alt="TAT 圖示" />
           </div>
           <div><h1>海大 TAT</h1><p>National Taiwan Ocean University</p></div>
         </div>
@@ -4247,6 +4398,9 @@ function LoginScreen({
             ? '密碼僅用於登入海大教學務系統，並加密儲存在手機內，不會上傳至任何其他伺服器'
             : '密碼僅用於登入海大教學務系統；未勾選記住帳密時不會儲存密碼'}
         </div>
+        <a className="privacy-policy-link" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" onClick={openPrivacyPolicy}>
+          閱讀隱私權政策 <ExternalLink size={13} />
+        </a>
       </section>
     </div>
   )
@@ -4267,12 +4421,12 @@ function moreViewTitle(view: MoreView) {
     departments: '各系系網',
     industry: '海大產學中心',
     competitions: '校外競賽',
-    calendar: '重要日期',
+    'important-dates': '重要日期',
     administration: '行政單位',
     traffic: '交通與地圖',
     emergency: '緊急聯絡',
     'school-song': '海大校歌',
-    settings: '帳號與設定',
+    settings: '外觀設定',
   }
   return titles[view]
 }
@@ -4452,7 +4606,7 @@ function AddCourseModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              style={{ padding: '8px 10px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
+              style={{ padding: '8px 10px', background: 'var(--surface)' , border: '1px solid var(--line-strong)', borderRadius: '6px', color: 'var(--ink)' }}
               placeholder="例如：熱力學（一）"
             />
           </label>
@@ -4462,7 +4616,7 @@ function AddCourseModal({
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              style={{ padding: '8px 10px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
+              style={{ padding: '8px 10px', background: 'var(--surface)' , border: '1px solid var(--line-strong)', borderRadius: '6px', color: 'var(--ink)' }}
               placeholder="例如：B7202S42"
             />
           </label>
@@ -4472,7 +4626,7 @@ function AddCourseModal({
               type="text"
               value={teacher}
               onChange={(e) => setTeacher(e.target.value)}
-              style={{ padding: '8px 10px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
+              style={{ padding: '8px 10px', background: 'var(--surface)' , border: '1px solid var(--line-strong)', borderRadius: '6px', color: 'var(--ink)' }}
               placeholder="例如：莊程媐 助理教授"
             />
           </label>
@@ -4482,7 +4636,7 @@ function AddCourseModal({
               type="text"
               value={room}
               onChange={(e) => setRoom(e.target.value)}
-              style={{ padding: '8px 10px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
+              style={{ padding: '8px 10px', background: 'var(--surface)' , border: '1px solid var(--line-strong)', borderRadius: '6px', color: 'var(--ink)' }}
               placeholder="例如：MEB429"
             />
           </label>
@@ -4604,7 +4758,7 @@ function AddGradeModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              style={{ padding: '8px 10px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
+              style={{ padding: '8px 10px', background: 'var(--surface)' , border: '1px solid var(--line-strong)', borderRadius: '6px', color: 'var(--ink)' }}
               placeholder="例如：熱力學"
             />
           </label>
@@ -4618,7 +4772,7 @@ function AddGradeModal({
                 max={10}
                 value={credits}
                 onChange={(e) => setCredits(Number(e.target.value))}
-                style={{ padding: '8px 10px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
+                style={{ padding: '8px 10px', background: 'var(--surface)' , border: '1px solid var(--line-strong)', borderRadius: '6px', color: 'var(--ink)' }}
               />
             </label>
             <label style={{ display: 'grid', gap: '4px' }}>
@@ -4627,7 +4781,7 @@ function AddGradeModal({
                 type="text"
                 value={scoreText}
                 onChange={(e) => setScoreText(e.target.value)}
-                style={{ padding: '8px 10px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
+                style={{ padding: '8px 10px', background: 'var(--surface)' , border: '1px solid var(--line-strong)', borderRadius: '6px', color: 'var(--ink)' }}
                 placeholder="例如：85 或 A+"
               />
             </label>
@@ -4641,7 +4795,7 @@ function AddGradeModal({
                 setCategory(e.target.value)
                 setRequired(e.target.value === '必修')
               }}
-              style={{ padding: '8px', background: '#252a30', border: '1px solid var(--line-strong)', borderRadius: '6px', color: '#fff' }}
+              style={{ padding: '8px', background: 'var(--surface)' , border: '1px solid var(--line-strong)', borderRadius: '6px', color: 'var(--ink)' }}
             >
               <option value="必修">必修</option>
               <option value="選修">選修</option>
@@ -4654,7 +4808,7 @@ function AddGradeModal({
             style={{
               padding: '10px 20px',
               background: 'var(--brand)',
-              color: '#fff',
+              color: 'var(--ink)',
               fontWeight: 800,
               borderRadius: '6px',
               marginTop: '8px',

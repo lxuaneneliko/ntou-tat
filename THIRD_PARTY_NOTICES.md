@@ -9,7 +9,6 @@ names, logos, trademarks, or externally hosted services.
 The following files contain or reproduce material associated with National
 Taiwan Ocean University (NTOU):
 
-- `public/ntou-emblem.png` and app-icon or splash-screen derivatives
 - `public/audio/ntou-school-song.m4a` and the lyrics in `src/schoolSong.ts`
 - `public/ntou-campus-map-2026.jpg`
 - `src/data/graduationCurricula.json`
@@ -20,6 +19,10 @@ These materials, the names "National Taiwan Ocean University", "NTOU", and
 inclusion does not imply university endorsement and does not grant trademark
 or content-redistribution rights. Any required permission must be obtained
 separately from the relevant rights holder.
+
+The T mark in `public/tat-mark.png` and its app-icon and splash-screen
+derivatives were provided by the project owner. They are not covered by the
+source-code MIT License.
 
 ## OCR components
 

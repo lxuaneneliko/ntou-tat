@@ -1,6 +1,7 @@
 import { hasPassingResult } from './gpa'
 import type { GraduationCourseRequirement, GraduationCurriculum } from './api/graduationRequirements'
 import type { Grade } from './types'
+import { advancedEnglishCreditAdjustment, isNonCreditAdvancedEnglishExemption, type AdvancedEnglishStatus } from './advancedEnglish'
 
 export type GraduationRequirementStatus = 'complete' | 'missing' | 'review'
 
@@ -8,6 +9,7 @@ export type GraduationRequirementAudit = GraduationCourseRequirement & {
   status: GraduationRequirementStatus
   earnedCredits: number
   matchedGrades: Grade[]
+  waived?: boolean
 }
 
 export type GraduationAudit = {
@@ -82,15 +84,25 @@ const auditRequirement = (
 export const analyzeGraduationAudit = (
   curriculum: GraduationCurriculum,
   grades: Grade[],
+  advancedEnglishStatus: AdvancedEnglishStatus = 'unconfirmed',
 ): GraduationAudit => {
   const completedGrades = dedupePassedGrades(grades)
-  const totalEarnedCredits = completedGrades
+  const englishRequirement = curriculum.requirements.find((item) => /進階英文|外文領域/u.test(item.title))
+  const englishWaived = isNonCreditAdvancedEnglishExemption(advancedEnglishStatus, curriculum.requestedYear)
+  const englishExtra = englishRequirement ? advancedEnglishCreditAdjustment(grades, advancedEnglishStatus, englishRequirement.credits, curriculum.requestedYear) : 0
+  const totalEarnedCredits = englishExtra + completedGrades
     .filter((grade) => !isExcludedFromGraduationCredits(grade))
     .reduce((total, grade) => total + Math.max(0, grade.credits), 0)
-  const requirements = curriculum.requirements.map((requirement) =>
-    auditRequirement(requirement, completedGrades),
-  )
-  const trackable = requirements.filter((requirement) => requirement.kind === 'course')
+  const requirements = curriculum.requirements.map((requirement) => {
+    const result = auditRequirement(requirement, completedGrades)
+    if (requirement.kind === 'course' && /進階英文/u.test(requirement.title) && (advancedEnglishStatus === 'approved-exemption' || advancedEnglishStatus === 'completed')) {
+      if (englishWaived) return { ...result, status: 'complete' as const, earnedCredits: 0, waived: true }
+      result.earnedCredits = Math.min(result.credits, result.earnedCredits + englishExtra)
+      result.status = result.earnedCredits >= result.credits ? 'complete' : 'missing'
+    }
+    return result
+  })
+  const trackable = requirements.filter((requirement) => requirement.kind === 'course' && !requirement.waived)
   const trackableRequiredCredits = trackable.reduce((total, requirement) => total + requirement.credits, 0)
   const completedRequiredCredits = trackable.reduce((total, requirement) => total + requirement.earnedCredits, 0)
 

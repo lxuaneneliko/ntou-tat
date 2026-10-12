@@ -1,4 +1,12 @@
-# 海大 TAT
+# 海大 TAT｜海洋黑客松增修進度
+
+本分支記錄截至 2026 年 10 月 12 日的海洋黑客松功能增修與測試進度，不代表正式版本發布或 Google Play 更新。
+
+新增與調整內容包含外觀／導覽客製化、行事曆跨日事件、課程資訊、進階英文抵免選項、Mail2000 快取與捲動位置、Android 課表小工具，以及校園活動快報、圖片與 App 內揪團。
+
+本次上傳前已重新執行 300 項測試及網頁建置。真實 AIS 身分交換、兩人揪團流程與背景通知仍需實機確認；保留原有 iOS 程式，不表示本次 Android 增修已在 iOS 驗收。
+
+完整紀錄請見 [海洋黑客松增修進度](docs/HACKATHON_PROGRESS.md)。安裝套件中的既有測試識別與版本值維持不變，本次不建立正式 Release、不上傳 APK／AAB，也不改動其他分支。
 
 海大 TAT 是以 React、TypeScript、Vite 與 Capacitor 製作的非官方 Android／iOS 學生工具，
 將國立臺灣海洋大學 AIS 的課表、成績與校務資訊整理成行動版介面。
@@ -6,7 +14,9 @@
 > 本專案不是海大官方 App，也未受海大委託或背書。AIS 網頁結構或登入流程變更時，
 > 部分功能可能暫時失效。
 
-## 下載 App
+## 已公開版本下載
+
+以下連結是原有公開版本，不是本分支的黑客松增修測試套件。
 
 [下載最新版 Android APK](https://github.com/lxuaneneliko/ntou-tat/releases/latest/download/NTOUTAT.apk)
 
@@ -26,7 +36,7 @@ App 不會在背景下載或自動安裝。
 3. 建立非草稿、非 prerelease 的 GitHub Release，並上傳固定名稱 `NTOUTAT.apk`。
 4. APK 使用與舊版相同的簽章金鑰，使用者才能直接覆蓋安裝並保留資料。
 
-公開更新說明統一使用「修復了一些已知問題。」；詳細變更保留在程式提交與測試紀錄。
+本分支使用「海洋黑客松增修進度」記錄實際功能與驗證範圍，不以籠統修復說明代替進度。
 
 本機測試 APK 可用 Gradle 的 `-PtatVersionName`、`-PtatVersionCode` 指定獨立版本，
 例如 PowerShell 使用 `'-PtatVersionName=1.13.29.5-test' '-PtatVersionCode=72'`（參數需加引號）。
@@ -49,7 +59,8 @@ App 不會在背景下載或自動安裝。
 
 - Android App 將帳號、密碼與驗證碼直接送往 `https://ais.ntou.edu.tw`。
 - App 可在使用者選擇「記住我」時，將登入資料存放於 Android Keystore；沒有分析 SDK 或廣告追蹤。
-- AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間。
+- AIS Cookie 與課表／成績快取使用 Android App 私有加密儲存空間。揪團功能另會將現有 AIS Cookie 暫時交給固定的活動後端核對學號；不傳 AIS 密碼，後端不保存收到的 Cookie。
+- 活動後端保存揪團會員識別、名稱、揪團／參加／檢舉紀錄及短效登入 token 雜湊；公開清單不顯示學號，參加名單只提供發起人查看。
 - Mail2000 密碼與 AIS 密碼完全分開；App 只把使用者在信箱頁輸入的帳密送往 `mail.ntou.edu.tw` 的 IMAP `993` 與 SMTP `465` 加密連線。
 - 使用者可選擇是否將 Mail2000 帳密加密儲存在 Android 本機安全區，信箱登出時會清除。
 - 郵件內容由 APK 直接透過加密 IMAP 讀取，不經海大 TAT 自有伺服器；信件文字一律轉為純文字顯示，內嵌圖片及圖片型雲端連結則整理至信件圖片區。
@@ -84,8 +95,8 @@ Debug APK 會輸出到：
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-App 圖示使用[海大官方校徽](https://www.ntou.edu.tw/motto)，來源檔取自海大 AIS
-官方網站；本專案仍為非官方學生工具。
+App 圖示、啟動畫面與登入頁使用專案的 T 圖示，不使用海大校徽；
+本專案仍為非官方學生工具。
 
 ## Mock 模式
 

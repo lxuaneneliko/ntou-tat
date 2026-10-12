@@ -141,6 +141,54 @@ public class NtouPortalPlugin extends Plugin {
         });
     }
 
+    /** One-time proof goes only to the fixed campus backend, never to JS/logs/storage. */
+    @PluginMethod
+    public void campusSession(PluginCall call) {
+        String studentNumber = call.getString("studentNumber", "");
+        if (!studentNumber.matches("[0-9]{8,12}")) { call.reject("學號格式不正確"); return; }
+        getBridge().execute(() -> {
+            HttpURLConnection connection = null;
+            try {
+                ensureCookiesLoaded();
+                long generation = cookieGeneration.get();
+                String proof;
+                synchronized (cookieJarLock) {
+                    proof = CampusSessionProof.header(cookieManager);
+                }
+                if (!proof.contains(".ASPXAUTH=")) { call.reject("AIS 登入已逾時，請重新登入 TAT"); return; }
+                JSONObject payload = new JSONObject();
+                payload.put("aisCookie", proof);
+                payload.put("studentNumber", studentNumber);
+                payload.put("name", call.getString("name", "海大同學"));
+                byte[] bytes = payload.toString().getBytes(StandardCharsets.UTF_8);
+                // No AIS cookie jar, redirected POST or caller-selected URL here.
+                connection = (HttpURLConnection) new URL(CampusSessionProof.ENDPOINT).openConnection();
+                connection.setInstanceFollowRedirects(false);
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(30000);
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+                connection.setFixedLengthStreamingMode(bytes.length);
+                try (OutputStream stream = connection.getOutputStream()) { stream.write(bytes); }
+                java.util.Arrays.fill(bytes, (byte) 0);
+                payload.remove("aisCookie");
+                int status = connection.getResponseCode();
+                InputStream source = status < 400 ? connection.getInputStream() : connection.getErrorStream();
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                if (source != null) try (InputStream stream = source) {
+                    byte[] chunk = new byte[2048]; int count;
+                    while ((count = stream.read(chunk)) != -1) { if (buffer.size() + count > 64000) throw new IllegalStateException("Response too large"); buffer.write(chunk, 0, count); }
+                }
+                assertCurrentGeneration(generation);
+                JSObject result = new JSObject(); result.put("status", status);
+                result.put("data", new String(buffer.toByteArray(), StandardCharsets.UTF_8));
+                call.resolve(result);
+            } catch (Exception ignored) { call.reject("AIS 身分核對暫時無法完成，請稍後再試"); }
+            finally { if (connection != null) connection.disconnect(); }
+        });
+    }
+
     @PluginMethod
     public void clear(PluginCall call) {
         getBridge().execute(() -> {

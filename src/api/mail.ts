@@ -17,6 +17,7 @@ export type MailSummary = {
 export type MailInbox = {
   account: string
   folder: string
+  uidValidity?: string
   total: number
   unread: number
   offset: number

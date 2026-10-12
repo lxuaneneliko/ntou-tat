@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Browser } from '@capacitor/browser'
 import { Capacitor } from '@capacitor/core'
@@ -43,7 +43,9 @@ import type {
 } from './api/mail'
 import { mailApi } from './api/mail'
 import { mailTextTokens } from './mailLinks'
+import { captureMailListScroll, restoreMailListScroll, type MailListScrollSnapshot } from './mailScroll'
 import { mailCredentialsStore } from './storage/mailCredentialsStorage'
+import { cacheMailPage, cachedMailPage, cacheMailDetail, cachedMailDetail, clearMailCache, mergeMailSummaries, updateCachedMail, MAIL_CACHE_LIMIT } from './storage/mailCache'
 
 const PAGE_SIZE = 30
 const MAX_OUTGOING_BYTES = 20 * 1024 * 1024
@@ -227,6 +229,48 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const attachmentInput = useRef<HTMLInputElement>(null)
+  const cacheGeneration = useRef(0)
+  const mailEdits = useRef(new Map<string, { changes: Partial<MailSummary>; remove: boolean }>())
+  const [visibleLimit, setVisibleLimit] = useState(60)
+  const [cacheProgress, setCacheProgress] = useState<number | null>(null)
+  const mailLoadSentinel = useRef<HTMLDivElement>(null)
+  const pagingGeneration = useRef<number | null>(null)
+  const listRoot = useRef<HTMLElement>(null)
+  const listScroll = useRef<MailListScrollSnapshot | null>(null)
+  const detailRequest = useRef(0)
+  const mailboxScope = JSON.stringify([credentials?.account, folderId, query.trim().toLocaleLowerCase('zh-TW')])
+  const mailView = !credentials ? 'login' : compose ? 'compose' : detail ? 'detail' : 'list'
+  const previousMailView = useRef(mailView)
+  useEffect(() => () => { cacheGeneration.current += 1 }, [])
+
+  const rememberListScroll = () => {
+    if (listRoot.current) listScroll.current = captureMailListScroll(listRoot.current, mailboxScope)
+  }
+
+  const closeMessage = useCallback(() => {
+    detailRequest.current += 1
+    setDetailBusyUid(null)
+    setDetail(null)
+  }, [])
+
+  useLayoutEffect(() => {
+    const previous = previousMailView.current
+    previousMailView.current = mailView
+    if (mailView === 'list' && previous !== 'list') {
+      const snapshot = listScroll.current
+      listScroll.current = null
+      if (!snapshot || snapshot.scope !== mailboxScope || !listRoot.current) return
+      // Restore before paint, then once after layout settles in the WebView.
+      restoreMailListScroll(listRoot.current, snapshot, mailboxScope)
+      const frame = requestAnimationFrame(() => {
+        if (listRoot.current) restoreMailListScroll(listRoot.current, snapshot, mailboxScope)
+      })
+      return () => cancelAnimationFrame(frame)
+    }
+    if (previous === 'list' && (mailView === 'detail' || mailView === 'compose')) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }
+  }, [mailView, mailboxScope])
 
   const currentFolder = folders.find((folder) => folder.id === folderId)
   const bodyImagesById = useMemo(
@@ -254,21 +298,26 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
         return true
       }
       if (detail) {
-        setDetail(null)
+        closeMessage()
         return true
       }
       return false
     },
-  }), [activeBodyImage, compose, detail])
+  }), [activeBodyImage, compose, detail, closeMessage])
 
-  const handleAuthFailure = useCallback(async (loadError: unknown) => {
+  const handleAuthFailure = useCallback(async (loadError: unknown, accountToClear?: string) => {
     if (mailErrorCode(loadError) !== 'MAIL_AUTH_FAILED') return false
+    listScroll.current = null
+    detailRequest.current += 1
+    cacheGeneration.current += 1
+    setCacheProgress(null); setBusy(false); setDetailBusyUid(null); setDetail(null)
     try {
       await mailApi.setNotifications(false)
     } catch {
       // Credential cleanup below remains authoritative for the signed-out UI.
     }
     await mailCredentialsStore.clear()
+    if (accountToClear) await clearMailCache(accountToClear)
     setNotificationsEnabled(false)
     setCredentials(null)
     setPassword('')
@@ -278,6 +327,11 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   }, [])
 
   const loadMailbox = useCallback(async (activeCredentials: MailCredentials, requestedFolder = 'INBOX') => {
+    const generation = ++cacheGeneration.current
+    mailEdits.current.clear(); setVisibleLimit(60); setPaging(false); pagingGeneration.current = null; setCacheProgress(null)
+    const cached = await cachedMailPage(activeCredentials.account, requestedFolder)
+    if (cacheGeneration.current !== generation) return false
+    if (cached) { setPage(cached.page); setFolders(cached.folders); setFolderId(requestedFolder); setNotice('已顯示本機快取，正在同步最新信件') }
     setBusy(true)
     setError(null)
     try {
@@ -287,17 +341,57 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
       ])
       const validFolder = nextFolders.some((folder) => folder.id === requestedFolder)
       const selectedFolder = validFolder ? requestedFolder : (nextFolders.find((folder) => folder.kind === 'inbox')?.id ?? 'INBOX')
+      if (cacheGeneration.current !== generation) return false
       setFolders(nextFolders)
       setFolderId(selectedFolder)
-      setPage(selectedFolder === requestedFolder ? nextPage : await mailApi.listMessages(activeCredentials, selectedFolder, 0, PAGE_SIZE))
+      const fresh = selectedFolder === requestedFolder ? nextPage : await mailApi.listMessages(activeCredentials, selectedFolder, 0, PAGE_SIZE)
+      if (cacheGeneration.current !== generation) return false
+      const previousMessages = selectedFolder === requestedFolder && (!fresh.uidValidity || !cached?.page.uidValidity || fresh.uidValidity === cached.page.uidValidity) ? cached?.page.messages || [] : []
+      setPage({ ...fresh, nextOffset: Math.max(fresh.nextOffset, previousMessages.length), messages: mergeMailSummaries(fresh.messages, previousMessages) })
+      await cacheMailPage(fresh, nextFolders)
+      if (generation !== cacheGeneration.current) return false
+      setNotice(null)
+      void (async () => {
+        let cursor = fresh.nextOffset
+        let summaries = fresh.messages
+        let latest = fresh
+        setCacheProgress(summaries.length)
+        try {
+          while (latest.hasMore && cursor < MAIL_CACHE_LIMIT && generation === cacheGeneration.current) {
+            latest = await mailApi.listMessages(activeCredentials, selectedFolder, cursor, Math.min(50, MAIL_CACHE_LIMIT - cursor))
+            if (generation !== cacheGeneration.current) return
+            if (fresh.uidValidity && latest.uidValidity && fresh.uidValidity !== latest.uidValidity) throw new Error('信箱已重建，請重新整理')
+            if (latest.nextOffset <= cursor) break
+            cursor = latest.nextOffset; summaries = mergeMailSummaries(summaries, latest.messages)
+            await cacheMailPage(latest, nextFolders)
+            if (generation !== cacheGeneration.current) return
+            setCacheProgress(summaries.length)
+            // Reveal each received batch while the remainder syncs in the background.
+            setPage((current) => current ? { ...current, nextOffset: cursor, hasMore: latest.hasMore, messages: mergeMailSummaries(summaries, current.messages).filter((item) => !mailEdits.current.get(item.uid)?.remove).map((item) => ({ ...item, ...mailEdits.current.get(item.uid)?.changes })) } : current)
+          }
+          if (generation === cacheGeneration.current) {
+            summaries = summaries.filter((item) => !mailEdits.current.get(item.uid)?.remove).map((item) => ({ ...item, ...mailEdits.current.get(item.uid)?.changes }))
+            await cacheMailPage({ ...fresh, messages: summaries }, nextFolders, true)
+            setPage((current) => ({ ...fresh, hasMore: latest.hasMore, nextOffset: cursor, messages: summaries.map((item) => current?.messages.find((old) => old.uid === item.uid) || item) }))
+          }
+        } catch (syncError) {
+          if (generation === cacheGeneration.current) {
+            if (await handleAuthFailure(syncError, activeCredentials.account)) setError(mailErrorMessage(syncError))
+            else setNotice('背景同步暫停，已快取的信件仍可閱讀；請稍後重新整理')
+          }
+        }
+        finally { if (generation === cacheGeneration.current) setCacheProgress(null) }
+      })()
       setDetail(null)
       return true
     } catch (loadError) {
-      await handleAuthFailure(loadError)
-      setError(mailErrorMessage(loadError))
+      if (cacheGeneration.current !== generation) return false
+      await handleAuthFailure(loadError, activeCredentials.account)
+      if (cached && mailErrorCode(loadError) !== 'MAIL_AUTH_FAILED') setNotice('目前無法連線，正在顯示本機快取')
+      else setError(mailErrorMessage(loadError))
       return false
     } finally {
-      setBusy(false)
+      if (generation === cacheGeneration.current) setBusy(false)
     }
   }, [handleAuthFailure])
 
@@ -346,37 +440,44 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
 
   const changeFolder = async (nextFolder: string) => {
     if (!credentials || nextFolder === folderId) return
+    listScroll.current = null
+    detailRequest.current += 1
     setFolderId(nextFolder)
-    setBusy(true)
-    setError(null)
     setQuery('')
-    try {
-      setPage(await mailApi.listMessages(credentials, nextFolder, 0, PAGE_SIZE))
-      setDetail(null)
-    } catch (loadError) {
-      await handleAuthFailure(loadError)
-      setError(mailErrorMessage(loadError))
-    } finally {
-      setBusy(false)
-    }
+    setPage(null); setDetail(null); setDetailBusyUid(null); setPaging(false); setCacheProgress(null)
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    await loadMailbox(credentials, nextFolder)
   }
 
   const loadMore = async () => {
-    if (!credentials || !page?.hasMore || paging) return
+    if (page && visibleLimit < page.messages.length) { setVisibleLimit((limit) => limit + 60); return }
+    if (!credentials || !page?.hasMore || paging || busy || cacheProgress !== null || pagingGeneration.current === cacheGeneration.current) return
+    const generation = cacheGeneration.current
+    pagingGeneration.current = generation
     setPaging(true)
     setError(null)
     try {
       const next = await mailApi.listMessages(credentials, folderId, page.nextOffset, PAGE_SIZE)
-      setPage({ ...next, messages: [...page.messages, ...next.messages] })
+      if (generation !== cacheGeneration.current) return
+      if (page.uidValidity && next.uidValidity && page.uidValidity !== next.uidValidity) throw new Error('信箱已重建，請重新整理')
+      if (next.hasMore && next.nextOffset <= page.nextOffset) throw new Error('郵件載入暫停，請重試')
+      await cacheMailPage(next, folders)
+      if (generation !== cacheGeneration.current) return
+      setPage((current) => ({ ...next, messages: [...new Map([...(current?.messages || []), ...next.messages].map((message) => [message.uid, message])).values()] }))
+      setVisibleLimit((limit) => limit + PAGE_SIZE)
     } catch (loadError) {
-      await handleAuthFailure(loadError)
+      if (generation !== cacheGeneration.current) return
+      await handleAuthFailure(loadError, credentials.account)
       setError(mailErrorMessage(loadError))
     } finally {
-      setPaging(false)
+      if (generation === cacheGeneration.current) setPaging(false)
+      if (pagingGeneration.current === generation) pagingGeneration.current = null
     }
   }
 
   const updateSummary = (uid: string, changes: Partial<MailSummary>, remove = false) => {
+    mailEdits.current.set(uid, { changes: { ...mailEdits.current.get(uid)?.changes, ...changes }, remove })
+    if (credentials) void updateCachedMail(credentials.account, folderId, uid, changes, remove)
     setPage((current) => current ? {
       ...current,
       messages: remove ? current.messages.filter((message) => message.uid !== uid) : current.messages.map((message) => message.uid === uid ? { ...message, ...changes } : message),
@@ -387,10 +488,19 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
 
   const openMessage = async (message: MailSummary) => {
     if (!credentials || detailBusyUid) return
+    const generation = cacheGeneration.current
+    const request = ++detailRequest.current
     setDetailBusyUid(message.uid)
     setError(null)
+    const cached = await cachedMailDetail(credentials.account, folderId, message.uid)
+    if (generation !== cacheGeneration.current || request !== detailRequest.current) return
+    if (cached) { rememberListScroll(); setDetail(cached); setFailedBodyImages(new Set()); setExternalImagesVisible(false); setActiveBodyImage(null); setShowHeaders(false) }
     try {
       const nextDetail = await mailApi.getMessage(credentials, folderId, message.uid)
+      if (generation !== cacheGeneration.current || request !== detailRequest.current) return
+      await cacheMailDetail(credentials.account, folderId, nextDetail)
+      if (generation !== cacheGeneration.current || request !== detailRequest.current) return
+      rememberListScroll()
       setDetail(nextDetail)
       setFailedBodyImages(new Set())
       setExternalImagesVisible(false)
@@ -398,10 +508,12 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
       setShowHeaders(false)
       if (message.unread) updateSummary(message.uid, { unread: false })
     } catch (loadError) {
-      await handleAuthFailure(loadError)
-      setError(mailErrorMessage(loadError))
+      if (generation !== cacheGeneration.current || request !== detailRequest.current) return
+      const authFailed = await handleAuthFailure(loadError, credentials.account)
+      if (cached && !authFailed) setNotice('目前無法連線，顯示已儲存的信件內文')
+      else setError(mailErrorMessage(loadError))
     } finally {
-      setDetailBusyUid(null)
+      if (generation === cacheGeneration.current && request === detailRequest.current) setDetailBusyUid(null)
     }
   }
 
@@ -426,7 +538,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
     try {
       await mailApi.setFlag(credentials, folderId, detail.uid, 'seen', false)
       updateSummary(detail.uid, { unread: true })
-      setDetail(null)
+      closeMessage()
     } catch (actionError) {
       setError(mailErrorMessage(actionError))
     } finally {
@@ -440,7 +552,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
     try {
       await mailApi.moveMessage(credentials, folderId, detail.uid, targetFolder)
       updateSummary(detail.uid, {}, true)
-      setDetail(null)
+      closeMessage()
       setNotice('信件已移動')
     } catch (actionError) {
       setError(mailErrorMessage(actionError))
@@ -527,7 +639,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
         setRemember(true)
         setNotice(Capacitor.getPlatform() === 'ios'
           ? '新信通知已開啟；iOS 自行安排背景檢查，關閉 App 或低耗電時可能暫停，並非即時推播。'
-          : '新信通知已開啟；背景會定期檢查 Mail2000')
+          : '新信通知已開啟；每天檢查一次，有新信時最多每 24 小時通知一次')
       } else {
         setNotice('新信通知已關閉')
       }
@@ -540,6 +652,11 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   }
 
   const logoutMail = async () => {
+    listScroll.current = null
+    detailRequest.current += 1
+    cacheGeneration.current += 1
+    setCacheProgress(null)
+    if (credentials) await clearMailCache(credentials.account)
     try {
       await mailApi.setNotifications(false)
     } catch {
@@ -557,9 +674,17 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
 
   const visibleMessages = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('zh-TW')
-    if (!needle) return page?.messages ?? []
+    if (!needle) return (page?.messages ?? []).slice(0, visibleLimit)
     return (page?.messages ?? []).filter((message) => `${message.sender} ${message.senderAddress} ${message.subject}`.toLocaleLowerCase('zh-TW').includes(needle))
-  }, [page?.messages, query])
+  }, [page?.messages, query, visibleLimit])
+
+  useEffect(() => {
+    const target = mailLoadSentinel.current
+    if (!target || query || detail || compose || busy || error || !page || (!page.hasMore && visibleLimit >= page.messages.length)) return
+    const observer = new IntersectionObserver((entries) => { if (entries.some((entry) => entry.isIntersecting)) void loadMore() }, { rootMargin: '350px 0px', threshold: 0 })
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [page, visibleLimit, query, detail, compose, busy, paging, cacheProgress, error])
 
   if (!credentials) {
     return (
@@ -630,7 +755,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
       <>
       <section className="mail-screen mail-detail-screen">
         <div className="mail-detail-toolbar">
-          <button type="button" aria-label="返回信箱" onClick={() => setDetail(null)}><ArrowLeft size={22} /></button>
+          <button type="button" aria-label="返回信箱" onClick={closeMessage}><ArrowLeft size={22} /></button>
           <span className="mail-detail-toolbar-title">信件內容</span>
           <button type="button" aria-label={detail.starred ? '取消星號' : '加上星號'} onClick={() => void toggleStar(detail)}><Star className={detail.starred ? 'mail-starred' : ''} fill={detail.starred ? 'currentColor' : 'none'} size={20} /></button>
           <button type="button" aria-label="標示未讀" onClick={() => void markUnread()}><MailOpen size={20} /></button>
@@ -694,7 +819,7 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
   }
 
   return (
-    <section className="mail-screen">
+    <section className="mail-screen" ref={listRoot}>
       <div className="mail-account-strip">
         <span className="mail-account-icon"><Mail size={25} /></span>
         <div><strong>Mail2000</strong><span>{page?.account ?? credentials.account}@mail.ntou.edu.tw</span></div>
@@ -704,13 +829,13 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
             type="button"
             aria-label={notificationsEnabled ? '關閉新信通知' : '開啟新信通知'}
             aria-pressed={notificationsEnabled}
-            title={notificationsEnabled ? '新信通知：已開啟' : '新信通知：已關閉'}
+            title={notificationsEnabled ? Capacitor.getPlatform() === 'ios' ? '新信通知：已開啟' : '新信通知：每天最多一次' : '新信通知：已關閉'}
             disabled={notificationBusy}
             onClick={() => void toggleNotifications()}
           >
             {notificationBusy ? <Loader2 className="spin" size={19} /> : <Bell fill={notificationsEnabled ? 'currentColor' : 'none'} size={19} />}
           </button>
-          <button type="button" aria-label="新增郵件" onClick={() => setCompose(emptyCompose())}><PenLine size={20} /></button>
+          <button type="button" aria-label="新增郵件" onClick={() => { rememberListScroll(); setCompose(emptyCompose()) }}><PenLine size={20} /></button>
           <button type="button" aria-label="重新整理" disabled={busy} onClick={() => void loadMailbox(credentials, folderId)}><RefreshCw className={busy ? 'spin' : ''} size={20} /></button>
           <button type="button" aria-label="登出信箱" onClick={() => void logoutMail()}><LogOut size={20} /></button>
         </div>
@@ -723,16 +848,17 @@ export const MailScreen = forwardRef<MailScreenHandle, { studentId: string }>(fu
       <label className="mail-search"><Search size={17} /><input aria-label="搜尋已載入郵件" placeholder="搜尋已載入的信件" value={query} onChange={(event) => setQuery(event.target.value)} />{query ? <button type="button" aria-label="清除搜尋" onClick={() => setQuery('')}><X size={16} /></button> : null}</label>
       {error ? <div className="error-banner mail-error"><AlertCircle size={18} /><span>{error}</span></div> : null}
       {notice ? <button className="mail-notice" type="button" onClick={() => setNotice(null)}>{notice}</button> : null}
+      {cacheProgress !== null ? <div className="mail-cache-progress" role="status">同步本機快取 {cacheProgress} / {Math.min(page?.total || MAIL_CACHE_LIMIT, MAIL_CACHE_LIMIT)}<progress max={Math.min(page?.total || MAIL_CACHE_LIMIT, MAIL_CACHE_LIMIT)} value={cacheProgress} /></div> : null}
       {busy && !page ? <div className="mail-loading"><Loader2 className="spin" size={28} /><span>正在讀取信箱</span></div> : visibleMessages.length ? <>
-        <div className="mail-message-list">{visibleMessages.map((message) => <div className={message.unread ? 'mail-message-row unread' : 'mail-message-row'} key={message.uid}>
+        <div className="mail-message-list">{visibleMessages.map((message) => <div className={message.unread ? 'mail-message-row unread' : 'mail-message-row'} key={message.uid} data-mail-uid={message.uid}>
           <button className="mail-message-open" type="button" disabled={detailBusyUid !== null} onClick={() => void openMessage(message)}>
             <span className="mail-unread-dot" aria-hidden="true" /><span className="mail-sender-avatar">{(message.sender || '?').slice(0, 1).toUpperCase()}</span><span className="mail-message-copy"><strong>{message.sender}</strong><span>{message.subject || '（無主旨）'}</span></span><time>{detailBusyUid === message.uid ? <Loader2 className="spin" size={16} /> : formatMailDate(message.receivedAt)}</time>
           </button>
           <button className={message.starred ? 'mail-row-star mail-starred' : 'mail-row-star'} type="button" aria-label={message.starred ? '取消星號' : '加上星號'} onClick={() => void toggleStar(message)}><Star fill={message.starred ? 'currentColor' : 'none'} size={18} /></button>
         </div>)}</div>
-        {!query && page?.hasMore ? <button className="mail-load-more" type="button" disabled={paging} onClick={() => void loadMore()}>{paging ? <Loader2 className="spin" size={18} /> : null}<span>{paging ? '載入中' : `載入更早郵件（已顯示 ${page.messages.length} 封）`}</span></button> : null}
+        {!query && page ? <div className="mail-scroll-sentinel" ref={mailLoadSentinel} role="status">{page.hasMore || visibleLimit < page.messages.length ? <>{paging || cacheProgress !== null ? <Loader2 className="spin" size={18} /> : null}<span>{paging || cacheProgress !== null ? '正在接續載入郵件…' : '往下滑，自動載入更早郵件'}</span>{error ? <button type="button" className="mail-load-retry" onClick={() => { setError(null); void loadMore() }}>重試載入</button> : null}</> : <span>已顯示全部 {page.messages.length} 封郵件</span>}</div> : null}
       </> : page ? <div className="mail-empty"><Inbox size={36} /><span>{query ? '找不到相符郵件' : '這個資料夾沒有信件'}</span></div> : null}
-      <button className="mail-compose-fab" type="button" aria-label="新增郵件" onClick={() => setCompose(emptyCompose())}><PenLine size={22} /></button>
+      <button className="mail-compose-fab" type="button" aria-label="新增郵件" onClick={() => { rememberListScroll(); setCompose(emptyCompose()) }}><PenLine size={22} /></button>
     </section>
   )
 })
