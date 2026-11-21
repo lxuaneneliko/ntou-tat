@@ -4138,7 +4138,7 @@ function LoginScreen({
       <section className="login-panel">
         <div className="login-brand">
           <div className="brand-icon">
-            <img src={`${import.meta.env.BASE_URL}ntou-emblem.png`} alt="海大校徽" />
+            <img src={`${import.meta.env.BASE_URL}tat-mark.png`} alt="TAT 圖示" />
           </div>
           <div><h1>海大 TAT</h1><p>National Taiwan Ocean University</p></div>
         </div>
